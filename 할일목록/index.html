@@ -80,14 +80,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .stamp{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--blue);background:var(--blue-bg);border-radius:5px;padding:3px 9px;margin-top:3px}
 .empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:13px;line-height:2}
 .empty i{font-size:30px;display:block;margin-bottom:8px}
-.memo-area{display:flex;flex-direction:column;gap:8px}
-.memo-toolbar{display:flex;align-items:center;justify-content:space-between}
-.memo-info{font-size:11px;color:var(--text3)}
-.btn-memo-save{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer}
-.btn-memo-save:hover{opacity:.85}
-.memo-pad{width:100%;min-height:460px;padding:14px;border-radius:var(--r);border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;line-height:1.8;resize:vertical;font-family:inherit}
+
+/* 메모장 */
+.memo-list-view{display:flex;flex-direction:column;gap:8px}
+.memo-date-item{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s}
+.memo-date-item:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.memo-date-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none}
+.memo-date-title{font-size:13px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:8px}
+.memo-today-tag{font-size:10px;font-weight:600;background:var(--accent-bg);color:var(--accent-dark);padding:2px 7px;border-radius:20px}
+.memo-date-preview{font-size:11px;color:var(--text3);margin-top:2px;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.memo-date-right{display:flex;align-items:center;gap:8px}
+.memo-char-count{font-size:11px;color:var(--text3)}
+.memo-chevron{font-size:14px;color:var(--text3);transition:transform .2s}
+.memo-chevron.open{transform:rotate(180deg)}
+.memo-edit-area{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px;border-top:0.5px solid var(--border)}
+.memo-pad{width:100%;min-height:200px;padding:12px;border-radius:var(--r);border:0.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px;line-height:1.8;resize:vertical;font-family:inherit;margin-top:12px}
 .memo-pad:focus{outline:none;border-color:var(--accent)}
-.memo-saved{font-size:11px;color:var(--accent)}
+.memo-edit-footer{display:flex;align-items:center;justify-content:space-between}
+.memo-saved-txt{font-size:11px;color:var(--accent)}
+.memo-actions{display:flex;gap:8px}
+.btn-memo-save{padding:5px 13px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer}
+.btn-memo-save:hover{opacity:.85}
+.btn-memo-del{padding:5px 10px;background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-bd);border-radius:var(--r);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-memo-del:hover{opacity:.85}
+.memo-top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.memo-top-info{font-size:11px;color:var(--text3)}
+
+/* 모달 */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:200;align-items:center;justify-content:center}
 .overlay.open{display:flex}
 .modal{background:var(--bg);border-radius:var(--rl);border:0.5px solid var(--border);padding:22px;width:420px;max-width:calc(100vw - 24px);display:flex;flex-direction:column;gap:13px;box-shadow:0 8px 32px rgba(0,0,0,.15)}
@@ -97,7 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
 .field textarea{resize:vertical;min-height:68px;line-height:1.6}
 .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ckrow{display:flex;align-items:center;gap:7px;cursor:pointer}
+.ckrow{display:flex;align-items:center;gap:7px}
 .ckrow input{width:15px;height:15px;cursor:pointer;accent-color:var(--accent)}
 .ckrow label{font-size:13px;color:var(--text);cursor:pointer}
 .mfooter{display:flex;gap:8px;justify-content:flex-end;padding-top:4px;border-top:0.5px solid var(--border)}
@@ -153,9 +172,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 const todayStr=()=>new Date().toISOString().slice(0,10);
 const nowStr=()=>{const d=new Date();return d.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});};
 const fmtDate=s=>{if(!s)return'';const[y,m,d]=s.split('-');return`${y}.${m}.${d}`;};
+const fmtDateKo=s=>{if(!s)return'';const[y,m,d]=s.split('-');const days=['일','월','화','수','목','금','토'];const day=days[new Date(s).getDay()];return`${y}.${m}.${d} (${day})`;};
 
 let tasks=[], nid=1, view='todo', eid=null;
-let memo='', memoSavedAt='';
+// 메모: { date(yyyy-mm-dd): { body, savedAt } }
+let memos={};
+// 열려있는 날짜
+let openMemoDate=null;
 
 document.getElementById('today').textContent=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
 
@@ -190,6 +213,7 @@ function groupByDate(list){
   return g;
 }
 
+/* ── 할일 ── */
 function rTodo(el){
   const today=todayStr();
   const list=tasks.filter(t=>!full(t)).sort((a,b)=>{
@@ -226,6 +250,7 @@ function rTodo(el){
   el.innerHTML=html;
 }
 
+/* ── 할일완료 ── */
 function rDone(el){
   const list=tasks.filter(t=>full(t)).sort((a,b)=>(b.completedAt||'').localeCompare(a.completedAt||''));
   const g=groupByDate(list);
@@ -243,7 +268,7 @@ function rDone(el){
     dates.forEach(d=>{
       html+=`<div class="date-group">
         <div class="date-header">
-          <span class="date-label">${fmtDate(d)}</span>
+          <span class="date-label">${fmtDateKo(d)}</span>
           <div class="date-line"></div>
           <span class="date-count">${g[d].length}건</span>
         </div>
@@ -255,15 +280,15 @@ function rDone(el){
               <div class="cw"><div class="cb ca" onclick="tAppr(${t.id})"><i class="ti ti-check"></i></div><span class="cl">결재</span></div>
             </div>
             <div class="cbody">
-              <div class="ctitle" style="text-decoration:line-through;color:var(--text3);cursor:default">${t.title}</div>
+              <div class="ctitle" style="text-decoration:line-through;color:var(--text3);cursor:default">${esc(t.title)}</div>
               <div class="cmeta">
                 ${t.due?`<span class="mi"><i class="ti ti-calendar"></i>${fmtDate(t.due)}</span>`:''}
-                ${t.person?`<span class="mi"><i class="ti ti-user"></i>${t.person}</span>`:''}
+                ${t.person?`<span class="mi"><i class="ti ti-user"></i>${esc(t.person)}</span>`:''}
               </div>
               ${t.completedAt?`<div class="stamp"><i class="ti ti-clock" style="font-size:11px"></i>완료: ${t.completedAt}</div>`:''}
             </div>
           </div>
-          ${t.rem?`<div class="cremark">${t.rem}</div>`:''}
+          ${t.rem?`<div class="cremark">${esc(t.rem)}</div>`:''}
         </div>`).join('')}
       </div>`;
     });
@@ -280,50 +305,103 @@ function cardHTML(t,today){
         <div class="cw"><div class="cb${t.appr?' ca':''}" onclick="tAppr(${t.id})">${t.appr?'<i class="ti ti-check"></i>':''}</div><span class="cl">결재</span></div>
       </div>
       <div class="cbody">
-        <div class="ctitle" onclick="edit(${t.id})">${t.title}</div>
+        <div class="ctitle" onclick="edit(${t.id})">${esc(t.title)}</div>
         <div class="cmeta">
           <span class="pp ${t.pri}">${t.pri==='h'?'긴급':t.pri==='m'?'보통':'낮음'}</span>
           ${t.due?`<span class="mi ${ov?'overdue':dt?'duetoday':''}"><i class="ti ti-calendar"></i>${ov?'⚠ 기한초과 ':dt?'오늘 마감 ':''}${fmtDate(t.due)}</span>`:''}
-          ${t.person?`<span class="mi"><i class="ti ti-user"></i>${t.person}</span>`:''}
+          ${t.person?`<span class="mi"><i class="ti ti-user"></i>${esc(t.person)}</span>`:''}
         </div>
       </div>
       <button class="btn-edit" onclick="edit(${t.id})"><i class="ti ti-edit" style="font-size:13px"></i></button>
     </div>
-    ${t.rem?`<div class="cremark">${t.rem}</div>`:''}
+    ${t.rem?`<div class="cremark">${esc(t.rem)}</div>`:''}
   </div>`;
 }
 
+/* ── 메모장 ── */
 function rMemo(el){
-  el.innerHTML=`<div class="memo-area">
-    <div class="memo-toolbar">
-      <span class="memo-info">자유롭게 메모를 입력하세요</span>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span class="memo-saved" id="memo-saved" style="display:none;font-size:11px;color:var(--accent)">저장됨 ✓</span>
-        <button class="btn-memo-save" onclick="saveMemo()">저장</button>
+  const today=todayStr();
+  // 오늘 메모가 없으면 빈 항목 자동 생성
+  if(!memos[today]) memos[today]={body:'',savedAt:null};
+  // 처음 메모 뷰 열면 오늘 날짜 자동 오픈
+  if(openMemoDate===null) openMemoDate=today;
+
+  const dates=Object.keys(memos).sort((a,b)=>b.localeCompare(a));
+
+  let html=`<div class="memo-top-bar">
+    <span class="memo-top-info">날짜별 메모 · ${dates.length}일</span>
+  </div>
+  <div class="memo-list-view">`;
+
+  dates.forEach(d=>{
+    const m=memos[d];
+    const isToday=d===today;
+    const isOpen=openMemoDate===d;
+    const preview=m.body?m.body.replace(/\n/g,' ').slice(0,40)+(m.body.length>40?'…':''):'(내용 없음)';
+    const charCount=m.body?m.body.length:0;
+
+    html+=`<div class="memo-date-item">
+      <div class="memo-date-header" onclick="toggleMemo('${d}')">
+        <div>
+          <div class="memo-date-title">
+            <i class="ti ti-note" style="font-size:14px;color:var(--text3)"></i>
+            ${fmtDateKo(d)}
+            ${isToday?'<span class="memo-today-tag">오늘</span>':''}
+          </div>
+          ${!isOpen?`<div class="memo-date-preview">${esc(preview)}</div>`:''}
+        </div>
+        <div class="memo-date-right">
+          ${charCount>0?`<span class="memo-char-count">${charCount}자</span>`:''}
+          <i class="ti ti-chevron-down memo-chevron ${isOpen?'open':''}"></i>
+        </div>
       </div>
-    </div>
-    <textarea class="memo-pad" id="memo-pad" placeholder="여기에 자유롭게 메모를 입력하세요...">${memo}</textarea>
-    ${memoSavedAt?`<div style="font-size:11px;color:var(--text3)">마지막 저장: ${memoSavedAt}</div>`:''}
-  </div>`;
+      ${isOpen?`
+      <div class="memo-edit-area">
+        <textarea class="memo-pad" id="memo-pad-${d}" placeholder="오늘 업무, 메모, 특이사항 등을 자유롭게 입력하세요...">${esc(m.body)}</textarea>
+        <div class="memo-edit-footer">
+          <span style="font-size:11px;color:var(--text3)">${m.savedAt?'저장: '+m.savedAt:''}</span>
+          <div class="memo-actions">
+            ${!isToday?`<button class="btn-memo-del" onclick="delMemo('${d}')"><i class="ti ti-trash" style="font-size:12px"></i>삭제</button>`:''}
+            <button class="btn-memo-save" onclick="saveMemo('${d}')">저장</button>
+          </div>
+        </div>
+      </div>`:''}
+    </div>`;
+  });
+
+  html+='</div>';
+  el.innerHTML=html;
 }
 
-function saveMemo(){
-  memo=document.getElementById('memo-pad')?.value||'';
-  memoSavedAt=nowStr();
-  const s=document.getElementById('memo-saved');
-  if(s){s.style.display='inline';setTimeout(()=>{if(s)s.style.display='none';},2000);}
-  const ts=document.querySelector('.memo-area>div:last-child');
-  if(ts&&ts.style){/* handled by re-render below */}
+function toggleMemo(d){
+  openMemoDate = openMemoDate===d ? null : d;
   render();
 }
 
+function saveMemo(d){
+  const pad=document.getElementById('memo-pad-'+d);
+  if(!pad)return;
+  memos[d]={body:pad.value, savedAt:nowStr()};
+  render();
+}
+
+function delMemo(d){
+  if(d===todayStr())return;
+  if(!confirm('이 날짜의 메모를 삭제할까요?'))return;
+  delete memos[d];
+  if(openMemoDate===d) openMemoDate=todayStr();
+  render();
+}
+
+/* ── 토글 ── */
 function tDone(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;chk(t);render();}
 function tAppr(id){const t=tasks.find(x=>x.id===id);if(!t)return;t.appr=!t.appr;chk(t);render();}
 function chk(t){
-  if(t.done&&t.appr&&!t.completedAt){t.completedAt=nowStr();}
-  else if(!t.done||!t.appr){t.completedAt=null;}
+  if(t.done&&t.appr&&!t.completedAt) t.completedAt=nowStr();
+  else if(!t.done||!t.appr) t.completedAt=null;
 }
 
+/* ── 모달 ── */
 function openModal(){
   eid=null;
   document.getElementById('mtitle').textContent='새 할일 추가';
@@ -357,15 +435,7 @@ function oclose(e){if(e.target.id==='modal')closeModal();}
 function save(){
   const title=document.getElementById('f-title').value.trim();
   if(!title){alert('제목을 입력해주세요');return;}
-  const data={
-    title,
-    pri:document.getElementById('f-pri').value,
-    due:document.getElementById('f-due').value,
-    person:document.getElementById('f-person').value.trim(),
-    rem:document.getElementById('f-rem').value.trim(),
-    done:document.getElementById('f-done').checked,
-    appr:document.getElementById('f-appr').checked
-  };
+  const data={title,pri:document.getElementById('f-pri').value,due:document.getElementById('f-due').value,person:document.getElementById('f-person').value.trim(),rem:document.getElementById('f-rem').value.trim(),done:document.getElementById('f-done').checked,appr:document.getElementById('f-appr').checked};
   if(eid){
     const i=tasks.findIndex(t=>t.id===eid);
     tasks[i]={...tasks[i],...data};chk(tasks[i]);
@@ -380,6 +450,8 @@ function delItem(){
   tasks=tasks.filter(t=>t.id!==eid);
   closeModal();render();
 }
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 render();
 </script>
