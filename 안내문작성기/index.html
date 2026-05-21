@@ -3,399 +3,531 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>안내문 빠른 작성기</title>
+<title>만족도 조사 분석기</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f5f5f3;--surface:#ffffff;--border:#dddbd4;--border-light:#eceae4;
-  --text:#1a1a1a;--text-sub:#5f5e5a;--text-muted:#888780;
-  --accent:#2563eb;--accent-light:#eff6ff;--accent-border:#bfdbfe;
-  --green:#16a34a;--green-light:#f0fdf4;
-  --radius:12px;--radius-sm:8px;
+  --bg:#f5f5f3;--sur:#fff;--bdr:#dddbd4;--bdl:#eceae4;
+  --tx:#1a1a1a;--sub:#5f5e5a;--mt:#888780;
+  --ac:#2563eb;--acl:#eff6ff;--acb:#bfdbfe;
+  --gn:#16a34a;--rd:#dc2626;--rdl:#fef2f2;--rdb:#fecaca;
+  --r:12px;--rs:8px;
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
-  background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 80px}
-
-.top-bar{background:var(--surface);border-bottom:1px solid var(--border);
-  padding:14px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-.back-btn{display:flex;align-items:center;gap:6px;color:var(--text-sub);font-size:13px;
-  text-decoration:none;padding:6px 10px;border-radius:var(--radius-sm);
-  border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:.15s}
-.back-btn:hover{background:var(--bg)}
-.top-bar h1{font-size:16px;font-weight:700;flex:1}
-.icon{font-size:20px;color:var(--accent)}
-
-.layout{max-width:1060px;margin:0 auto;padding:24px 16px;
-  display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-@media(max-width:720px){.layout{grid-template-columns:1fr}}
-
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.panel-head{padding:14px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px}
-.panel-head h2{font-size:14px;font-weight:600;flex:1}
-.panel-body{padding:18px}
-
-.form-group{margin-bottom:12px}
-.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px}
-.form-group input,.form-group textarea,.form-group select{
-  width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);
-  padding:9px 12px;font-size:13px;color:var(--text);background:var(--surface);
-  font-family:inherit;transition:.15s;outline:none}
-.form-group input:focus,.form-group textarea:focus,.form-group select:focus{
-  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
-.form-group textarea{resize:vertical}
-
+  background:var(--bg);color:var(--tx);min-height:100vh;padding:0 0 80px}
+.topbar{background:#fff;border-bottom:1px solid var(--bdr);padding:14px 24px;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.back{display:flex;align-items:center;gap:6px;color:var(--sub);font-size:13px;
+  text-decoration:none;padding:6px 10px;border-radius:var(--rs);
+  border:1px solid var(--bdr);background:#fff;cursor:pointer}
+.back:hover{background:var(--bg)}
+.topbar h1{font-size:16px;font-weight:700;flex:1}
+.wrap{max-width:900px;margin:0 auto;padding:24px 16px 0}
+.tabs{display:flex;gap:2px;padding:4px;background:var(--bg);border-radius:10px;
+  border:1px solid var(--bdr);margin-bottom:20px}
+.tab{flex:1;padding:9px;font-size:13px;font-weight:600;border:none;background:transparent;
+  border-radius:8px;cursor:pointer;color:var(--mt);transition:.15s;font-family:inherit}
+.tab.on{background:#fff;color:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.card{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
+.ch{padding:14px 18px;border-bottom:1px solid var(--bdl);display:flex;align-items:center;gap:8px}
+.ch h2{font-size:14px;font-weight:700;flex:1}
+.ci{color:var(--ac);font-size:17px}
+.cb{padding:18px}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.fg label{font-size:12px;font-weight:600;color:var(--sub)}
+.fg input,.fg select{border:1px solid var(--bdr);border-radius:var(--rs);
+  padding:8px 11px;font-size:13px;font-family:inherit;outline:none;width:100%;background:#fff}
+.fg input:focus,.fg select:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--acl)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;
-  border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;
-  border:1px solid transparent;transition:.15s;font-family:inherit}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:#1d4ed8}
-.btn-outline{background:var(--surface);color:var(--text-sub);border-color:var(--border)}
-.btn-outline:hover{background:var(--bg)}
-.btn-sm{padding:6px 12px;font-size:12px}
-.btn-group{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
-
-/* 템플릿 버튼 */
-.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
-.tpl-btn{padding:8px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);
-  background:var(--bg);cursor:pointer;font-size:11px;font-weight:600;color:var(--text-sub);
-  text-align:center;transition:.15s;font-family:inherit}
-.tpl-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-
-/* 미리보기 */
-.preview-wrap{position:sticky;top:72px}
-.preview-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border-light)}
-
-/* 인쇄용 안내문 */
-#notice-output{padding:32px 36px;min-height:400px;font-family:'Noto Sans KR',sans-serif;line-height:1.8}
-.notice-org{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:4px}
-.notice-title{text-align:center;font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.01em;color:var(--text)}
-.notice-subtitle{text-align:center;font-size:14px;color:var(--text-sub);margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid var(--text)}
-.notice-info{margin-bottom:20px}
-.notice-info-row{display:flex;gap:0;margin-bottom:6px;font-size:13px}
-.notice-info-key{width:90px;font-weight:700;color:var(--text);flex-shrink:0}
-.notice-info-val{color:var(--text-sub);flex:1}
-.notice-body{font-size:13px;line-height:2;white-space:pre-wrap;color:var(--text);margin-bottom:24px;min-height:40px}
-.notice-highlights{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
-.notice-highlight{padding:6px 14px;border-radius:20px;background:var(--accent-light);
-  border:1px solid var(--accent-border);font-size:12px;font-weight:700;color:var(--accent)}
-.notice-divider{border:none;border-top:1px dashed var(--border);margin:18px 0}
-.notice-contact{font-size:12px;color:var(--text-muted);text-align:center}
-.notice-footer{margin-top:28px;text-align:right;font-size:12px;color:var(--text-muted)}
-.notice-org-big{font-size:15px;font-weight:700;color:var(--text)}
-
-/* 색상 선택 */
-.color-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s}
-.color-dot.active{border-color:var(--text);transform:scale(1.15)}
-
-/* 인쇄 */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--rs);
+  font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;transition:.15s;font-family:inherit}
+.btp{background:var(--ac);color:#fff}.btp:hover{background:#1d4ed8}
+.bto{background:#fff;color:var(--sub);border-color:var(--bdr)}.bto:hover{background:var(--bg)}
+.btg{background:var(--gn);color:#fff}.btg:hover{background:#15803d}
+.btsm{padding:6px 12px;font-size:12px}
+.drop-zone{border:2px dashed var(--bdr);border-radius:var(--r);padding:48px 24px;
+  text-align:center;cursor:pointer;transition:.2s;background:var(--bg)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--ac);background:var(--acl)}
+.drop-zone i{font-size:40px;color:var(--mt);display:block;margin-bottom:12px}
+.drop-zone p{font-size:14px;color:var(--sub);margin-bottom:6px}
+.drop-zone small{font-size:12px;color:var(--mt)}
+.drop-zone input[type=file]{display:none}
+.notice{padding:10px 14px;background:var(--acl);border:1px solid var(--acb);
+  border-radius:var(--rs);font-size:12px;color:var(--ac);margin-bottom:12px;line-height:1.7}
+.notice-warn{background:#fffbeb;border-color:#fde68a;color:#b45309}
+.notice-ok{background:#f0fdf4;border-color:#bbf7d0;color:var(--gn)}
+.col-map-table{width:100%;border-collapse:collapse;font-size:13px}
+.col-map-table th{background:#f8f8f6;padding:8px 10px;border:1px solid var(--bdr);font-weight:600;font-size:11px;color:var(--sub);text-align:left}
+.col-map-table td{padding:6px 10px;border:1px solid var(--bdl);vertical-align:middle}
+.mb{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.mb-r{background:var(--acl);color:var(--ac)}
+.mb-o{background:#f0fdf4;color:var(--gn)}
+.mb-auto{background:#fef3c7;color:#92400e}
+/* 결과지 */
+#rdoc{background:#fff;border:1px solid var(--bdr);border-radius:var(--r);padding:32px;
+  font-family:'Noto Sans KR',sans-serif;line-height:1.8}
+.rtitle{text-align:center;font-size:18px;font-weight:800;letter-spacing:.05em;margin-bottom:4px}
+.rsubt{text-align:center;font-size:12px;color:var(--mt);margin-bottom:20px}
+.rdiv{border:none;border-top:1px solid var(--bdr);margin:16px 0}
+.rst{font-size:13px;font-weight:700;margin-bottom:10px}
+.rtbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:14px}
+.rtbl th{background:#f0f0ee;padding:8px 12px;border:1px solid var(--bdr);font-weight:700;text-align:center;font-size:12px}
+.rtbl td{padding:8px 12px;border:1px solid var(--bdl)}
+.sc{text-align:center;font-weight:800;font-size:15px;color:var(--ac)}
+.sit{padding-left:22px;font-size:12px;color:var(--sub)}
+.br{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px}
+.bl{width:200px;color:var(--sub);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bw{flex:1;height:16px;background:var(--bdl);border-radius:8px;overflow:hidden}
+.bf{height:100%;border-radius:8px;background:var(--ac)}
+.bp{width:48px;text-align:right;font-weight:700;flex-shrink:0}
+.tb{background:#f8f8f6;border-left:3px solid var(--ac);padding:6px 12px;
+  font-size:12px;color:var(--sub);margin-bottom:4px;border-radius:0 4px 4px 0}
+.sarea{width:100%;border:1px solid var(--bdr);border-radius:var(--rs);padding:12px;
+  font-size:13px;line-height:1.9;font-family:inherit;color:var(--tx);
+  resize:vertical;min-height:100px;background:#fafaf8;outline:none}
+.sarea:focus{border-color:var(--ac)}
 @media print{
-  body *{visibility:hidden}
-  .print-area,
-  .print-area *{visibility:visible}
-  .print-area{position:fixed;top:0;left:0;width:100%;padding:28px 40px}
-  .preview-actions,.top-bar{display:none!important}
+  .topbar,.tabs,.noprint{display:none!important}
+  body{padding:0;background:#fff;margin:0}
+  .wrap{padding:0;max-width:100%}
+  #rdoc{border:none;padding:8px 14px;font-size:10px;line-height:1.4}
+
+  /* 제목 */
+  .rtitle{font-size:13px;margin-bottom:1px;letter-spacing:.03em}
+  .rsubt{font-size:9px;margin-bottom:8px}
+
+  /* 기본정보 */
+  #r-info{font-size:10px;line-height:1.5;margin-bottom:6px}
+
+  /* 구분선 */
+  .rdiv{margin:5px 0}
+
+  /* 섹션 제목 */
+  .rst{font-size:10px;margin-bottom:4px;font-weight:700}
+
+  /* 항목별 점수 테이블 */
+  .rtbl{font-size:9px;margin-bottom:6px}
+  .rtbl th{padding:3px 6px;font-size:9px}
+  .rtbl td{padding:3px 6px}
+  .sc{font-size:11px}
+  .sit{font-size:9px;padding-left:12px}
+
+  /* 점수 테이블 + 인식조사 2단 배치 */
+  #r-tbl, #r-aware{display:inline-block;vertical-align:top}
+  #r-tbl{width:42%;margin-right:2%}
+  #r-aware{width:55%}
+  #r-aware > div{margin-bottom:4px}
+
+  /* 막대 차트 */
+  .br{margin-bottom:2px;font-size:9px;gap:4px}
+  .bl{width:120px}
+  .bw{height:10px}
+  .bp{width:32px;font-size:9px}
+
+  /* 서술형 답변 */
+  .tb{padding:2px 6px;font-size:9px;margin-bottom:2px}
+  #r-help-blk .rst, #r-op-blk .rst{font-size:10px;margin-bottom:3px}
+
+  /* 도움된 점 + 기타의견 2단 배치 */
+  #r-help-blk, #r-op-blk{display:inline-block;vertical-align:top;width:48%}
+  #r-help-blk{margin-right:2%}
+
+  /* 총평 */
+  .sarea{border:none;border-top:1px solid #ccc;background:transparent;padding:3px 0 0;
+    font-size:10px;min-height:auto;resize:none;line-height:1.6;width:100%}
+
+  /* 색상 유지 */
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{margin:8mm;size:A4}
 }
 </style>
 </head>
 <body>
-<div class="top-bar">
-  <a href="../" class="back-btn"><i class="ti ti-arrow-left"></i> 돌아가기</a>
-  <i class="ti ti-file-text icon"></i>
-  <h1>안내문 빠른 작성기</h1>
+<div class="topbar">
+  <a href="../" class="back"><i class="ti ti-arrow-left"></i> 돌아가기</a>
+  <i class="ti ti-chart-bar" style="font-size:20px;color:var(--ac)"></i>
+  <h1>만족도 조사 분석기</h1>
+  <button class="btn bto btsm noprint" onclick="window.print()"><i class="ti ti-printer"></i> 결과 인쇄</button>
 </div>
 
-<div class="layout">
-  <!-- 입력 패널 -->
-  <div class="panel">
-    <div class="panel-head">
-      <i class="ti ti-template icon"></i>
-      <h2>빠른 템플릿</h2>
-    </div>
-    <div class="panel-body">
-      <div class="tpl-grid">
-        <button class="tpl-btn" onclick="loadTpl('program')">🎯 프로그램<br>모집</button>
-        <button class="tpl-btn" onclick="loadTpl('event')">🎉 행사<br>안내</button>
-        <button class="tpl-btn" onclick="loadTpl('camp')">🏕 캠프<br>참가</button>
-        <button class="tpl-btn" onclick="loadTpl('closed')">🔒 휴관<br>안내</button>
-        <button class="tpl-btn" onclick="loadTpl('vote')">📋 설문<br>안내</button>
-        <button class="tpl-btn" onclick="loadTpl('blank')">📄 직접<br>작성</button>
-      </div>
-    </div>
+<div class="wrap">
+<div class="tabs noprint">
+  <button class="tab on" id="t-info" onclick="go('info')">📋 기본 정보</button>
+  <button class="tab" id="t-csv"    onclick="go('csv')">📂 CSV 업로드</button>
+  <button class="tab" id="t-result" onclick="go('result')">📊 결과 분석</button>
+</div>
 
-    <div class="panel-head" style="border-top:1px solid var(--border-light)">
-      <i class="ti ti-pencil icon"></i>
-      <h2>내용 입력</h2>
+<!-- ① 기본 정보 -->
+<div id="p-info">
+  <div class="card">
+    <div class="ch"><i class="ti ti-building ci"></i><h2>시설 및 프로그램 정보</h2></div>
+    <div class="cb">
+      <div class="row2">
+        <div class="fg"><label>시설명</label><input id="ff" value="광양시청소년문화센터"/></div>
+        <div class="fg"><label>프로그램명</label><input id="fp" placeholder="예) LED 지구 무드등 만들기"/></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>시행일시</label><input id="fd" placeholder="예) 2026. 4. 25.(토) 10:00~12:00"/></div>
+        <div class="fg"><label>담당자</label><input id="fs" placeholder="예) 홍길동"/></div>
+      </div>
     </div>
-    <div class="panel-body">
-      <div class="form-group">
-        <label>발행 기관명</label>
-        <input type="text" id="f-org" placeholder="예) 광양시청소년문화센터" oninput="preview()"/>
+  </div>
+  <div class="card">
+    <div class="ch"><i class="ti ti-help-circle ci"></i><h2>CSV 내보내기 방법</h2></div>
+    <div class="cb">
+      <div class="notice">
+        <b>📌 구글폼 → CSV 순서</b><br>
+        구글폼 편집 화면 → <b>응답</b> 탭 → 상단 초록색 스프레드시트 아이콘 클릭<br>
+        → 구글 시트 열림 → <b>파일 → 다운로드 → 쉼표로 구분된 값(.csv)</b>
       </div>
-      <div class="form-group">
-        <label>제목</label>
-        <input type="text" id="f-title" placeholder="예) 2025 여름방학 청소년 캠프 참가자 모집" oninput="preview()"/>
+      <div class="notice notice-ok">
+        ✅ 현재 구글폼 구조를 확인했습니다. CSV 업로드 시 <b>컬럼이 자동으로 매핑</b>됩니다.
       </div>
-      <div class="form-group">
-        <label>부제목 <span style="font-weight:400;color:var(--text-muted)">(선택)</span></label>
-        <input type="text" id="f-subtitle" placeholder="예) 함께 성장하는 여름!" oninput="preview()"/>
-      </div>
-      <div class="row2">
-        <div class="form-group">
-          <label>일시</label>
-          <input type="text" id="f-date" placeholder="예) 2025. 8. 1.(금) 10:00" oninput="preview()"/>
-        </div>
-        <div class="form-group">
-          <label>장소</label>
-          <input type="text" id="f-place" placeholder="예) 본관 2층 대강당" oninput="preview()"/>
-        </div>
-      </div>
-      <div class="row2">
-        <div class="form-group">
-          <label>대상</label>
-          <input type="text" id="f-target" placeholder="예) 관내 중학생 30명" oninput="preview()"/>
-        </div>
-        <div class="form-group">
-          <label>비용</label>
-          <input type="text" id="f-cost" placeholder="예) 무료 / 3만원" oninput="preview()"/>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>신청 방법 <span style="font-weight:400;color:var(--text-muted)">(선택)</span></label>
-        <input type="text" id="f-apply" placeholder="예) 전화 또는 방문 접수 (선착순)" oninput="preview()"/>
-      </div>
-      <div class="form-group">
-        <label>주요 내용 <span style="font-weight:400;color:var(--text-muted)">(여러 줄 입력 가능)</span></label>
-        <textarea id="f-body" rows="5" placeholder="프로그램 내용이나 안내 사항을 자유롭게 입력하세요." oninput="preview()"></textarea>
-      </div>
-      <div class="form-group">
-        <label>하이라이트 포인트 <span style="font-weight:400;color:var(--text-muted)">(쉼표로 구분)</span></label>
-        <input type="text" id="f-highlights" placeholder="예) 무료 참가, 중식 제공, 수료증 발급" oninput="preview()"/>
-      </div>
-      <div class="form-group">
-        <label>문의처</label>
-        <input type="text" id="f-contact" placeholder="예) 061-792-0000 / 담당: 홍길동" oninput="preview()"/>
-      </div>
-      <div class="form-group">
-        <label>강조 색상</label>
-        <div class="color-picker" id="color-picker">
-          <div class="color-dot active" style="background:#2563eb" data-color="#2563eb" onclick="setColor(this)"></div>
-          <div class="color-dot" style="background:#7c3aed" data-color="#7c3aed" onclick="setColor(this)"></div>
-          <div class="color-dot" style="background:#db2777" data-color="#db2777" onclick="setColor(this)"></div>
-          <div class="color-dot" style="background:#ea580c" data-color="#ea580c" onclick="setColor(this)"></div>
-          <div class="color-dot" style="background:#16a34a" data-color="#16a34a" onclick="setColor(this)"></div>
-          <div class="color-dot" style="background:#0891b2" data-color="#0891b2" onclick="setColor(this)"></div>
-          <div class="color-dot" style="background:#1a1a1a" data-color="#1a1a1a" onclick="setColor(this)"></div>
-        </div>
+    </div>
+  </div>
+  <div style="text-align:right">
+    <button class="btn btp" onclick="go('csv')"><i class="ti ti-upload"></i> CSV 업로드하기</button>
+  </div>
+</div>
+
+<!-- ② CSV 업로드 -->
+<div id="p-csv" style="display:none">
+  <div class="card">
+    <div class="ch"><i class="ti ti-file-spreadsheet ci"></i><h2>CSV 파일 업로드</h2></div>
+    <div class="cb">
+      <div class="drop-zone" id="dz"
+        onclick="document.getElementById('csv-file').click()"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="handleDrop(event)">
+        <i class="ti ti-cloud-upload"></i>
+        <p>구글폼 CSV 파일을 드래그하거나 클릭해서 선택하세요</p>
+        <small>구글 시트 → 파일 → 다운로드 → .csv</small>
+        <input type="file" id="csv-file" accept=".csv" onchange="loadCSV(this.files[0])"/>
       </div>
     </div>
   </div>
 
-  <!-- 미리보기 패널 -->
-  <div class="panel preview-wrap">
-    <div class="panel-head">
-      <i class="ti ti-eye icon"></i>
-      <h2>미리보기</h2>
-      <span style="font-size:11px;color:var(--text-muted)">실시간 반영</span>
-    </div>
-    <div id="notice-output" class="print-area"></div>
-    <div class="preview-actions">
-      <button class="btn btn-primary" onclick="window.print()"><i class="ti ti-printer"></i> 인쇄</button>
-      <button class="btn btn-outline" onclick="copyText()"><i class="ti ti-copy"></i> 텍스트 복사</button>
-      <button class="btn btn-outline" onclick="clearAll()"><i class="ti ti-refresh"></i> 초기화</button>
+  <div class="card" id="map-card" style="display:none">
+    <div class="ch"><i class="ti ti-check ci"></i><h2>컬럼 자동 인식 결과</h2></div>
+    <div class="cb">
+      <div id="map-notice"></div>
+      <table class="col-map-table">
+        <thead><tr><th>설문 항목</th><th>인식된 CSV 컬럼</th><th style="width:60px">구분</th></tr></thead>
+        <tbody id="map-tbody"></tbody>
+      </table>
     </div>
   </div>
+
+  <div id="map-btn" style="display:none;text-align:right">
+    <button class="btn btg" onclick="applyAndGo()"><i class="ti ti-chart-bar"></i> 분석 결과 보기</button>
+  </div>
+</div>
+
+<!-- ③ 결과 -->
+<div id="p-result" style="display:none">
+  <div id="rdoc">
+    <div class="rtitle">고 객 만 족 도 설 문 조 사 결 과</div>
+    <div class="rsubt">&lt; 시 설 별 작 성 양 식 &gt;</div>
+    <div id="r-info" style="font-size:13px;line-height:2;margin-bottom:14px"></div>
+    <hr class="rdiv"/>
+    <div class="rst">○ 항목별 조사결과</div>
+    <div id="r-tbl"></div>
+    <hr class="rdiv"/>
+    <div class="rst">3. 인식조사</div>
+    <div id="r-aware"></div>
+    <div id="r-help-blk" style="display:none">
+      <hr class="rdiv"/>
+      <div class="rst"> 3-6. 도움이 된 점</div>
+      <div id="r-help"></div>
+    </div>
+    <div id="r-op-blk" style="display:none">
+      <hr class="rdiv"/>
+      <div class="rst">4. 기타</div>
+      <div id="r-op"></div>
+    </div>
+    <hr class="rdiv"/>
+    <div class="rst">총평</div>
+    <textarea class="sarea" id="summary"
+      placeholder="총평을 직접 작성해주세요.&#10;예) 4월 청소년일일특강은 청소년동아리 도담교실이 주도적으로 기획하고 운영하였다..."></textarea>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px" class="noprint">
+    <button class="btn bto" onclick="go('csv')"><i class="ti ti-arrow-left"></i> CSV 업로드로</button>
+    <button class="btn btp" onclick="window.print()"><i class="ti ti-printer"></i> 결과 인쇄</button>
+  </div>
+</div>
 </div>
 
 <script>
-let accentColor = '#2563eb';
+// ── 실제 구글폼 컬럼명 패턴 (폼 확인 완료) ─────────────────────────────
+const COL_PATTERNS = {
+  grade:   ['교급'],
+  gender:  ['성별'],
+  overall: ['전반적인 만족도', 'ⅰ. 전반적'],
+  // 프로그램 그리드: "Ⅱ. 프로그램 분야 [항목명]"
+  prog_0:  ['적극적으로 참여'],
+  prog_1:  ['자발적인 선택'],
+  prog_2:  ['흥미롭고 유익'],
+  prog_3:  ['수준에 적합'],
+  prog_4:  ['기자재'],
+  prog_5:  ['안전교육'],
+  // 지도자 그리드: "Ⅲ. 지도자 분야 [항목명]"
+  lead_0:  ['친절하다'],
+  lead_1:  ['열성적'],
+  lead_2:  ['전문적으로 활동'],
+  lead_3:  ['존중하며'],
+  lead_4:  ['폭언'],
+  // 시설 그리드: "Ⅳ. 시설/환경 분야 [항목명]"
+  fac_0:   ['활동시설은'],
+  fac_1:   ['편의시설'],
+  fac_2:   ['대피로'],
+  // 인식조사
+  before:  ['참여 전 어떤 활동', '참여하기 전'],
+  after:   ['참여 후 어떤 활동', '참여한 후'],
+  want:    ['참여하고 싶은 프로그램', '희망'],
+  q4:      ['충족'],
+  q5:      ['안전하다고'],
+  q6:      ['도움이 되었습니까'],
+  help:    ['도움이 되었다면', '도움된 점'],
+  opinion: ['좋았던 점이나', '기타 의견', '불편한 사항'],
+};
 
-function g(id){return document.getElementById(id).value.trim()}
+const SAT_DEF = [
+  {domain:'프로그램', keys:['prog_0','prog_1','prog_2','prog_3','prog_4','prog_5'],
+   items:['나는 적극적으로 참여하였다.','자발적인 선택에 의해 이루어졌다.','흥미롭고 유익했다.',
+          '진행은 나의 수준에 적합했다.','프로그램 진행을 위한 기자재가 잘 갖추어져 있다.','프로그램에 대한 사전 안전교육을 받았다.']},
+  {domain:'지도자', keys:['lead_0','lead_1','lead_2','lead_3','lead_4'],
+   items:['친절하다.','열성적이다.','적극적이고 전문적으로 활동을 이끌어주었다.',
+          '청소년들을 존중하며 활동을 지도했다.','폭언이나 욕설 등을 사용하지 않고 가르쳐주었다.']},
+  {domain:'시설/환경', keys:['fac_0','fac_1','fac_2'],
+   items:['활동시설은 청소년에게 맞게 갖추어져 있다.','편의시설이 잘 되어 있다.','대피로 등 시설에 대한 안내가 잘 되어 있다.']},
+];
 
-function preview() {
-  const org = g('f-org');
-  const title = g('f-title');
-  const subtitle = g('f-subtitle');
-  const date = g('f-date');
-  const place = g('f-place');
-  const target = g('f-target');
-  const cost = g('f-cost');
-  const apply = g('f-apply');
-  const body = g('f-body');
-  const hlRaw = g('f-highlights');
-  const contact = g('f-contact');
+const MAP_LABELS = {
+  grade:'교급', gender:'성별', overall:'Ⅰ. 전반적인 만족도',
+  prog_0:'프로그램: 적극적 참여', prog_1:'프로그램: 자발적 선택',
+  prog_2:'프로그램: 흥미롭고 유익', prog_3:'프로그램: 수준 적합',
+  prog_4:'프로그램: 기자재', prog_5:'프로그램: 안전교육',
+  lead_0:'지도자: 친절', lead_1:'지도자: 열성',
+  lead_2:'지도자: 전문성', lead_3:'지도자: 존중',
+  lead_4:'지도자: 폭언 없음',
+  fac_0:'시설: 활동시설', fac_1:'시설: 편의시설', fac_2:'시설: 대피로 안내',
+  before:'참여 전 인식', after:'참여 후 인식', want:'참여 희망 프로그램',
+  q4:'충족 여부', q5:'안전 여부', q6:'도움 여부',
+  help:'도움된 점', opinion:'기타 의견',
+};
 
-  const highlights = hlRaw ? hlRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+const REQUIRED_KEYS = ['overall','prog_0','prog_1','prog_2','prog_3','prog_4','prog_5',
+  'lead_0','lead_1','lead_2','lead_3','lead_4','fac_0','fac_1','fac_2'];
 
-  const infoRows = [
-    {k:'일  시', v:date},
-    {k:'장  소', v:place},
-    {k:'대  상', v:target},
-    {k:'참 가 비', v:cost},
-    {k:'신청방법', v:apply},
-  ].filter(r=>r.v);
+const AWARE_OPTS = {
+  before:['① 자율적 청소년 활동','② 학교의무 행사','③ 자연친화적 활동','④ 문화체험 활동','⑤ 강압적 극기 활동','⑥ 공동체 활동','기타(직접입력)'],
+  after: ['① 자율적 청소년 활동','② 학교의무 행사','③ 자연친화적 활동','④ 문화체험 활동','⑤ 강압적 극기 활동','⑥ 공동체 활동','기타(직접입력)'],
+  want:  ['① 봉사와 협동심 함양 프로그램','② 인권폭력 예방 청소년 인권보호 프로그램','③ 문화적 감성 함양 프로그램',
+          '④ 모험심과 개척정신 함양 프로그램','⑤ 전문적 직업능력 준비 프로그램','⑥ 환경의식 함양 프로그램',
+          '⑦ 과학 및 정보화 능력 함양 프로그램','기타(직접입력)'],
+};
 
-  let html = '';
-  if(org) html += `<div class="notice-org">${esc(org)}</div>`;
-  if(title) html += `<div class="notice-title" style="color:${accentColor}">${esc(title)}</div>`;
-  if(subtitle) html += `<div class="notice-subtitle">${esc(subtitle)}</div>`;
-  else if(title) html += `<div style="border-bottom:2px solid ${accentColor};margin-bottom:20px"></div>`;
+let csvHeaders = [], csvRows = [], colMap = {}, parsedData = [];
 
-  if(highlights.length) {
-    html += `<div class="notice-highlights">${highlights.map(h=>`<span class="notice-highlight" style="background:${accentColor}15;border-color:${accentColor}50;color:${accentColor}">${esc(h)}</span>`).join('')}</div>`;
-  }
-
-  if(infoRows.length) {
-    html += `<div class="notice-info">`;
-    infoRows.forEach(r=>{
-      html += `<div class="notice-info-row"><div class="notice-info-key">${esc(r.k)}</div><div class="notice-info-val">: ${esc(r.v)}</div></div>`;
-    });
-    html += `</div>`;
-  }
-
-  if(body) {
-    html += `<hr class="notice-divider"/>`;
-    html += `<div class="notice-body">${esc(body)}</div>`;
-  }
-
-  if(contact) {
-    html += `<hr class="notice-divider"/>`;
-    html += `<div class="notice-contact"><i class="ti ti-phone"></i> 문의: ${esc(contact)}</div>`;
-  }
-
-  if(org) {
-    html += `<div class="notice-footer"><span class="notice-org-big">${esc(org)}</span></div>`;
-  }
-
-  if(!title && !body) {
-    html = `<div style="text-align:center;padding:60px 20px;color:#b0ada6">
-      <i class="ti ti-file-text" style="font-size:48px;display:block;margin-bottom:12px"></i>
-      <div style="font-size:14px">왼쪽에 내용을 입력하면<br>안내문이 자동으로 만들어집니다</div>
-    </div>`;
-  }
-
-  document.getElementById('notice-output').innerHTML = html;
+// ── CSV 처리 ─────────────────────────────────────────────────────────
+function handleDrop(ev) {
+  ev.preventDefault();
+  document.getElementById('dz').classList.remove('over');
+  if (ev.dataTransfer.files[0]) loadCSV(ev.dataTransfer.files[0]);
 }
-
-function setColor(el) {
-  document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
-  el.classList.add('active');
-  accentColor = el.dataset.color;
-  preview();
-}
-
-function set(id, val) { document.getElementById(id).value = val; }
-
-function loadTpl(type) {
-  const tpls = {
-    program:{
-      org:'광양시청소년문화센터',
-      title:'청소년 진로탐색 프로그램 참가자 모집',
-      subtitle:'나의 꿈을 찾아가는 특별한 시간!',
-      date:'2025. 9. 6.(토) 10:00~17:00',
-      place:'본관 2층 진로체험실',
-      target:'관내 중·고등학생 20명 (선착순)',
-      cost:'무료',
-      apply:'전화 또는 방문 접수 (센터 홈페이지)',
-      body:'다양한 직업 세계를 탐색하고 나만의 진로를 설계해보는 프로그램입니다.\n\n▶ 주요 내용\n  - 직업 흥미 검사 및 분석\n  - 직업 현장 전문가 특강\n  - 진로 포트폴리오 제작\n\n많은 참여 바랍니다.',
-      highlights:'무료 참가, 수료증 발급, 중식 제공',
-      contact:'061-792-0000 / 담당: 진로지원팀',
-    },
-    event:{
-      org:'광양시청소년문화센터',
-      title:'2025 청소년 축제 한마당',
-      subtitle:'모두 함께 즐기는 특별한 하루!',
-      date:'2025. 10. 11.(토) 13:00~18:00',
-      place:'야외 잔디마당',
-      target:'청소년 및 가족 누구나',
-      cost:'무료',
-      apply:'당일 현장 참여',
-      body:'청소년들이 직접 기획하고 운영하는 축제입니다.\n\n▶ 주요 프로그램\n  - 버스킹 공연 및 댄스 경연\n  - 체험 부스 운영\n  - 경품 추첨 이벤트\n\n여러분의 많은 참여를 바랍니다!',
-      highlights:'무료 입장, 경품 추첨, 먹거리 부스',
-      contact:'061-792-0000 / 행사운영팀',
-    },
-    camp:{
-      org:'광양시청소년문화센터',
-      title:'2025 여름방학 청소년 캠프 참가자 모집',
-      subtitle:'자연 속에서 함께 성장해요!',
-      date:'2025. 8. 1.(금) ~ 8. 3.(일) 2박 3일',
-      place:'지리산 청소년야영장',
-      target:'관내 초등학교 5~6학년 30명',
-      cost:'1인 30,000원 (일부 지원)',
-      apply:'센터 방문 또는 전화 선착순 접수',
-      body:'자연 속에서 친구들과 함께하는 특별한 캠프입니다.\n\n▶ 주요 활동\n  - 등산 및 자연탐험\n  - 팀빌딩 레크리에이션\n  - 야간 별자리 관측\n  - 공동체 캠프파이어\n\n접수 기간: 7월 14일(월) ~ 7월 25일(금)',
-      highlights:'선착순 마감, 안전 보험 포함, 전문 강사 동행',
-      contact:'061-792-0000 / 방과후팀',
-    },
-    closed:{
-      org:'광양시청소년문화센터',
-      title:'임시 휴관 안내',
-      subtitle:'이용에 불편을 드려 죄송합니다.',
-      date:'2025. 8. 15.(금) 하루 종일',
-      place:'광양시청소년문화센터 전관',
-      target:'',
-      cost:'',
-      apply:'',
-      body:'광복절 공휴일로 인해 임시 휴관합니다.\n\n▶ 휴관 일정\n  - 휴관일: 2025년 8월 15일(금)\n  - 정상 운영 재개: 2025년 8월 18일(월)\n\n이용에 불편을 드려 죄송합니다.\n휴관 기간 중 긴급 문의는 이메일로 부탁드립니다.',
-      highlights:'8.15(금) 휴관, 8.18(월) 정상운영',
-      contact:'061-792-0000 / center@example.com',
-    },
-    vote:{
-      org:'광양시청소년문화센터',
-      title:'프로그램 만족도 조사 참여 안내',
-      subtitle:'여러분의 소중한 의견을 들려주세요!',
-      date:'2025. 9. 1.(월) ~ 9. 30.(화)',
-      place:'온라인 (QR코드 접속)',
-      target:'센터 이용 청소년 및 보호자',
-      cost:'무료 (참여자 소정의 선물)',
-      apply:'QR코드 스캔 또는 직접 방문 접수',
-      body:'더 나은 서비스 제공을 위해 만족도 조사를 실시합니다.\n\n▶ 조사 내용\n  - 프로그램 만족도\n  - 시설 및 환경 만족도\n  - 직원 서비스 만족도\n  - 개선 의견\n\n응답하신 내용은 프로그램 개선에 적극 반영하겠습니다.\n참여해 주신 모든 분께 감사드립니다.',
-      highlights:'참여자 선물 증정, 5분 내외 소요',
-      contact:'061-792-0000 / 기획운영팀',
-    },
-    blank:{org:'',title:'',subtitle:'',date:'',place:'',target:'',cost:'',apply:'',body:'',highlights:'',contact:''},
+function loadCSV(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    let text = e.target.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) return alert('응답 데이터가 없습니다');
+    csvHeaders = parseCSVLine(lines[0]);
+    csvRows = lines.slice(1).map(l => parseCSVLine(l));
+    autoMap();
+    showMapResult();
   };
-  const t = tpls[type];
-  if(!t) return;
-  set('f-org', t.org); set('f-title', t.title); set('f-subtitle', t.subtitle);
-  set('f-date', t.date); set('f-place', t.place); set('f-target', t.target);
-  set('f-cost', t.cost); set('f-apply', t.apply); set('f-body', t.body);
-  set('f-highlights', t.highlights); set('f-contact', t.contact);
-  preview();
+  reader.readAsText(file, 'UTF-8');
+}
+function parseCSVLine(line) {
+  const res = []; let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { if (inQ && line[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+    else if (c===',' && !inQ) { res.push(cur.trim()); cur=''; }
+    else cur+=c;
+  }
+  res.push(cur.trim());
+  return res;
 }
 
-function clearAll() {
-  ['f-org','f-title','f-subtitle','f-date','f-place','f-target','f-cost','f-apply','f-body','f-highlights','f-contact']
-    .forEach(id=>document.getElementById(id).value='');
-  preview();
+// ── 자동 매핑 ────────────────────────────────────────────────────────
+function autoMap() {
+  colMap = {};
+  Object.keys(COL_PATTERNS).forEach(key => {
+    const patterns = COL_PATTERNS[key];
+    for (let i = 0; i < csvHeaders.length; i++) {
+      const h = csvHeaders[i];
+      if (patterns.some(p => h.includes(p))) {
+        colMap[key] = i;
+        break;
+      }
+    }
+  });
 }
 
-function copyText() {
-  const org = g('f-org'); const title = g('f-title'); const subtitle = g('f-subtitle');
-  const date = g('f-date'); const place = g('f-place'); const target = g('f-target');
-  const cost = g('f-cost'); const apply = g('f-apply'); const body = g('f-body');
-  const contact = g('f-contact');
-  let txt = '';
-  if(org) txt += `[${org}]\n`;
-  if(title) txt += `■ ${title}\n`;
-  if(subtitle) txt += `  ${subtitle}\n`;
-  txt += '\n';
-  if(date)  txt += `∙ 일  시: ${date}\n`;
-  if(place) txt += `∙ 장  소: ${place}\n`;
-  if(target)txt += `∙ 대  상: ${target}\n`;
-  if(cost)  txt += `∙ 참가비: ${cost}\n`;
-  if(apply) txt += `∙ 신청방법: ${apply}\n`;
-  if(body)  txt += `\n${body}\n`;
-  if(contact) txt += `\n문의: ${contact}\n`;
-  navigator.clipboard.writeText(txt).then(()=>alert('✅ 텍스트가 복사되었습니다'));
+function showMapResult() {
+  const card = document.getElementById('map-card');
+  const btn  = document.getElementById('map-btn');
+  card.style.display = '';
+  btn.style.display  = '';
+
+  const mapped   = Object.keys(colMap).length;
+  const required_ok = REQUIRED_KEYS.every(k => colMap[k] !== undefined);
+
+  document.getElementById('map-notice').innerHTML = required_ok
+    ? `<div class="notice notice-ok">✅ ${csvRows.length}개 응답 · ${mapped}개 컬럼 자동 인식 완료 — 바로 분석할 수 있습니다!</div>`
+    : `<div class="notice notice-warn">⚠️ 일부 필수 컬럼을 찾지 못했습니다. CSV 파일의 컬럼명을 확인해주세요.<br>인식된 컬럼: ${mapped}개 / 전체: ${Object.keys(MAP_LABELS).length}개</div>`;
+
+  const allKeys = Object.keys(MAP_LABELS);
+  let html = '';
+  allKeys.forEach(key => {
+    const idx = colMap[key];
+    const found = idx !== undefined;
+    const colName = found ? csvHeaders[idx].slice(0,50) : '—';
+    const req = REQUIRED_KEYS.includes(key);
+    html += `<tr>
+      <td style="font-size:12px;font-weight:600">${MAP_LABELS[key]}</td>
+      <td style="font-size:11px;color:${found?'var(--tx)':'var(--mt)'}">${colName}</td>
+      <td>
+        <span class="mb ${found?'mb-auto':'mb-o'}">${found?'자동인식':req?'<span style=color:var(--rd)>미인식</span>':'미인식'}</span>
+      </td>
+    </tr>`;
+  });
+  document.getElementById('map-tbody').innerHTML = html;
 }
 
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function applyAndGo() {
+  parsedData = csvRows.map(row => {
+    const r = {};
+    Object.keys(colMap).forEach(key => {
+      const val = (row[colMap[key]] || '').trim();
+      const isNum = REQUIRED_KEYS.includes(key) || key==='q4' || key==='q5';
+      r[key] = isNum ? (parseFloat(val)||null) : val;
+    });
+    return r;
+  }).filter(r => r.overall !== null);
 
-loadTpl('program');
+  if (!parsedData.length) {
+    alert('분석 가능한 응답이 없습니다.\n전반적인 만족도 컬럼 매핑을 확인해주세요.');
+    return;
+  }
+  go('result');
+}
+
+// ── 결과 렌더 ─────────────────────────────────────────────────────────
+function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
+function fmt(v)   { return v!=null ? v.toFixed(1) : '-'; }
+
+function renderResult() {
+  const n    = parsedData.length;
+  const fac  = document.getElementById('ff').value || '광양시청소년문화센터';
+  const prog = document.getElementById('fp').value || '';
+  const date = document.getElementById('fd').value || '';
+  const men  = parsedData.filter(r=>r.gender==='남').length;
+  const women= parsedData.filter(r=>r.gender==='여').length;
+
+  document.getElementById('r-info').innerHTML =
+    `<div>□ 시 설 명 : <b>${fac}</b></div>
+     <div>□ 프로그램명 : <b>${prog}</b></div>
+     <div>□ 시 행 일 시 : <b>${date}</b></div>
+     <div style="margin-top:6px">○ 조사인원: <b>${n}명</b>&emsp;남 <b>${men}</b>&emsp;여 <b>${women}</b></div>`;
+
+  // 전반적 만족도
+  const ovAvg = avg(parsedData.map(r=>r.overall).filter(v=>v!=null));
+
+  // 분야별
+  const dRes = SAT_DEF.map(d => {
+    const ia = d.keys.map(k => avg(parsedData.map(r=>r[k]).filter(v=>v!=null)));
+    return { ...d, ia, da: avg(ia.filter(v=>v!=null)) };
+  });
+  const fieldAvg = avg(dRes.map(d=>d.da).filter(v=>v!=null));
+
+  const q4avg = avg(parsedData.map(r=>r.q4).filter(v=>v!=null));
+  const q5avg = avg(parsedData.map(r=>r.q5).filter(v=>v!=null));
+  // 도움여부: "예" or "아니오"
+  const q6yes = parsedData.filter(r => r.q6 && r.q6.trim() === '예').length;
+  const q6no  = n - q6yes;
+
+  // 점수표
+  let tbl = `<table class="rtbl">
+    <tr><th>항 목</th><th style="width:120px">조 사 결 과</th></tr>
+    <tr><td style="font-weight:700">1. 전반적인 만족도</td><td class="sc">${fmt(ovAvg)}</td></tr>`;
+  const dNums = ['1','2','3'];
+  dRes.forEach((d,di) => {
+    tbl += `<tr><td style="font-weight:700"> 2-${dNums[di]}.${d.domain}</td><td class="sc">${fmt(d.da)}</td></tr>`;
+    d.ia.forEach((v,i) => {
+      tbl += `<tr><td class="sit">${i+1}. ${d.items[i]}</td><td class="sc" style="font-size:13px">${fmt(v)}</td></tr>`;
+    });
+  });
+  tbl += `<tr><td style="font-weight:700">2. 분야별 만족도</td><td class="sc">${fmt(fieldAvg)}</td></tr>
+    <tr><td style="font-weight:700"> 3-4.충족여부</td><td class="sc">${fmt(q4avg)}</td></tr>
+    <tr><td style="font-weight:700"> 3-5.안전여부</td><td class="sc">${fmt(q5avg)}</td></tr>
+    <tr><td style="font-weight:700"> 3-6.도움여부</td>
+      <td class="sc" style="font-size:12px">① ${n?Math.round(q6yes/n*100):0}%&nbsp; ② ${n?Math.round(q6no/n*100):0}%</td></tr>
+  </table>`;
+  document.getElementById('r-tbl').innerHTML = tbl;
+
+  // 인식조사 막대
+  const awareDef = [
+    {key:'before', label:'3-1.참여전', opts:AWARE_OPTS.before},
+    {key:'after',  label:'3-2.참여후', opts:AWARE_OPTS.after},
+    {key:'want',   label:'3-3.참여희망',opts:AWARE_OPTS.want},
+  ];
+  let aw = '';
+  awareDef.forEach(a => {
+    const vals = parsedData.map(r=>r[a.key]).filter(v=>v);
+    aw += `<div style="margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;margin-bottom:5px">${a.label}</div>`;
+    a.opts.forEach((opt, i) => {
+      // 구글폼 저장값과 정확히 매칭 (원문자 포함), 기타는 별도 처리
+      const isEtc = opt.includes('기타');
+      const cnt = isEtc
+        ? vals.filter(v => v && !AWARE_OPTS[a.key].slice(0,-1).includes(v)).length
+        : vals.filter(v => v === opt).length;
+      const pct = vals.length ? Math.round(cnt/vals.length*100) : 0;
+      aw += `<div class="br">
+        <div class="bl">${opt}</div>
+        <div class="bw"><div class="bf" style="width:${pct}%"></div></div>
+        <div class="bp">${pct} %</div>
+      </div>`;
+    });
+    aw += '</div>';
+  });
+  document.getElementById('r-aware').innerHTML = aw;
+
+  // 도움된 점
+  const helps = parsedData.map(r=>r.help).filter(v=>v&&v.trim());
+  const hb = document.getElementById('r-help-blk');
+  if (helps.length) { hb.style.display=''; document.getElementById('r-help').innerHTML=helps.map(t=>`<div class="tb">▲ ${t}</div>`).join(''); }
+  else hb.style.display='none';
+
+  // 기타 의견
+  const ops = parsedData.map(r=>r.opinion).filter(v=>v&&v.trim());
+  const ob  = document.getElementById('r-op-blk');
+  if (ops.length) { ob.style.display=''; document.getElementById('r-op').innerHTML=ops.map(t=>`<div class="tb">▲ ${t}</div>`).join(''); }
+  else ob.style.display='none';
+}
+
+function go(tab) {
+  ['info','csv','result'].forEach(t => {
+    document.getElementById('p-'+t).style.display = t===tab?'':'none';
+    document.getElementById('t-'+t).classList.toggle('on', t===tab);
+  });
+  if (tab==='result') renderResult();
+}
 </script>
 </body>
 </html>
