@@ -89,7 +89,62 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .sarea:focus{border-color:var(--ac)}
 @media print{
   .topbar,.tabs,.noprint{display:none!important}
-  .wrap{padding:0}#rdoc{border:none;padding:20px}body{padding:0;background:#fff}
+  body{padding:0;background:#fff;margin:0}
+  .wrap{padding:0;max-width:100%}
+  #rdoc{border:none;padding:6px 12px;font-size:9.5px;line-height:1.35}
+
+  /* 제목 */
+  .rtitle{font-size:12px;margin-bottom:1px;letter-spacing:.03em}
+  .rsubt{font-size:8.5px;margin-bottom:6px}
+
+  /* 기본정보 */
+  #r-info{font-size:9.5px;line-height:1.4;margin-bottom:5px}
+  #r-info div{display:inline;margin-right:12px}
+
+  /* 구분선 */
+  .rdiv{margin:4px 0}
+
+  /* 섹션 제목 */
+  .rst{font-size:9.5px;margin-bottom:3px;font-weight:700}
+
+  /* ── 상단: 점수표(좌) + 인식조사(우) 2단 ── */
+  .print-top{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+  #r-tbl{flex:0 0 38%}
+  #r-aware-wrap{flex:1}
+
+  /* 점수 테이블 */
+  .rtbl{font-size:8.5px;margin-bottom:0;width:100%}
+  .rtbl th{padding:2px 5px;font-size:8.5px}
+  .rtbl td{padding:2px 5px}
+  .sc{font-size:10px}
+  .sit{font-size:8px;padding-left:10px}
+
+  /* 인식조사 3단 */
+  #r-aware{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  #r-aware > div{margin-bottom:0}
+
+  /* 막대 차트 */
+  .br{margin-bottom:1px;font-size:8px;gap:3px}
+  .bl{width:80px;font-size:8px}
+  .bw{height:8px}
+  .bf{height:8px}
+  .bp{width:26px;font-size:8px}
+
+  /* ── 하단: 도움된점(좌) + 기타(우) 2단 ── */
+  .print-bottom{display:flex;gap:12px;align-items:flex-start;margin-top:4px}
+  #r-help-blk,#r-op-blk{flex:1;display:block}
+  #r-help-blk .rdiv,#r-op-blk .rdiv{display:none}
+
+  /* 서술형 */
+  .tb{padding:2px 5px;font-size:8px;margin-bottom:1px}
+
+  /* 총평 */
+  .sarea{border:none;border-top:1px solid #ccc;background:transparent;
+    padding:3px 0 0;font-size:9px;min-height:auto;resize:none;
+    line-height:1.5;width:100%;margin-top:4px}
+
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{margin:7mm;size:A4}
 }
 </style>
 </head>
@@ -181,21 +236,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     <div class="rtitle">고 객 만 족 도 설 문 조 사 결 과</div>
     <div class="rsubt">&lt; 시 설 별 작 성 양 식 &gt;</div>
     <div id="r-info" style="font-size:13px;line-height:2;margin-bottom:14px"></div>
-    <hr class="rdiv"/>
-    <div class="rst">○ 항목별 조사결과</div>
-    <div id="r-tbl"></div>
-    <hr class="rdiv"/>
-    <div class="rst">3. 인식조사</div>
-    <div id="r-aware"></div>
-    <div id="r-help-blk" style="display:none">
-      <hr class="rdiv"/>
-      <div class="rst"> 3-6. 도움이 된 점</div>
-      <div id="r-help"></div>
+    <div class="print-top">
+      <div>
+        <div class="rst">○ 항목별 조사결과</div>
+        <div id="r-tbl"></div>
+      </div>
+      <div id="r-aware-wrap">
+        <div class="rst">3. 인식조사</div>
+        <div id="r-aware"></div>
+      </div>
     </div>
-    <div id="r-op-blk" style="display:none">
-      <hr class="rdiv"/>
-      <div class="rst">4. 기타</div>
-      <div id="r-op"></div>
+    <div class="print-bottom">
+      <div id="r-help-blk" style="display:none">
+        <hr class="rdiv"/>
+        <div class="rst"> 3-6. 도움이 된 점</div>
+        <div id="r-help"></div>
+      </div>
+      <div id="r-op-blk" style="display:none">
+        <hr class="rdiv"/>
+        <div class="rst">4. 기타</div>
+        <div id="r-op"></div>
+      </div>
     </div>
     <hr class="rdiv"/>
     <div class="rst">총평</div>
