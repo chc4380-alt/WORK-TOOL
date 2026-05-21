@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>안내문 빠른 작성기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f5f3;--surface:#ffffff;--border:#dddbd4;--border-light:#eceae4;
+  --text:#1a1a1a;--text-sub:#5f5e5a;--text-muted:#888780;
+  --accent:#2563eb;--accent-light:#eff6ff;--accent-border:#bfdbfe;
+  --green:#16a34a;--green-light:#f0fdf4;
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 80px}
+
+.top-bar{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:14px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.back-btn{display:flex;align-items:center;gap:6px;color:var(--text-sub);font-size:13px;
+  text-decoration:none;padding:6px 10px;border-radius:var(--radius-sm);
+  border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:.15s}
+.back-btn:hover{background:var(--bg)}
+.top-bar h1{font-size:16px;font-weight:700;flex:1}
+.icon{font-size:20px;color:var(--accent)}
+
+.layout{max-width:1060px;margin:0 auto;padding:24px 16px;
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:720px){.layout{grid-template-columns:1fr}}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-head{padding:14px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:8px}
+.panel-head h2{font-size:14px;font-weight:600;flex:1}
+.panel-body{padding:18px}
+
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:5px}
+.form-group input,.form-group textarea,.form-group select{
+  width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:9px 12px;font-size:13px;color:var(--text);background:var(--surface);
+  font-family:inherit;transition:.15s;outline:none}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.form-group textarea{resize:vertical}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;
+  border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;
+  border:1px solid transparent;transition:.15s;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-outline{background:var(--surface);color:var(--text-sub);border-color:var(--border)}
+.btn-outline:hover{background:var(--bg)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-group{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+
+/* 템플릿 버튼 */
+.tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.tpl-btn{padding:8px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--bg);cursor:pointer;font-size:11px;font-weight:600;color:var(--text-sub);
+  text-align:center;transition:.15s;font-family:inherit}
+.tpl-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* 미리보기 */
+.preview-wrap{position:sticky;top:72px}
+.preview-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border-light)}
+
+/* 인쇄용 안내문 */
+#notice-output{padding:32px 36px;min-height:400px;font-family:'Noto Sans KR',sans-serif;line-height:1.8}
+.notice-org{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:4px}
+.notice-title{text-align:center;font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.01em;color:var(--text)}
+.notice-subtitle{text-align:center;font-size:14px;color:var(--text-sub);margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid var(--text)}
+.notice-info{margin-bottom:20px}
+.notice-info-row{display:flex;gap:0;margin-bottom:6px;font-size:13px}
+.notice-info-key{width:90px;font-weight:700;color:var(--text);flex-shrink:0}
+.notice-info-val{color:var(--text-sub);flex:1}
+.notice-body{font-size:13px;line-height:2;white-space:pre-wrap;color:var(--text);margin-bottom:24px;min-height:40px}
+.notice-highlights{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.notice-highlight{padding:6px 14px;border-radius:20px;background:var(--accent-light);
+  border:1px solid var(--accent-border);font-size:12px;font-weight:700;color:var(--accent)}
+.notice-divider{border:none;border-top:1px dashed var(--border);margin:18px 0}
+.notice-contact{font-size:12px;color:var(--text-muted);text-align:center}
+.notice-footer{margin-top:28px;text-align:right;font-size:12px;color:var(--text-muted)}
+.notice-org-big{font-size:15px;font-weight:700;color:var(--text)}
+
+/* 색상 선택 */
+.color-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.color-dot{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s}
+.color-dot.active{border-color:var(--text);transform:scale(1.15)}
+
+/* 인쇄 */
+@media print{
+  body *{visibility:hidden}
+  .print-area,
+  .print-area *{visibility:visible}
+  .print-area{position:fixed;top:0;left:0;width:100%;padding:28px 40px}
+  .preview-actions,.top-bar{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <a href="../" class="back-btn"><i class="ti ti-arrow-left"></i> 돌아가기</a>
+  <i class="ti ti-file-text icon"></i>
+  <h1>안내문 빠른 작성기</h1>
+</div>
+
+<div class="layout">
+  <!-- 입력 패널 -->
+  <div class="panel">
+    <div class="panel-head">
+      <i class="ti ti-template icon"></i>
+      <h2>빠른 템플릿</h2>
+    </div>
+    <div class="panel-body">
+      <div class="tpl-grid">
+        <button class="tpl-btn" onclick="loadTpl('program')">🎯 프로그램<br>모집</button>
+        <button class="tpl-btn" onclick="loadTpl('event')">🎉 행사<br>안내</button>
+        <button class="tpl-btn" onclick="loadTpl('camp')">🏕 캠프<br>참가</button>
+        <button class="tpl-btn" onclick="loadTpl('closed')">🔒 휴관<br>안내</button>
+        <button class="tpl-btn" onclick="loadTpl('vote')">📋 설문<br>안내</button>
+        <button class="tpl-btn" onclick="loadTpl('blank')">📄 직접<br>작성</button>
+      </div>
+    </div>
+
+    <div class="panel-head" style="border-top:1px solid var(--border-light)">
+      <i class="ti ti-pencil icon"></i>
+      <h2>내용 입력</h2>
+    </div>
+    <div class="panel-body">
+      <div class="form-group">
+        <label>발행 기관명</label>
+        <input type="text" id="f-org" placeholder="예) 광양시청소년문화센터" oninput="preview()"/>
+      </div>
+      <div class="form-group">
+        <label>제목</label>
+        <input type="text" id="f-title" placeholder="예) 2025 여름방학 청소년 캠프 참가자 모집" oninput="preview()"/>
+      </div>
+      <div class="form-group">
+        <label>부제목 <span style="font-weight:400;color:var(--text-muted)">(선택)</span></label>
+        <input type="text" id="f-subtitle" placeholder="예) 함께 성장하는 여름!" oninput="preview()"/>
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>일시</label>
+          <input type="text" id="f-date" placeholder="예) 2025. 8. 1.(금) 10:00" oninput="preview()"/>
+        </div>
+        <div class="form-group">
+          <label>장소</label>
+          <input type="text" id="f-place" placeholder="예) 본관 2층 대강당" oninput="preview()"/>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="form-group">
+          <label>대상</label>
+          <input type="text" id="f-target" placeholder="예) 관내 중학생 30명" oninput="preview()"/>
+        </div>
+        <div class="form-group">
+          <label>비용</label>
+          <input type="text" id="f-cost" placeholder="예) 무료 / 3만원" oninput="preview()"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>신청 방법 <span style="font-weight:400;color:var(--text-muted)">(선택)</span></label>
+        <input type="text" id="f-apply" placeholder="예) 전화 또는 방문 접수 (선착순)" oninput="preview()"/>
+      </div>
+      <div class="form-group">
+        <label>주요 내용 <span style="font-weight:400;color:var(--text-muted)">(여러 줄 입력 가능)</span></label>
+        <textarea id="f-body" rows="5" placeholder="프로그램 내용이나 안내 사항을 자유롭게 입력하세요." oninput="preview()"></textarea>
+      </div>
+      <div class="form-group">
+        <label>하이라이트 포인트 <span style="font-weight:400;color:var(--text-muted)">(쉼표로 구분)</span></label>
+        <input type="text" id="f-highlights" placeholder="예) 무료 참가, 중식 제공, 수료증 발급" oninput="preview()"/>
+      </div>
+      <div class="form-group">
+        <label>문의처</label>
+        <input type="text" id="f-contact" placeholder="예) 061-792-0000 / 담당: 홍길동" oninput="preview()"/>
+      </div>
+      <div class="form-group">
+        <label>강조 색상</label>
+        <div class="color-picker" id="color-picker">
+          <div class="color-dot active" style="background:#2563eb" data-color="#2563eb" onclick="setColor(this)"></div>
+          <div class="color-dot" style="background:#7c3aed" data-color="#7c3aed" onclick="setColor(this)"></div>
+          <div class="color-dot" style="background:#db2777" data-color="#db2777" onclick="setColor(this)"></div>
+          <div class="color-dot" style="background:#ea580c" data-color="#ea580c" onclick="setColor(this)"></div>
+          <div class="color-dot" style="background:#16a34a" data-color="#16a34a" onclick="setColor(this)"></div>
+          <div class="color-dot" style="background:#0891b2" data-color="#0891b2" onclick="setColor(this)"></div>
+          <div class="color-dot" style="background:#1a1a1a" data-color="#1a1a1a" onclick="setColor(this)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 미리보기 패널 -->
+  <div class="panel preview-wrap">
+    <div class="panel-head">
+      <i class="ti ti-eye icon"></i>
+      <h2>미리보기</h2>
+      <span style="font-size:11px;color:var(--text-muted)">실시간 반영</span>
+    </div>
+    <div id="notice-output" class="print-area"></div>
+    <div class="preview-actions">
+      <button class="btn btn-primary" onclick="window.print()"><i class="ti ti-printer"></i> 인쇄</button>
+      <button class="btn btn-outline" onclick="copyText()"><i class="ti ti-copy"></i> 텍스트 복사</button>
+      <button class="btn btn-outline" onclick="clearAll()"><i class="ti ti-refresh"></i> 초기화</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let accentColor = '#2563eb';
+
+function g(id){return document.getElementById(id).value.trim()}
+
+function preview() {
+  const org = g('f-org');
+  const title = g('f-title');
+  const subtitle = g('f-subtitle');
+  const date = g('f-date');
+  const place = g('f-place');
+  const target = g('f-target');
+  const cost = g('f-cost');
+  const apply = g('f-apply');
+  const body = g('f-body');
+  const hlRaw = g('f-highlights');
+  const contact = g('f-contact');
+
+  const highlights = hlRaw ? hlRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+  const infoRows = [
+    {k:'일  시', v:date},
+    {k:'장  소', v:place},
+    {k:'대  상', v:target},
+    {k:'참 가 비', v:cost},
+    {k:'신청방법', v:apply},
+  ].filter(r=>r.v);
+
+  let html = '';
+  if(org) html += `<div class="notice-org">${esc(org)}</div>`;
+  if(title) html += `<div class="notice-title" style="color:${accentColor}">${esc(title)}</div>`;
+  if(subtitle) html += `<div class="notice-subtitle">${esc(subtitle)}</div>`;
+  else if(title) html += `<div style="border-bottom:2px solid ${accentColor};margin-bottom:20px"></div>`;
+
+  if(highlights.length) {
+    html += `<div class="notice-highlights">${highlights.map(h=>`<span class="notice-highlight" style="background:${accentColor}15;border-color:${accentColor}50;color:${accentColor}">${esc(h)}</span>`).join('')}</div>`;
+  }
+
+  if(infoRows.length) {
+    html += `<div class="notice-info">`;
+    infoRows.forEach(r=>{
+      html += `<div class="notice-info-row"><div class="notice-info-key">${esc(r.k)}</div><div class="notice-info-val">: ${esc(r.v)}</div></div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(body) {
+    html += `<hr class="notice-divider"/>`;
+    html += `<div class="notice-body">${esc(body)}</div>`;
+  }
+
+  if(contact) {
+    html += `<hr class="notice-divider"/>`;
+    html += `<div class="notice-contact"><i class="ti ti-phone"></i> 문의: ${esc(contact)}</div>`;
+  }
+
+  if(org) {
+    html += `<div class="notice-footer"><span class="notice-org-big">${esc(org)}</span></div>`;
+  }
+
+  if(!title && !body) {
+    html = `<div style="text-align:center;padding:60px 20px;color:#b0ada6">
+      <i class="ti ti-file-text" style="font-size:48px;display:block;margin-bottom:12px"></i>
+      <div style="font-size:14px">왼쪽에 내용을 입력하면<br>안내문이 자동으로 만들어집니다</div>
+    </div>`;
+  }
+
+  document.getElementById('notice-output').innerHTML = html;
+}
+
+function setColor(el) {
+  document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active');
+  accentColor = el.dataset.color;
+  preview();
+}
+
+function set(id, val) { document.getElementById(id).value = val; }
+
+function loadTpl(type) {
+  const tpls = {
+    program:{
+      org:'광양시청소년문화센터',
+      title:'청소년 진로탐색 프로그램 참가자 모집',
+      subtitle:'나의 꿈을 찾아가는 특별한 시간!',
+      date:'2025. 9. 6.(토) 10:00~17:00',
+      place:'본관 2층 진로체험실',
+      target:'관내 중·고등학생 20명 (선착순)',
+      cost:'무료',
+      apply:'전화 또는 방문 접수 (센터 홈페이지)',
+      body:'다양한 직업 세계를 탐색하고 나만의 진로를 설계해보는 프로그램입니다.\n\n▶ 주요 내용\n  - 직업 흥미 검사 및 분석\n  - 직업 현장 전문가 특강\n  - 진로 포트폴리오 제작\n\n많은 참여 바랍니다.',
+      highlights:'무료 참가, 수료증 발급, 중식 제공',
+      contact:'061-792-0000 / 담당: 진로지원팀',
+    },
+    event:{
+      org:'광양시청소년문화센터',
+      title:'2025 청소년 축제 한마당',
+      subtitle:'모두 함께 즐기는 특별한 하루!',
+      date:'2025. 10. 11.(토) 13:00~18:00',
+      place:'야외 잔디마당',
+      target:'청소년 및 가족 누구나',
+      cost:'무료',
+      apply:'당일 현장 참여',
+      body:'청소년들이 직접 기획하고 운영하는 축제입니다.\n\n▶ 주요 프로그램\n  - 버스킹 공연 및 댄스 경연\n  - 체험 부스 운영\n  - 경품 추첨 이벤트\n\n여러분의 많은 참여를 바랍니다!',
+      highlights:'무료 입장, 경품 추첨, 먹거리 부스',
+      contact:'061-792-0000 / 행사운영팀',
+    },
+    camp:{
+      org:'광양시청소년문화센터',
+      title:'2025 여름방학 청소년 캠프 참가자 모집',
+      subtitle:'자연 속에서 함께 성장해요!',
+      date:'2025. 8. 1.(금) ~ 8. 3.(일) 2박 3일',
+      place:'지리산 청소년야영장',
+      target:'관내 초등학교 5~6학년 30명',
+      cost:'1인 30,000원 (일부 지원)',
+      apply:'센터 방문 또는 전화 선착순 접수',
+      body:'자연 속에서 친구들과 함께하는 특별한 캠프입니다.\n\n▶ 주요 활동\n  - 등산 및 자연탐험\n  - 팀빌딩 레크리에이션\n  - 야간 별자리 관측\n  - 공동체 캠프파이어\n\n접수 기간: 7월 14일(월) ~ 7월 25일(금)',
+      highlights:'선착순 마감, 안전 보험 포함, 전문 강사 동행',
+      contact:'061-792-0000 / 방과후팀',
+    },
+    closed:{
+      org:'광양시청소년문화센터',
+      title:'임시 휴관 안내',
+      subtitle:'이용에 불편을 드려 죄송합니다.',
+      date:'2025. 8. 15.(금) 하루 종일',
+      place:'광양시청소년문화센터 전관',
+      target:'',
+      cost:'',
+      apply:'',
+      body:'광복절 공휴일로 인해 임시 휴관합니다.\n\n▶ 휴관 일정\n  - 휴관일: 2025년 8월 15일(금)\n  - 정상 운영 재개: 2025년 8월 18일(월)\n\n이용에 불편을 드려 죄송합니다.\n휴관 기간 중 긴급 문의는 이메일로 부탁드립니다.',
+      highlights:'8.15(금) 휴관, 8.18(월) 정상운영',
+      contact:'061-792-0000 / center@example.com',
+    },
+    vote:{
+      org:'광양시청소년문화센터',
+      title:'프로그램 만족도 조사 참여 안내',
+      subtitle:'여러분의 소중한 의견을 들려주세요!',
+      date:'2025. 9. 1.(월) ~ 9. 30.(화)',
+      place:'온라인 (QR코드 접속)',
+      target:'센터 이용 청소년 및 보호자',
+      cost:'무료 (참여자 소정의 선물)',
+      apply:'QR코드 스캔 또는 직접 방문 접수',
+      body:'더 나은 서비스 제공을 위해 만족도 조사를 실시합니다.\n\n▶ 조사 내용\n  - 프로그램 만족도\n  - 시설 및 환경 만족도\n  - 직원 서비스 만족도\n  - 개선 의견\n\n응답하신 내용은 프로그램 개선에 적극 반영하겠습니다.\n참여해 주신 모든 분께 감사드립니다.',
+      highlights:'참여자 선물 증정, 5분 내외 소요',
+      contact:'061-792-0000 / 기획운영팀',
+    },
+    blank:{org:'',title:'',subtitle:'',date:'',place:'',target:'',cost:'',apply:'',body:'',highlights:'',contact:''},
+  };
+  const t = tpls[type];
+  if(!t) return;
+  set('f-org', t.org); set('f-title', t.title); set('f-subtitle', t.subtitle);
+  set('f-date', t.date); set('f-place', t.place); set('f-target', t.target);
+  set('f-cost', t.cost); set('f-apply', t.apply); set('f-body', t.body);
+  set('f-highlights', t.highlights); set('f-contact', t.contact);
+  preview();
+}
+
+function clearAll() {
+  ['f-org','f-title','f-subtitle','f-date','f-place','f-target','f-cost','f-apply','f-body','f-highlights','f-contact']
+    .forEach(id=>document.getElementById(id).value='');
+  preview();
+}
+
+function copyText() {
+  const org = g('f-org'); const title = g('f-title'); const subtitle = g('f-subtitle');
+  const date = g('f-date'); const place = g('f-place'); const target = g('f-target');
+  const cost = g('f-cost'); const apply = g('f-apply'); const body = g('f-body');
+  const contact = g('f-contact');
+  let txt = '';
+  if(org) txt += `[${org}]\n`;
+  if(title) txt += `■ ${title}\n`;
+  if(subtitle) txt += `  ${subtitle}\n`;
+  txt += '\n';
+  if(date)  txt += `∙ 일  시: ${date}\n`;
+  if(place) txt += `∙ 장  소: ${place}\n`;
+  if(target)txt += `∙ 대  상: ${target}\n`;
+  if(cost)  txt += `∙ 참가비: ${cost}\n`;
+  if(apply) txt += `∙ 신청방법: ${apply}\n`;
+  if(body)  txt += `\n${body}\n`;
+  if(contact) txt += `\n문의: ${contact}\n`;
+  navigator.clipboard.writeText(txt).then(()=>alert('✅ 텍스트가 복사되었습니다'));
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+loadTpl('program');
+</script>
+</body>
+</html>
