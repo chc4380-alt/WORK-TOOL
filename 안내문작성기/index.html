@@ -374,23 +374,60 @@ function clearAll() {
 }
 
 function copyText() {
-  const org = g('f-org'); const title = g('f-title'); const subtitle = g('f-subtitle');
-  const date = g('f-date'); const place = g('f-place'); const target = g('f-target');
-  const cost = g('f-cost'); const apply = g('f-apply'); const body = g('f-body');
+  const org     = g('f-org');
+  const title   = g('f-title');
+  const subtitle= g('f-subtitle');
+  const date    = g('f-date');
+  const place   = g('f-place');
+  const target  = g('f-target');
+  const cost    = g('f-cost');
+  const apply   = g('f-apply');
+  const body    = g('f-body');
+  const hlRaw   = g('f-highlights');
   const contact = g('f-contact');
+  const highlights = hlRaw ? hlRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
+
+  const line = '─────────────────────';
   let txt = '';
-  if(org) txt += `[${org}]\n`;
-  if(title) txt += `■ ${title}\n`;
-  if(subtitle) txt += `  ${subtitle}\n`;
-  txt += '\n';
-  if(date)  txt += `∙ 일  시: ${date}\n`;
-  if(place) txt += `∙ 장  소: ${place}\n`;
-  if(target)txt += `∙ 대  상: ${target}\n`;
-  if(cost)  txt += `∙ 참가비: ${cost}\n`;
-  if(apply) txt += `∙ 신청방법: ${apply}\n`;
-  if(body)  txt += `\n${body}\n`;
-  if(contact) txt += `\n문의: ${contact}\n`;
-  navigator.clipboard.writeText(txt).then(()=>alert('✅ 텍스트가 복사되었습니다'));
+
+  // 기관명
+  if(org) txt += `📢 ${org}\n`;
+  txt += line + '\n';
+
+  // 제목
+  if(title) txt += `\n🔷 ${title}\n`;
+  if(subtitle) txt += `   ${subtitle}\n`;
+
+  txt += '\n' + line + '\n';
+
+  // 정보
+  if(date)   txt += `\n📅 일  시  ${date}\n`;
+  if(place)  txt += `📍 장  소  ${place}\n`;
+  if(target) txt += `👥 대  상  ${target}\n`;
+  if(cost)   txt += `💰 참 가 비  ${cost}\n`;
+  if(apply)  txt += `📝 신청방법  ${apply}\n`;
+
+  // 하이라이트
+  if(highlights.length) {
+    txt += '\n';
+    txt += highlights.map(h => `✅ ${h}`).join('  ') + '\n';
+  }
+
+  // 본문
+  if(body) {
+    txt += '\n' + line + '\n';
+    txt += '\n' + body + '\n';
+  }
+
+  // 문의
+  if(contact) {
+    txt += '\n' + line + '\n';
+    txt += `\n📞 문  의  ${contact}\n`;
+  }
+
+  txt += line;
+
+  navigator.clipboard.writeText(txt).then(()=>alert('✅ 카카오톡용 텍스트가 복사되었습니다!\n메시지에 바로 붙여넣기 하세요 😊'));
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
