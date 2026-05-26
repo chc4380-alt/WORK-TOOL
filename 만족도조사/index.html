@@ -248,12 +248,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     <div class="print-bottom">
       <div id="r-help-blk" style="display:none">
         <hr class="rdiv"/>
-        <div class="rst"> 3-6. 도움이 된 점</div>
+        <div class="rst" style="display:flex;align-items:center;justify-content:space-between">
+          <span> 3-6. 도움이 된 점</span>
+          <button onclick="clearSection('help')" class="noprint" style="font-size:11px;padding:2px 8px;border:1px solid var(--rdb);background:var(--rdl);color:var(--rd);border-radius:4px;cursor:pointer;font-family:inherit"><i class="ti ti-trash"></i> 삭제</button>
+        </div>
         <div id="r-help"></div>
       </div>
       <div id="r-op-blk" style="display:none">
         <hr class="rdiv"/>
-        <div class="rst">4. 기타</div>
+        <div class="rst" style="display:flex;align-items:center;justify-content:space-between">
+          <span>4. 기타</span>
+          <button onclick="clearSection('op')" class="noprint" style="font-size:11px;padding:2px 8px;border:1px solid var(--rdb);background:var(--rdl);color:var(--rd);border-radius:4px;cursor:pointer;font-family:inherit"><i class="ti ti-trash"></i> 삭제</button>
+        </div>
         <div id="r-op"></div>
       </div>
     </div>
@@ -521,16 +527,53 @@ function renderResult() {
   // 도움된 점
   const helps = parsedData.map(r=>r.help).filter(v=>v&&v.trim());
   const hb = document.getElementById('r-help-blk');
-  if (helps.length) { hb.style.display=''; document.getElementById('r-help').innerHTML=helps.map(t=>`<div class="tb">▲ ${t}</div>`).join(''); }
-  else hb.style.display='none';
+  if (helps.length) {
+    hb.style.display='';
+    document.getElementById('r-help').innerHTML = helps.map((t,i) =>
+      `<div class="tb" style="display:flex;align-items:center;gap:6px">
+        <span style="flex:1">▲ ${t}</span>
+        <button class="noprint" onclick="delText('help',${i})"
+          style="font-size:10px;padding:1px 6px;border:1px solid var(--rdb);background:var(--rdl);color:var(--rd);border-radius:4px;cursor:pointer;flex-shrink:0">삭제</button>
+      </div>`).join('');
+  } else hb.style.display='none';
 
   // 기타 의견
   const ops = parsedData.map(r=>r.opinion).filter(v=>v&&v.trim());
   const ob  = document.getElementById('r-op-blk');
-  if (ops.length) { ob.style.display=''; document.getElementById('r-op').innerHTML=ops.map(t=>`<div class="tb">▲ ${t}</div>`).join(''); }
-  else ob.style.display='none';
+  if (ops.length) {
+    ob.style.display='';
+    document.getElementById('r-op').innerHTML = ops.map((t,i) =>
+      `<div class="tb" style="display:flex;align-items:center;gap:6px">
+        <span style="flex:1">▲ ${t}</span>
+        <button class="noprint" onclick="delText('op',${i})"
+          style="font-size:10px;padding:1px 6px;border:1px solid var(--rdb);background:var(--rdl);color:var(--rd);border-radius:4px;cursor:pointer;flex-shrink:0">삭제</button>
+      </div>`).join('');
+  } else ob.style.display='none';
 }
 
+function delText(type, idx) {
+  var key = type === 'help' ? 'help' : 'opinion';
+  var count = 0;
+  parsedData = parsedData.map(function(r) {
+    var n = Object.assign({}, r);
+    if (n[key] && n[key].trim()) {
+      if (count === idx) n[key] = '';
+      count++;
+    }
+    return n;
+  });
+  renderResult();
+}
+function clearSection(type) {
+  if (!confirm('삭제할까요? 복구되지 않습니다.')) return;
+  if (type === 'help') {
+    parsedData = parsedData.map(function(r) { var n = Object.assign({}, r); n.help = ''; return n; });
+    document.getElementById('r-help-blk').style.display = 'none';
+  } else {
+    parsedData = parsedData.map(function(r) { var n = Object.assign({}, r); n.opinion = ''; return n; });
+    document.getElementById('r-op-blk').style.display = 'none';
+  }
+}
 function go(tab) {
   ['info','csv','result'].forEach(t => {
     document.getElementById('p-'+t).style.display = t===tab?'':'none';
