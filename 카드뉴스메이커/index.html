@@ -87,43 +87,205 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 
     <!-- 폰트 -->
     <div class="panel">
-      <div class="ph"><i class="ti ti-typography pi"></i><h2>폰트 설정</h2></div>
-      <div class="pb">
-        <div class="fg" style="margin-bottom:8px"><label>타이틀 폰트</label>
-          <div class="grid3" style="margin-top:4px">
-            <button class="sel-btn on" id="font-0" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:11px">한교안심<br>떡볶이체</button>
-            <button class="sel-btn" id="font-1" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:11px">메이플<br>스토리체</button>
-            <button class="sel-btn" id="font-2" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:11px">마포구<br>배낭여행체</button>
-            <button class="sel-btn" id="font-3" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:11px">여기어때<br>잘난체</button>
-            <button class="sel-btn" id="font-4" style="font-family:'Black Han Sans',sans-serif;font-size:11px">블랙<br>한산스</button>
-          </div>
-        </div>
-        <div class="fg" style="margin-bottom:8px"><label>타이틀 크기</label>
-          <div class="size-btns" id="title-size-btns">
-            <button class="size-btn" data-v="7">소</button>
-            <button class="size-btn" data-v="9">중</button>
-            <button class="size-btn on" data-v="12">대</button>
-            <button class="size-btn" data-v="15">특대</button>
-          </div>
-        </div>
-        <div class="fg" style="margin-bottom:8px"><label>본문 / 표 크기</label>
-          <div class="size-btns" id="body-size-btns">
-            <button class="size-btn" data-v="1.6">소</button>
-            <button class="size-btn on" data-v="2.0">중</button>
-            <button class="size-btn" data-v="2.5">대</button>
-          </div>
-        </div>
-        <div class="fg" style="margin-bottom:8px"><label>글씨 굵기</label>
-          <div class="size-btns" id="weight-btns">
-            <button class="size-btn" data-v="400">가늘게</button>
-            <button class="size-btn on" data-v="700">보통</button>
-            <button class="size-btn" data-v="900">굵게</button>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--bdl)">
+      <div class="ph"><i class="ti ti-typography pi"></i><h2>텍스트 스타일</h2></div>
+      <div class="pb" style="padding-bottom:4px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <label style="font-size:12px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer">
             <input type="checkbox" id="use-shadow" style="accent-color:var(--ac)"/> 타이틀 그림자 효과
           </label>
+        </div>
+        
+        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">🔤 타이틀</div>
+          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
+            
+            <div class="grid3" style="margin-top:4px">
+              <button class="sel-btn" data-key="title" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="title" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="title" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="title" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="title" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="title" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
+              <div class="size-btns" id="sz-title">
+                <button class="size-btn" data-key="title" data-type="size" data-v="6">소</button>
+                <button class="size-btn" data-key="title" data-type="size" data-v="9">중</button>
+                <button class="size-btn on" data-key="title" data-type="size" data-v="12">대</button>
+                <button class="size-btn" data-key="title" data-type="size" data-v="15">특대</button>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
+              <div class="size-btns" id="wt-title">
+                <button class="size-btn" data-key="title" data-type="weight" data-v="300">가늘게</button>
+                <button class="size-btn" data-key="title" data-type="weight" data-v="500">보통</button>
+                <button class="size-btn on" data-key="title" data-type="weight" data-v="700">굵게</button>
+                <button class="size-btn on" data-key="title" data-type="weight" data-v="900">진하게</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">🏷 소제목 태그</div>
+          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
+            
+            <div class="grid3" style="margin-top:4px">
+              <button class="sel-btn" data-key="tag" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="tag" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="tag" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="tag" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="tag" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="tag" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
+              <div class="size-btns" id="sz-tag">
+                <button class="size-btn" data-key="tag" data-type="size" data-v="1.5">소</button>
+                <button class="size-btn" data-key="tag" data-type="size" data-v="2.0">중</button>
+                <button class="size-btn on" data-key="tag" data-type="size" data-v="2.8">대</button>
+                <button class="size-btn" data-key="tag" data-type="size" data-v="3.5">특대</button>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
+              <div class="size-btns" id="wt-tag">
+                <button class="size-btn" data-key="tag" data-type="weight" data-v="300">가늘게</button>
+                <button class="size-btn" data-key="tag" data-type="weight" data-v="500">보통</button>
+                <button class="size-btn on" data-key="tag" data-type="weight" data-v="700">굵게</button>
+                <button class="size-btn " data-key="tag" data-type="weight" data-v="900">진하게</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">📅 날짜 / 시간</div>
+          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
+            
+            <div class="grid3" style="margin-top:4px">
+              <button class="sel-btn" data-key="date" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="date" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="date" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="date" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="date" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="date" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
+              <div class="size-btns" id="sz-date">
+                <button class="size-btn" data-key="date" data-type="size" data-v="1.5">소</button>
+                <button class="size-btn" data-key="date" data-type="size" data-v="2.0">중</button>
+                <button class="size-btn on" data-key="date" data-type="size" data-v="2.8">대</button>
+                <button class="size-btn" data-key="date" data-type="size" data-v="3.5">특대</button>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
+              <div class="size-btns" id="wt-date">
+                <button class="size-btn" data-key="date" data-type="weight" data-v="300">가늘게</button>
+                <button class="size-btn" data-key="date" data-type="weight" data-v="500">보통</button>
+                <button class="size-btn " data-key="date" data-type="weight" data-v="700">굵게</button>
+                <button class="size-btn " data-key="date" data-type="weight" data-v="900">진하게</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">📍 장소</div>
+          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
+            
+            <div class="grid3" style="margin-top:4px">
+              <button class="sel-btn" data-key="place" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="place" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="place" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="place" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="place" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="place" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
+              <div class="size-btns" id="sz-place">
+                <button class="size-btn" data-key="place" data-type="size" data-v="1.5">소</button>
+                <button class="size-btn" data-key="place" data-type="size" data-v="2.0">중</button>
+                <button class="size-btn on" data-key="place" data-type="size" data-v="2.8">대</button>
+                <button class="size-btn" data-key="place" data-type="size" data-v="3.5">특대</button>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
+              <div class="size-btns" id="wt-place">
+                <button class="size-btn" data-key="place" data-type="weight" data-v="300">가늘게</button>
+                <button class="size-btn" data-key="place" data-type="weight" data-v="500">보통</button>
+                <button class="size-btn " data-key="place" data-type="weight" data-v="700">굵게</button>
+                <button class="size-btn " data-key="place" data-type="weight" data-v="900">진하게</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">📝 본문</div>
+          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
+            
+            <div class="grid3" style="margin-top:4px">
+              <button class="sel-btn" data-key="body" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="body" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="body" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="body" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="body" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="body" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
+              <div class="size-btns" id="sz-body">
+                <button class="size-btn" data-key="body" data-type="size" data-v="1.5">소</button>
+                <button class="size-btn" data-key="body" data-type="size" data-v="2.0">중</button>
+                <button class="size-btn on" data-key="body" data-type="size" data-v="2.8">대</button>
+                <button class="size-btn" data-key="body" data-type="size" data-v="3.5">특대</button>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
+              <div class="size-btns" id="wt-body">
+                <button class="size-btn" data-key="body" data-type="weight" data-v="300">가늘게</button>
+                <button class="size-btn" data-key="body" data-type="weight" data-v="500">보통</button>
+                <button class="size-btn " data-key="body" data-type="weight" data-v="700">굵게</button>
+                <button class="size-btn " data-key="body" data-type="weight" data-v="900">진하게</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">🏢 기관명</div>
+          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
+            
+            <div class="grid3" style="margin-top:4px">
+              <button class="sel-btn" data-key="org" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="org" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="org" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="org" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="org" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="org" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
+              <div class="size-btns" id="sz-org">
+                <button class="size-btn" data-key="org" data-type="size" data-v="1.5">소</button>
+                <button class="size-btn" data-key="org" data-type="size" data-v="2.0">중</button>
+                <button class="size-btn on" data-key="org" data-type="size" data-v="2.8">대</button>
+                <button class="size-btn" data-key="org" data-type="size" data-v="3.5">특대</button>
+              </div>
+            </div>
+            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
+              <div class="size-btns" id="wt-org">
+                <button class="size-btn" data-key="org" data-type="weight" data-v="300">가늘게</button>
+                <button class="size-btn" data-key="org" data-type="weight" data-v="500">보통</button>
+                <button class="size-btn on" data-key="org" data-type="weight" data-v="700">굵게</button>
+                <button class="size-btn " data-key="org" data-type="weight" data-v="900">진하게</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -237,12 +399,16 @@ var ST = {
   showTable: false,
   showQr: false,
   qrDataUrl: null,
-  font: "'TTTteokbokki','Jua',sans-serif",
-  titleSize: 12,
-  bodySize: 2.0,
-  fontWeight: 700,
   shadow: false,
-  mainImgs: []
+  mainImgs: [],
+  ts: {
+    title: { size:12, weight:900, font:"'TTTteokbokki','Jua',sans-serif" },
+    tag:   { size:2.8, weight:700, font:"inherit" },
+    date:  { size:2.8, weight:700, font:"inherit" },
+    place: { size:2.4, weight:500, font:"inherit" },
+    body:  { size:2.0, weight:400, font:"inherit" },
+    org:   { size:2.2, weight:900, font:"inherit" }
+  }
 };
 
 function hexBright(h) {
@@ -317,6 +483,7 @@ function render() {
   var titlePx = p(ST.titleSize);
   var bs = ST.bodySize;
   var shadowStyle = ST.shadow ? 'text-shadow:2px 3px 0 ' + ac + ';' : '';
+  var fw = ST.fontWeight;
 
   // QR
   var qrHtml = '';
@@ -372,16 +539,16 @@ function render() {
   if (ST.tpl === 0) {
     html = '<div style="position:absolute;inset:0;' + bgStyle + '"></div>' + overlayHtml + qrHtml
       + '<div style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;padding:' + pad + '">'
-        + (tag ? '<div style="align-self:center;background:' + ac + ';color:' + act + ';font-size:' + p(bs*1.4) + ';font-weight:900;padding:' + p(0.5) + ' ' + p(2) + ';border-radius:' + p(3) + ';margin-bottom:' + p(1.5) + '">' + tag + '</div>' : '')
+        + (tag ? '<div style="align-self:center;background:' + ac + ';color:' + act + ';font-size:' + p(ts.tag.size) + ';font-weight:' + ts.tag.weight + ';font-family:' + (ts.tag.font==='inherit'?'inherit':ts.tag.font) + ';padding:' + p(0.5) + ' ' + p(2) + ';border-radius:' + p(3) + ';margin-bottom:' + p(1.5) + '">' + tag + '</div>' : '')
         + '<div style="font-family:' + ST.font + ';font-size:' + titlePx + ';color:' + mainTx + ';text-align:center;line-height:1.15;margin-bottom:' + p(1.5) + ';word-break:keep-all;' + shadowStyle + '">' + title + '</div>'
-        + (date  ? '<div style="font-size:' + p(bs*1.5) + ';font-weight:900;color:' + ac + ';text-align:center;margin-bottom:' + p(0.6) + '">' + date + '</div>' : '')
-        + (place ? '<div style="font-size:' + p(bs*1.2) + ';font-weight:700;color:' + subTx + ';text-align:center;margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
+        + (date  ? '<div style="font-size:' + p(ts.date.size) + ';font-weight:' + ts.date.weight + ';font-family:' + (ts.date.font==='inherit'?'inherit':ts.date.font) + ';color:' + ac + ';text-align:center;margin-bottom:' + p(0.6) + '">' + date + '</div>' : '')
+        + (place ? '<div style="font-size:' + p(ts.place.size) + ';font-weight:' + ts.place.weight + ';font-family:' + (ts.place.font==='inherit'?'inherit':ts.place.font) + ';color:' + subTx + ';text-align:center;margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
         + mainImgHtml
-        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;font-weight:' + ST.fontWeight + ';margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
+        + (body  ? '<div style="font-size:' + p(ts.body.size) + ';font-weight:' + ts.body.weight + ';font-family:' + (ts.body.font==='inherit'?'inherit':ts.body.font) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
         + tableHtml
         + '<div style="margin-top:auto;border-top:2px solid ' + ac + ';padding-top:' + p(1.8) + ';display:flex;justify-content:space-between;align-items:center">'
-          + '<div style="font-size:' + p(bs*1.1) + ';font-weight:900;color:' + mainTx + '">' + org + '</div>'
-          + '<div style="font-size:' + p(bs*0.85) + ';color:' + subTx + '">광양시 광장로14 ☎794-2230</div>'
+          + '<div style="font-size:' + p(ts.org.size) + ';font-weight:' + ts.org.weight + ';font-family:' + (ts.org.font==='inherit'?'inherit':ts.org.font) + ';color:' + mainTx + '">' + org + '</div>'
+          + '<div style="font-size:' + p(ts.org.size*0.75) + ';color:' + subTx + '">광양시 광장로14 ☎794-2230</div>'
         + '</div>'
       + '</div>';
 
@@ -389,16 +556,16 @@ function render() {
   } else if (ST.tpl === 1) {
     html = '<div style="position:absolute;inset:0;' + bgStyle + '"></div>' + overlayHtml + qrHtml
       + '<div style="position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;padding:' + pad + '">'
-        + (tag ? '<div style="display:inline-block;background:' + ac + ';color:' + act + ';font-size:' + p(bs*1.4) + ';font-weight:900;padding:' + p(0.5) + ' ' + p(1.8) + ';border-radius:' + p(3) + ';margin-bottom:' + p(1.5) + '">' + tag + '</div>' : '')
+        + (tag ? '<div style="display:inline-block;background:' + ac + ';color:' + act + ';font-size:' + p(ts.tag.size) + ';font-weight:' + ts.tag.weight + ';font-family:' + (ts.tag.font==='inherit'?'inherit':ts.tag.font) + ';padding:' + p(0.5) + ' ' + p(1.8) + ';border-radius:' + p(3) + ';margin-bottom:' + p(1.5) + '">' + tag + '</div>' : '')
         + '<div style="font-family:' + ST.font + ';font-size:' + titlePx + ';color:' + mainTx + ';line-height:1.15;margin-bottom:' + p(1.2) + ';word-break:keep-all;' + shadowStyle + '">' + title + '</div>'
-        + (date  ? '<div style="font-size:' + p(bs*1.5) + ';font-weight:900;color:' + ac + ';margin-bottom:' + p(0.5) + '">' + date + '</div>' : '')
-        + (place ? '<div style="font-size:' + p(bs*1.2) + ';color:' + subTx + ';margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
+        + (date  ? '<div style="font-size:' + p(ts.date.size) + ';font-weight:' + ts.date.weight + ';font-family:' + (ts.date.font==='inherit'?'inherit':ts.date.font) + ';color:' + ac + ';margin-bottom:' + p(0.5) + '">' + date + '</div>' : '')
+        + (place ? '<div style="font-size:' + p(ts.place.size) + ';font-weight:' + ts.place.weight + ';font-family:' + (ts.place.font==='inherit'?'inherit':ts.place.font) + ';color:' + subTx + ';margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
         + mainImgHtml
-        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;font-weight:' + ST.fontWeight + ';margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
+        + (body  ? '<div style="font-size:' + p(ts.body.size) + ';font-weight:' + ts.body.weight + ';font-family:' + (ts.body.font==='inherit'?'inherit':ts.body.font) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
         + tableHtml
         + '<div style="margin-top:auto;border-top:2px solid ' + ac + ';padding-top:' + p(1.8) + ';display:flex;justify-content:space-between;align-items:center">'
-          + '<div style="font-size:' + p(bs*1.1) + ';font-weight:900;color:' + mainTx + '">' + org + '</div>'
-          + '<div style="font-size:' + p(bs*0.85) + ';color:' + subTx + '">광양시 광장로14 ☎794-2230</div>'
+          + '<div style="font-size:' + p(ts.org.size) + ';font-weight:' + ts.org.weight + ';font-family:' + (ts.org.font==='inherit'?'inherit':ts.org.font) + ';color:' + mainTx + '">' + org + '</div>'
+          + '<div style="font-size:' + p(ts.org.size*0.75) + ';color:' + subTx + '">광양시 광장로14 ☎794-2230</div>'
         + '</div>'
       + '</div>';
 
@@ -410,14 +577,14 @@ function render() {
         + '<div style="font-family:' + ST.font + ';font-size:' + titlePx + ';color:#fff;text-align:center;line-height:1.1;word-break:keep-all;' + (ST.shadow ? 'text-shadow:2px 2px 0 rgba(0,0,0,.3)' : '') + '">' + title + '</div>'
       + '</div>'
       + '<div style="position:absolute;top:' + p(20) + ';left:0;right:0;bottom:0;z-index:10;display:flex;flex-direction:column;padding:' + p(4) + ' ' + p(6) + '">'
-        + (date  ? '<div style="font-size:' + p(bs*1.5) + ';font-weight:900;color:' + ac + ';margin-bottom:' + p(0.6) + '">' + date + '</div>' : '')
-        + (place ? '<div style="font-size:' + p(bs*1.2) + ';color:' + subTx + ';margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
+        + (date  ? '<div style="font-size:' + p(ts.date.size) + ';font-weight:' + ts.date.weight + ';font-family:' + (ts.date.font==='inherit'?'inherit':ts.date.font) + ';color:' + ac + ';margin-bottom:' + p(0.6) + '">' + date + '</div>' : '')
+        + (place ? '<div style="font-size:' + p(ts.place.size) + ';font-weight:' + ts.place.weight + ';font-family:' + (ts.place.font==='inherit'?'inherit':ts.place.font) + ';color:' + subTx + ';margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
         + mainImgHtml
-        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;font-weight:' + ST.fontWeight + ';margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
+        + (body  ? '<div style="font-size:' + p(ts.body.size) + ';font-weight:' + ts.body.weight + ';font-family:' + (ts.body.font==='inherit'?'inherit':ts.body.font) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
         + tableHtml
         + '<div style="margin-top:auto;border-top:2px solid ' + ac + ';padding-top:' + p(1.8) + ';display:flex;justify-content:space-between;align-items:center">'
-          + '<div style="font-size:' + p(bs*1.1) + ';font-weight:900;color:' + mainTx + '">' + org + '</div>'
-          + '<div style="font-size:' + p(bs*0.85) + ';color:' + subTx + '">광양시 광장로14 ☎794-2230</div>'
+          + '<div style="font-size:' + p(ts.org.size) + ';font-weight:' + ts.org.weight + ';font-family:' + (ts.org.font==='inherit'?'inherit':ts.org.font) + ';color:' + mainTx + '">' + org + '</div>'
+          + '<div style="font-size:' + p(ts.org.size*0.75) + ';color:' + subTx + '">광양시 광장로14 ☎794-2230</div>'
         + '</div>'
       + '</div>';
   }
@@ -440,50 +607,30 @@ for (var ti = 0; ti < 3; ti++) {
   })(ti);
 }
 
-// 폰트
-var FONTS = [
-  "'TTTteokbokki','Jua',sans-serif",
-  "'MapleStory','Do Hyeon',sans-serif",
-  "'MapoBackpacking','Jua',sans-serif",
-  "'Jalnan','Black Han Sans',sans-serif",
-  "'Black Han Sans',sans-serif"
-];
-for (var fi = 0; fi < 5; fi++) {
-  (function(n) {
-    document.getElementById('font-' + n).addEventListener('click', function() {
-      ST.font = FONTS[n];
-      for (var x = 0; x < 5; x++) { var el = document.getElementById('font-' + x); if(el) el.classList.toggle('on', x === n); }
-      render();
+// 텍스트 스타일 - 폰트 버튼
+document.querySelectorAll('[data-font]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var k = this.getAttribute('data-key');
+    var f = this.getAttribute('data-font');
+    ST.ts[k].font = f;
+    // 같은 key의 폰트 버튼들 on/off
+    document.querySelectorAll('[data-font][data-key="' + k + '"]').forEach(function(b) {
+      b.classList.toggle('on', b.getAttribute('data-font') === f);
     });
-  })(fi);
-}
-
-// 타이틀 크기
-document.getElementById('title-size-btns').querySelectorAll('.size-btn').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    ST.titleSize = parseFloat(this.getAttribute('data-v'));
-    document.getElementById('title-size-btns').querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('on'); });
-    this.classList.add('on');
     render();
   });
 });
 
-// 본문 크기
-document.getElementById('body-size-btns').querySelectorAll('.size-btn').forEach(function(btn) {
+// 크기 / 굵기 버튼
+document.querySelectorAll('[data-type]').forEach(function(btn) {
   btn.addEventListener('click', function() {
-    ST.bodySize = parseFloat(this.getAttribute('data-v'));
-    document.getElementById('body-size-btns').querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('on'); });
-    this.classList.add('on');
-    render();
-  });
-});
-
-// 굵기
-document.getElementById('weight-btns').querySelectorAll('.size-btn').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    ST.fontWeight = parseInt(this.getAttribute('data-v'));
-    document.getElementById('weight-btns').querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('on'); });
-    this.classList.add('on');
+    var k    = this.getAttribute('data-key');
+    var type = this.getAttribute('data-type');
+    var v    = parseFloat(this.getAttribute('data-v'));
+    ST.ts[k][type] = v;
+    document.querySelectorAll('[data-type="' + type + '"][data-key="' + k + '"]').forEach(function(b) {
+      b.classList.toggle('on', parseFloat(b.getAttribute('data-v')) === v);
+    });
     render();
   });
 });
@@ -611,6 +758,14 @@ document.getElementById('btn-reset').addEventListener('click', function() {
   document.getElementById('show-qr').checked = false;
   document.getElementById('show-table').checked = false;
   document.getElementById('use-shadow').checked = false;
+  ST.ts = {
+    title: { size:12, weight:900, font:"'TTTteokbokki','Jua',sans-serif" },
+    tag:   { size:2.8, weight:700, font:"inherit" },
+    date:  { size:2.8, weight:700, font:"inherit" },
+    place: { size:2.4, weight:500, font:"inherit" },
+    body:  { size:2.0, weight:400, font:"inherit" },
+    org:   { size:2.2, weight:900, font:"inherit" }
+  };
   render();
 });
 
