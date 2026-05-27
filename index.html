@@ -7,48 +7,34 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
   background:#f5f5f3;color:#1a1a1a;min-height:100vh;
-  display:flex;flex-direction:column;align-items:center;
-  padding:48px 16px 64px
-}
+  display:flex;flex-direction:column;align-items:center;padding:48px 16px 64px}
 header{text-align:center;margin-bottom:40px}
 .org-name{font-size:13px;color:#888780;letter-spacing:.04em;margin-bottom:10px}
 header h1{font-size:26px;font-weight:700;color:#1a1a1a;letter-spacing:-.02em;margin-bottom:8px}
 header p{font-size:14px;color:#5f5e5a}
-
-.section-label{
-  width:100%;max-width:720px;font-size:11px;font-weight:600;color:#888780;
-  text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;padding-left:2px
-}
-.grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:12px;width:100%;max-width:720px;margin-bottom:32px
-}
-.card{
-  background:#fff;border:0.5px solid #d4d2c9;border-radius:14px;
+.section-label{width:100%;max-width:720px;font-size:11px;font-weight:600;color:#888780;
+  text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;padding-left:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;width:100%;max-width:720px;margin-bottom:32px}
+.card{background:#fff;border:0.5px solid #d4d2c9;border-radius:14px;
   padding:22px 18px 18px;text-decoration:none;color:inherit;
   display:flex;flex-direction:column;align-items:flex-start;gap:10px;
-  transition:box-shadow .18s,border-color .18s,transform .15s
-}
+  transition:box-shadow .18s,border-color .18s,transform .15s}
 .card:hover{box-shadow:0 4px 18px rgba(0,0,0,.10);border-color:#a0ada6;transform:translateY(-2px)}
-.card-icon{
-  width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
-  justify-content:center;font-size:22px;flex-shrink:0
-}
-.card-info{}
+.card-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:22px;flex-shrink:0}
 .card-title{font-size:14px;font-weight:700;margin-bottom:4px}
 .card-desc{font-size:12px;color:#5f5e5a;line-height:1.5}
-
-/* 아이콘 색상 */
 .ic-blue{background:#eff6ff;color:#2563eb}
 .ic-green{background:#f0fdf4;color:#16a34a}
 .ic-purple{background:#faf5ff;color:#7c3aed}
 .ic-orange{background:#fff7ed;color:#ea580c}
 .ic-pink{background:#fdf2f8;color:#db2777}
 .ic-teal{background:#f0fdfa;color:#0d9488}
-
+.ic-yellow{background:#fffbeb;color:#d97706}
+.ic-red{background:#fef2f2;color:#dc2626}
 footer{margin-top:16px;font-size:12px;color:#b0ada6;text-align:center}
 </style>
 </head>
@@ -63,14 +49,14 @@ footer{margin-top:16px;font-size:12px;color:#b0ada6;text-align:center}
 <div class="grid">
   <a class="card" href="./기안자동작성기/">
     <div class="card-icon ic-blue"><i class="ti ti-file-text"></i></div>
-    <div class="card-info">
+    <div>
       <div class="card-title">기안 자동작성기</div>
       <div class="card-desc">내용 입력 후 공문 기안문 자동 생성</div>
     </div>
   </a>
   <a class="card" href="./안내문작성기/">
     <div class="card-icon ic-teal"><i class="ti ti-speakerphone"></i></div>
-    <div class="card-info">
+    <div>
       <div class="card-title">안내문 빠른 작성기</div>
       <div class="card-desc">템플릿으로 인쇄용 안내문 즉시 완성</div>
     </div>
@@ -81,9 +67,16 @@ footer{margin-top:16px;font-size:12px;color:#b0ada6;text-align:center}
 <div class="grid">
   <a class="card" href="./할일목록/">
     <div class="card-icon ic-green"><i class="ti ti-checklist"></i></div>
-    <div class="card-info">
+    <div>
       <div class="card-title">할일 목록 · 업무일지</div>
       <div class="card-desc">할일 관리, 결재 체크, 메모 통합</div>
+    </div>
+  </a>
+  <a class="card" href="./체크리스트메이커/">
+    <div class="card-icon ic-orange"><i class="ti ti-clipboard-check"></i></div>
+    <div>
+      <div class="card-title">체크리스트 메이커</div>
+      <div class="card-desc">행사·캠프·강의 준비 항목 빠르게 생성</div>
     </div>
   </a>
 </div>
@@ -92,9 +85,38 @@ footer{margin-top:16px;font-size:12px;color:#b0ada6;text-align:center}
 <div class="grid">
   <a class="card" href="./만족도조사/">
     <div class="card-icon ic-purple"><i class="ti ti-chart-bar"></i></div>
-    <div class="card-info">
+    <div>
       <div class="card-title">만족도 조사 분석기</div>
-      <div class="card-desc">문항 구성 → 응답 입력 → 자동 분석</div>
+      <div class="card-desc">구글폼 CSV → 자동 분석 · 결과지 출력</div>
+    </div>
+  </a>
+</div>
+
+<div class="section-label">🎨 홍보 도구</div>
+<div class="grid">
+  <a class="card" href="./카드뉴스메이커/">
+    <div class="card-icon ic-pink"><i class="ti ti-photo"></i></div>
+    <div>
+      <div class="card-title">카드뉴스 메이커</div>
+      <div class="card-desc">잡지 스타일 SNS 카드뉴스 즉시 생성</div>
+    </div>
+  </a>
+</div>
+
+<div class="section-label">🛠 편의 도구</div>
+<div class="grid">
+  <a class="card" href="./QR코드생성기/">
+    <div class="card-icon ic-blue"><i class="ti ti-qrcode"></i></div>
+    <div>
+      <div class="card-title">QR코드 생성기</div>
+      <div class="card-desc">구글폼·링크 QR 즉시 생성 및 저장</div>
+    </div>
+  </a>
+  <a class="card" href="./랜덤추첨기/">
+    <div class="card-icon ic-yellow"><i class="ti ti-dice"></i></div>
+    <div>
+      <div class="card-title">랜덤 추첨기</div>
+      <div class="card-desc">경품 추첨, 모둠 나누기, 순서 정하기</div>
     </div>
   </a>
 </div>
