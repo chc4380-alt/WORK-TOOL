@@ -113,6 +113,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
             <button class="size-btn" data-v="2.5">대</button>
           </div>
         </div>
+        <div class="fg" style="margin-bottom:8px"><label>글씨 굵기</label>
+          <div class="size-btns" id="weight-btns">
+            <button class="size-btn" data-v="400">가늘게</button>
+            <button class="size-btn on" data-v="700">보통</button>
+            <button class="size-btn" data-v="900">굵게</button>
+          </div>
+        </div>
         <div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--bdl)">
           <label style="font-size:12px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer">
             <input type="checkbox" id="use-shadow" style="accent-color:var(--ac)"/> 타이틀 그림자 효과
@@ -153,12 +160,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 
     <!-- 메인 이미지 -->
     <div class="panel">
-      <div class="ph"><i class="ti ti-photo-up pi"></i><h2>메인 이미지 <span style="font-size:11px;font-weight:400;color:var(--mt)">(카드 중앙)</span></h2></div>
+      <div class="ph"><i class="ti ti-photo-up pi"></i><h2>메인 이미지 <span style="font-size:11px;font-weight:400;color:var(--mt)">(여러 장 가능)</span></h2></div>
       <div class="pb">
-        <div class="dropz" id="dropz2"><i class="ti ti-image"></i><p>프로그램 사진 등</p><input type="file" id="img2-input" accept="image/*"/></div>
-        <div id="img2-ctrl" style="display:none;margin-top:8px">
-          <button class="btn bto btsm" id="btn-rm2"><i class="ti ti-x"></i> 제거</button>
-        </div>
+        <div class="dropz" id="dropz2"><i class="ti ti-image"></i><p>사진 드래그 또는 클릭 (여러 장 선택 가능)</p><input type="file" id="img2-input" accept="image/*" multiple/></div>
+        <div id="img2-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
       </div>
     </div>
 
@@ -228,7 +233,6 @@ var ST = {
   bgColor: '#fff9f0',
   acColor: '#ff6b35',
   bgImg: null,
-  mainImg: null,
   overlay: 35,
   showTable: false,
   showQr: false,
@@ -236,7 +240,9 @@ var ST = {
   font: "'TTTteokbokki',sans-serif",
   titleSize: 12,
   bodySize: 2.0,
-  shadow: false
+  fontWeight: 700,
+  shadow: false,
+  mainImgs: []
 };
 
 function hexBright(h) {
@@ -322,10 +328,20 @@ function render() {
       + '</div>';
   }
 
-  // 메인 이미지
-  var mainImgHtml = ST.mainImg
-    ? '<div style="text-align:center;margin:' + p(1.5) + ' 0"><img src="' + ST.mainImg + '" style="max-height:' + p(22) + ';max-width:75%;object-fit:contain;border-radius:' + p(1.5) + '"/></div>'
-    : '';
+  // 메인 이미지 (여러 장)
+  var mainImgHtml = '';
+  if (ST.mainImgs.length > 0) {
+    if (ST.mainImgs.length === 1) {
+      mainImgHtml = '<div style="text-align:center;margin:' + p(1.5) + ' 0"><img src="' + ST.mainImgs[0] + '" style="max-height:' + p(22) + ';max-width:80%;object-fit:contain;border-radius:' + p(1.5) + '"/></div>';
+    } else {
+      var imgW = Math.floor(88 / ST.mainImgs.length);
+      mainImgHtml = '<div style="display:flex;gap:' + p(1) + ';margin:' + p(1.5) + ' 0;justify-content:center;align-items:center">';
+      ST.mainImgs.forEach(function(src) {
+        mainImgHtml += '<img src="' + src + '" style="width:' + imgW + '%;max-height:' + p(20) + ';object-fit:cover;border-radius:' + p(1.5) + '"/>';
+      });
+      mainImgHtml += '</div>';
+    }
+  }
 
   // 표
   var tableHtml = '';
@@ -361,7 +377,7 @@ function render() {
         + (date  ? '<div style="font-size:' + p(bs*1.5) + ';font-weight:900;color:' + ac + ';text-align:center;margin-bottom:' + p(0.6) + '">' + date + '</div>' : '')
         + (place ? '<div style="font-size:' + p(bs*1.2) + ';font-weight:700;color:' + subTx + ';text-align:center;margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
         + mainImgHtml
-        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
+        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;font-weight:' + ST.fontWeight + ';margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
         + tableHtml
         + '<div style="margin-top:auto;border-top:2px solid ' + ac + ';padding-top:' + p(1.8) + ';display:flex;justify-content:space-between;align-items:center">'
           + '<div style="font-size:' + p(bs*1.1) + ';font-weight:900;color:' + mainTx + '">' + org + '</div>'
@@ -378,7 +394,7 @@ function render() {
         + (date  ? '<div style="font-size:' + p(bs*1.5) + ';font-weight:900;color:' + ac + ';margin-bottom:' + p(0.5) + '">' + date + '</div>' : '')
         + (place ? '<div style="font-size:' + p(bs*1.2) + ';color:' + subTx + ';margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
         + mainImgHtml
-        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
+        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;font-weight:' + ST.fontWeight + ';margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
         + tableHtml
         + '<div style="margin-top:auto;border-top:2px solid ' + ac + ';padding-top:' + p(1.8) + ';display:flex;justify-content:space-between;align-items:center">'
           + '<div style="font-size:' + p(bs*1.1) + ';font-weight:900;color:' + mainTx + '">' + org + '</div>'
@@ -397,7 +413,7 @@ function render() {
         + (date  ? '<div style="font-size:' + p(bs*1.5) + ';font-weight:900;color:' + ac + ';margin-bottom:' + p(0.6) + '">' + date + '</div>' : '')
         + (place ? '<div style="font-size:' + p(bs*1.2) + ';color:' + subTx + ';margin-bottom:' + p(1.5) + '">' + place + '</div>' : '')
         + mainImgHtml
-        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
+        + (body  ? '<div style="font-size:' + p(bs) + ';color:' + subTx + ';line-height:1.7;white-space:pre-wrap;font-weight:' + ST.fontWeight + ';margin-bottom:' + p(1.5) + '">' + body + '</div>' : '')
         + tableHtml
         + '<div style="margin-top:auto;border-top:2px solid ' + ac + ';padding-top:' + p(1.8) + ';display:flex;justify-content:space-between;align-items:center">'
           + '<div style="font-size:' + p(bs*1.1) + ';font-weight:900;color:' + mainTx + '">' + org + '</div>'
@@ -456,6 +472,16 @@ document.getElementById('body-size-btns').querySelectorAll('.size-btn').forEach(
   });
 });
 
+// 굵기
+document.getElementById('weight-btns').querySelectorAll('.size-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    ST.fontWeight = parseInt(this.getAttribute('data-v'));
+    document.getElementById('weight-btns').querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('on'); });
+    this.classList.add('on');
+    render();
+  });
+});
+
 // 그림자
 document.getElementById('use-shadow').addEventListener('change', function() { ST.shadow = this.checked; render(); });
 
@@ -495,7 +521,45 @@ function loadFile(file, key, ctrlId) {
   rd.readAsDataURL(file);
 }
 setupDrop('dropz1','img1-input','img1-ctrl','btn-rm1','bgImg');
-setupDrop('dropz2','img2-input','img2-ctrl','btn-rm2','mainImg');
+// 메인 이미지 다중 처리
+var dz2 = document.getElementById('dropz2');
+var inp2 = document.getElementById('img2-input');
+dz2.addEventListener('click', function() { inp2.click(); });
+dz2.addEventListener('dragover', function(e) { e.preventDefault(); dz2.classList.add('over'); });
+dz2.addEventListener('dragleave', function() { dz2.classList.remove('over'); });
+dz2.addEventListener('drop', function(e) { e.preventDefault(); dz2.classList.remove('over'); loadMultiImg(e.dataTransfer.files); });
+inp2.addEventListener('change', function() { loadMultiImg(this.files); });
+
+function loadMultiImg(files) {
+  var arr = Array.from(files);
+  var loaded = 0;
+  arr.forEach(function(file) {
+    var rd = new FileReader();
+    rd.onload = function(e) {
+      ST.mainImgs.push(e.target.result);
+      loaded++;
+      if (loaded === arr.length) { renderImgList(); render(); }
+    };
+    rd.readAsDataURL(file);
+  });
+}
+
+function renderImgList() {
+  var list = document.getElementById('img2-list');
+  if (!ST.mainImgs.length) { list.innerHTML = ''; return; }
+  list.innerHTML = ST.mainImgs.map(function(src, i) {
+    return '<div style="position:relative;display:inline-block">'
+      + '<img src="' + src + '" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--bdr)"/>'
+      + '<button onclick="removeImg(' + i + ')" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--rd);color:#fff;border:none;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0">×</button>'
+      + '</div>';
+  }).join('');
+}
+
+function removeImg(idx) {
+  ST.mainImgs.splice(idx, 1);
+  renderImgList();
+  render();
+}
 document.getElementById('overlay-val').addEventListener('input', function() { ST.overlay = parseInt(this.value); render(); });
 
 // QR
@@ -537,7 +601,7 @@ document.getElementById('btn-reset').addEventListener('click', function() {
   ST.bgImg = null; ST.mainImg = null; ST.qrDataUrl = null;
   ST.showQr = false; ST.showTable = false; ST.shadow = false;
   document.getElementById('img1-ctrl').style.display = 'none';
-  document.getElementById('img2-ctrl').style.display = 'none';
+  ST.mainImgs = []; renderImgList();
   document.getElementById('show-qr').checked = false;
   document.getElementById('show-table').checked = false;
   document.getElementById('use-shadow').checked = false;
