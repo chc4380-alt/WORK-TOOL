@@ -6,13 +6,13 @@
 <title>카드뉴스 메이커</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
 <!-- 구글 폰트 -->
-<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet"/>
-<!-- 눈누 폰트 CDN -->
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Do+Hyeon&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet"/>
+<!-- 눈누 폰트 - 실제 서비스 URL -->
 <style>
-@font-face{font-family:'TTTteokbokki';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2111-2@1.0/TTTteokbokki.woff2') format('woff2');font-weight:normal}
-@font-face{font-family:'MapoBackpacking';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/MapoBackpacking.woff2') format('woff2');font-weight:normal}
-@font-face{font-family:'MapleStory';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryBold.woff') format('woff');font-weight:normal}
-@font-face{font-family:'Jalnan';src:url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_four@1.2/Jalnan.woff') format('woff');font-weight:normal}
+@font-face{font-family:'TTTteokbokki';src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2111-2@1.0/TTTteokbokki.woff2') format('woff2'),url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2111-2@1.0/TTTteokbokki.woff2') format('woff2');font-weight:normal;font-display:swap}
+@font-face{font-family:'MapoBackpacking';src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/MapoBackpacking.woff2') format('woff2');font-weight:normal;font-display:swap}
+@font-face{font-family:'MapleStory';src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryBold.woff') format('woff');font-weight:normal;font-display:swap}
+@font-face{font-family:'Jalnan';src:url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_four@1.2/Jalnan.woff') format('woff');font-weight:normal;font-display:swap}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
@@ -91,10 +91,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
       <div class="pb">
         <div class="fg" style="margin-bottom:8px"><label>타이틀 폰트</label>
           <div class="grid3" style="margin-top:4px">
-            <button class="sel-btn on" id="font-0" style="font-family:'TTTteokbokki',sans-serif;font-size:11px">한교안심<br>떡볶이체</button>
-            <button class="sel-btn" id="font-1" style="font-family:'MapleStory',sans-serif;font-size:11px">메이플<br>스토리체</button>
-            <button class="sel-btn" id="font-2" style="font-family:'MapoBackpacking',sans-serif;font-size:11px">마포구<br>배낭여행체</button>
-            <button class="sel-btn" id="font-3" style="font-family:'Jalnan',sans-serif;font-size:11px">여기어때<br>잘난체</button>
+            <button class="sel-btn on" id="font-0" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:11px">한교안심<br>떡볶이체</button>
+            <button class="sel-btn" id="font-1" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:11px">메이플<br>스토리체</button>
+            <button class="sel-btn" id="font-2" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:11px">마포구<br>배낭여행체</button>
+            <button class="sel-btn" id="font-3" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:11px">여기어때<br>잘난체</button>
             <button class="sel-btn" id="font-4" style="font-family:'Black Han Sans',sans-serif;font-size:11px">블랙<br>한산스</button>
           </div>
         </div>
@@ -237,7 +237,7 @@ var ST = {
   showTable: false,
   showQr: false,
   qrDataUrl: null,
-  font: "'TTTteokbokki',sans-serif",
+  font: "'TTTteokbokki','Jua',sans-serif",
   titleSize: 12,
   bodySize: 2.0,
   fontWeight: 700,
@@ -441,7 +441,13 @@ for (var ti = 0; ti < 3; ti++) {
 }
 
 // 폰트
-var FONTS = ["'TTTteokbokki',sans-serif","'MapleStory',sans-serif","'MapoBackpacking',sans-serif","'Jalnan',sans-serif","'Black Han Sans',sans-serif"];
+var FONTS = [
+  "'TTTteokbokki','Jua',sans-serif",
+  "'MapleStory','Do Hyeon',sans-serif",
+  "'MapoBackpacking','Jua',sans-serif",
+  "'Jalnan','Black Han Sans',sans-serif",
+  "'Black Han Sans',sans-serif"
+];
 for (var fi = 0; fi < 5; fi++) {
   (function(n) {
     document.getElementById('font-' + n).addEventListener('click', function() {
