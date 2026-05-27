@@ -91,7 +91,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
   .topbar,.tabs,.noprint{display:none!important}
   body{padding:0;background:#fff;margin:0}
   .wrap{padding:0;max-width:100%}
-  #rdoc{border:none;padding:6px 12px;font-size:9.5px;line-height:1.35}
+  #rdoc{border:none;padding:16px 12px 6px;font-size:9.5px;line-height:1.35}
 
   /* 제목 */
   .rtitle{font-size:12px;margin-bottom:1px;letter-spacing:.03em}
@@ -127,7 +127,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
   .bl{width:70px;font-size:7.5px}
   .bw{height:7px}
   .bf{height:7px}
-  .bp{width:26px;font-size:8px}
+  .bp{width:34px;font-size:8px;overflow:visible}
+  #r-aware-wrap{overflow:hidden;padding-right:4px}
 
   /* ── 하단: 도움된점(좌) + 기타(우) 2단 ── */
   .print-bottom{display:flex;gap:12px;align-items:flex-start;margin-top:4px}
@@ -276,29 +277,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 </div>
 
 <script>
-// ── 실제 구글폼 컬럼명 패턴 (폼 확인 완료) ─────────────────────────────
 const COL_PATTERNS = {
   grade:   ['교급'],
   gender:  ['성별'],
   overall: ['전반적인 만족도', 'ⅰ. 전반적'],
-  // 프로그램 그리드: "Ⅱ. 프로그램 분야 [항목명]"
   prog_0:  ['적극적으로 참여'],
   prog_1:  ['자발적인 선택'],
   prog_2:  ['흥미롭고 유익'],
   prog_3:  ['수준에 적합'],
   prog_4:  ['기자재'],
   prog_5:  ['안전교육'],
-  // 지도자 그리드: "Ⅲ. 지도자 분야 [항목명]"
   lead_0:  ['친절하다'],
   lead_1:  ['열성적'],
   lead_2:  ['전문적으로 활동'],
   lead_3:  ['존중하며'],
   lead_4:  ['폭언'],
-  // 시설 그리드: "Ⅳ. 시설/환경 분야 [항목명]"
   fac_0:   ['활동시설은'],
   fac_1:   ['편의시설'],
   fac_2:   ['대피로'],
-  // 인식조사
   before:  ['참여 전 어떤 활동', '참여하기 전'],
   after:   ['참여 후 어떤 활동', '참여한 후'],
   want:    ['참여하고 싶은 프로그램', '희망'],
@@ -347,7 +343,6 @@ const AWARE_OPTS = {
 
 let csvHeaders = [], csvRows = [], colMap = {}, parsedData = [];
 
-// ── CSV 처리 ─────────────────────────────────────────────────────────
 function handleDrop(ev) {
   ev.preventDefault();
   document.getElementById('dz').classList.remove('over');
@@ -379,7 +374,6 @@ function parseCSVLine(line) {
   return res;
 }
 
-// ── 자동 매핑 ────────────────────────────────────────────────────────
 function autoMap() {
   colMap = {};
   Object.keys(COL_PATTERNS).forEach(key => {
@@ -443,7 +437,6 @@ function applyAndGo() {
   go('result');
 }
 
-// ── 결과 렌더 ─────────────────────────────────────────────────────────
 function avg(arr) { return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null; }
 function fmt(v)   { return v!=null ? v.toFixed(1) : '-'; }
 
@@ -461,10 +454,8 @@ function renderResult() {
      <div>□ 시 행 일 시 : <b>${date}</b></div>
      <div style="margin-top:6px">○ 조사인원: <b>${n}명</b>&emsp;남 <b>${men}</b>&emsp;여 <b>${women}</b></div>`;
 
-  // 전반적 만족도
   const ovAvg = avg(parsedData.map(r=>r.overall).filter(v=>v!=null));
 
-  // 분야별
   const dRes = SAT_DEF.map(d => {
     const ia = d.keys.map(k => avg(parsedData.map(r=>r[k]).filter(v=>v!=null)));
     return { ...d, ia, da: avg(ia.filter(v=>v!=null)) };
@@ -473,11 +464,9 @@ function renderResult() {
 
   const q4avg = avg(parsedData.map(r=>r.q4).filter(v=>v!=null));
   const q5avg = avg(parsedData.map(r=>r.q5).filter(v=>v!=null));
-  // 도움여부: "예" or "아니오"
   const q6yes = parsedData.filter(r => r.q6 && r.q6.trim() === '예').length;
   const q6no  = n - q6yes;
 
-  // 점수표
   let tbl = `<table class="rtbl">
     <tr><th>항 목</th><th style="width:120px">조 사 결 과</th></tr>
     <tr><td style="font-weight:700">1. 전반적인 만족도</td><td class="sc">${fmt(ovAvg)}</td></tr>`;
@@ -496,7 +485,6 @@ function renderResult() {
   </table>`;
   document.getElementById('r-tbl').innerHTML = tbl;
 
-  // 인식조사 막대
   const awareDef = [
     {key:'before', label:'3-1.참여전', opts:AWARE_OPTS.before},
     {key:'after',  label:'3-2.참여후', opts:AWARE_OPTS.after},
@@ -508,7 +496,6 @@ function renderResult() {
     aw += `<div style="margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;margin-bottom:5px">${a.label}</div>`;
     a.opts.forEach((opt, i) => {
-      // 구글폼 저장값과 정확히 매칭 (원문자 포함), 기타는 별도 처리
       const isEtc = opt.includes('기타');
       const cnt = isEtc
         ? vals.filter(v => v && !AWARE_OPTS[a.key].slice(0,-1).includes(v)).length
@@ -524,7 +511,6 @@ function renderResult() {
   });
   document.getElementById('r-aware').innerHTML = aw;
 
-  // 도움된 점
   const helps = parsedData.map(r=>r.help).filter(v=>v&&v.trim());
   const hb = document.getElementById('r-help-blk');
   if (helps.length) {
@@ -537,7 +523,6 @@ function renderResult() {
       </div>`).join('');
   } else hb.style.display='none';
 
-  // 기타 의견
   const ops = parsedData.map(r=>r.opinion).filter(v=>v&&v.trim());
   const ob  = document.getElementById('r-op-blk');
   if (ops.length) {
