@@ -302,8 +302,8 @@ function render() {
 
   var tag   = document.getElementById('f-tag').value.trim();
   var title = document.getElementById('f-title').value.trim() || '제목 입력';
-  var date  = document.getElementById('f-date').value.trim();
-  var place = document.getElementById('f-place').value.trim();
+  var date  = document.getElementById('f-date').value.trim().replace(/\n/g,'<br>');
+  var place = document.getElementById('f-place').value.trim().replace(/\n/g,'<br>');
   var body  = document.getElementById('f-body').value.trim();
   var org   = document.getElementById('f-org').value.trim();
   var qrLbl = document.getElementById('f-qr-label').value.trim() || '신청하기';
