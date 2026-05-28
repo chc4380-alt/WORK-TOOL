@@ -63,6 +63,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 .size-btns{display:flex;gap:4px}
 .size-btn{padding:5px 10px;border:1.5px solid var(--bdr);border-radius:var(--rs);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:var(--sub);transition:.15s;font-family:inherit}
 .size-btn.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.wt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.wt-grid .size-btn{padding:7px 4px;font-size:12px;text-align:center;white-space:nowrap;width:100%}
 </style>
 </head>
 <body>
@@ -73,212 +75,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
 </div>
 <div class="page">
   <div>
-    <!-- 폰트 -->
-    <div class="panel">
-      <div class="ph"><i class="ti ti-typography pi"></i><h2>텍스트 스타일</h2></div>
-      <div class="pb" style="padding-bottom:4px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <label style="font-size:12px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer">
-            <input type="checkbox" id="use-shadow" style="accent-color:var(--ac)"/> 타이틀 그림자 효과
-          </label>
-        </div>
-        
-        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
-          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">🔤 타이틀</div>
-          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
-            
-            <div class="grid3" style="margin-top:4px">
-              <button class="sel-btn" data-key="title" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
-              <button class="sel-btn" data-key="title" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
-              <button class="sel-btn" data-key="title" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
-              <button class="sel-btn" data-key="title" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
-              <button class="sel-btn" data-key="title" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
-              <button class="sel-btn" data-key="title" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
-              <div class="size-btns" id="sz-title">
-                <button class="size-btn" data-key="title" data-type="size" data-v="6">소</button>
-                <button class="size-btn" data-key="title" data-type="size" data-v="9">중</button>
-                <button class="size-btn on" data-key="title" data-type="size" data-v="12">대</button>
-                <button class="size-btn" data-key="title" data-type="size" data-v="15">특대</button>
-              </div>
-            </div>
-            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
-              <div class="size-btns" id="wt-title">
-                <button class="size-btn" data-key="title" data-type="weight" data-v="300">가늘게</button>
-                <button class="size-btn" data-key="title" data-type="weight" data-v="500">보통</button>
-                <button class="size-btn on" data-key="title" data-type="weight" data-v="700">굵게</button>
-                <button class="size-btn on" data-key="title" data-type="weight" data-v="900">진하게</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
-          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">🏷 소제목 태그</div>
-          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
-            
-            <div class="grid3" style="margin-top:4px">
-              <button class="sel-btn" data-key="tag" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
-              <button class="sel-btn" data-key="tag" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
-              <button class="sel-btn" data-key="tag" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
-              <button class="sel-btn" data-key="tag" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
-              <button class="sel-btn" data-key="tag" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
-              <button class="sel-btn" data-key="tag" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
-              <div class="size-btns" id="sz-tag">
-                <button class="size-btn" data-key="tag" data-type="size" data-v="1.5">소</button>
-                <button class="size-btn" data-key="tag" data-type="size" data-v="2.0">중</button>
-                <button class="size-btn on" data-key="tag" data-type="size" data-v="2.8">대</button>
-                <button class="size-btn" data-key="tag" data-type="size" data-v="3.5">특대</button>
-              </div>
-            </div>
-            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
-              <div class="size-btns" id="wt-tag">
-                <button class="size-btn" data-key="tag" data-type="weight" data-v="300">가늘게</button>
-                <button class="size-btn" data-key="tag" data-type="weight" data-v="500">보통</button>
-                <button class="size-btn on" data-key="tag" data-type="weight" data-v="700">굵게</button>
-                <button class="size-btn " data-key="tag" data-type="weight" data-v="900">진하게</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
-          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">📅 날짜 / 시간</div>
-          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
-            
-            <div class="grid3" style="margin-top:4px">
-              <button class="sel-btn" data-key="date" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
-              <button class="sel-btn" data-key="date" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
-              <button class="sel-btn" data-key="date" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
-              <button class="sel-btn" data-key="date" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
-              <button class="sel-btn" data-key="date" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
-              <button class="sel-btn" data-key="date" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
-              <div class="size-btns" id="sz-date">
-                <button class="size-btn" data-key="date" data-type="size" data-v="1.5">소</button>
-                <button class="size-btn" data-key="date" data-type="size" data-v="2.0">중</button>
-                <button class="size-btn on" data-key="date" data-type="size" data-v="2.8">대</button>
-                <button class="size-btn" data-key="date" data-type="size" data-v="3.5">특대</button>
-              </div>
-            </div>
-            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
-              <div class="size-btns" id="wt-date">
-                <button class="size-btn" data-key="date" data-type="weight" data-v="300">가늘게</button>
-                <button class="size-btn" data-key="date" data-type="weight" data-v="500">보통</button>
-                <button class="size-btn " data-key="date" data-type="weight" data-v="700">굵게</button>
-                <button class="size-btn " data-key="date" data-type="weight" data-v="900">진하게</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
-          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">📍 장소</div>
-          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
-            
-            <div class="grid3" style="margin-top:4px">
-              <button class="sel-btn" data-key="place" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
-              <button class="sel-btn" data-key="place" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
-              <button class="sel-btn" data-key="place" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
-              <button class="sel-btn" data-key="place" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
-              <button class="sel-btn" data-key="place" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
-              <button class="sel-btn" data-key="place" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
-              <div class="size-btns" id="sz-place">
-                <button class="size-btn" data-key="place" data-type="size" data-v="1.5">소</button>
-                <button class="size-btn" data-key="place" data-type="size" data-v="2.0">중</button>
-                <button class="size-btn on" data-key="place" data-type="size" data-v="2.8">대</button>
-                <button class="size-btn" data-key="place" data-type="size" data-v="3.5">특대</button>
-              </div>
-            </div>
-            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
-              <div class="size-btns" id="wt-place">
-                <button class="size-btn" data-key="place" data-type="weight" data-v="300">가늘게</button>
-                <button class="size-btn" data-key="place" data-type="weight" data-v="500">보통</button>
-                <button class="size-btn " data-key="place" data-type="weight" data-v="700">굵게</button>
-                <button class="size-btn " data-key="place" data-type="weight" data-v="900">진하게</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
-          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">📝 본문</div>
-          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
-            
-            <div class="grid3" style="margin-top:4px">
-              <button class="sel-btn" data-key="body" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
-              <button class="sel-btn" data-key="body" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
-              <button class="sel-btn" data-key="body" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
-              <button class="sel-btn" data-key="body" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
-              <button class="sel-btn" data-key="body" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
-              <button class="sel-btn" data-key="body" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
-              <div class="size-btns" id="sz-body">
-                <button class="size-btn" data-key="body" data-type="size" data-v="1.5">소</button>
-                <button class="size-btn" data-key="body" data-type="size" data-v="2.0">중</button>
-                <button class="size-btn on" data-key="body" data-type="size" data-v="2.8">대</button>
-                <button class="size-btn" data-key="body" data-type="size" data-v="3.5">특대</button>
-              </div>
-            </div>
-            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
-              <div class="size-btns" id="wt-body">
-                <button class="size-btn" data-key="body" data-type="weight" data-v="300">가늘게</button>
-                <button class="size-btn" data-key="body" data-type="weight" data-v="500">보통</button>
-                <button class="size-btn " data-key="body" data-type="weight" data-v="700">굵게</button>
-                <button class="size-btn " data-key="body" data-type="weight" data-v="900">진하게</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style="border-bottom:1px solid var(--bdl);padding:12px 0">
-          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">🏢 기관명</div>
-          <div class="fg" style="margin-bottom:6px"><label>폰트</label>
-            
-            <div class="grid3" style="margin-top:4px">
-              <button class="sel-btn" data-key="org" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
-              <button class="sel-btn" data-key="org" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
-              <button class="sel-btn" data-key="org" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
-              <button class="sel-btn" data-key="org" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
-              <button class="sel-btn" data-key="org" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
-              <button class="sel-btn" data-key="org" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
-            </div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div class="fg" style="margin-bottom:0;flex:1"><label>크기</label>
-              <div class="size-btns" id="sz-org">
-                <button class="size-btn" data-key="org" data-type="size" data-v="1.5">소</button>
-                <button class="size-btn" data-key="org" data-type="size" data-v="2.0">중</button>
-                <button class="size-btn on" data-key="org" data-type="size" data-v="2.8">대</button>
-                <button class="size-btn" data-key="org" data-type="size" data-v="3.5">특대</button>
-              </div>
-            </div>
-            <div class="fg" style="margin-bottom:0;flex:1"><label>굵기</label>
-              <div class="size-btns" id="wt-org">
-                <button class="size-btn" data-key="org" data-type="weight" data-v="300">가늘게</button>
-                <button class="size-btn" data-key="org" data-type="weight" data-v="500">보통</button>
-                <button class="size-btn on" data-key="org" data-type="weight" data-v="700">굵게</button>
-                <button class="size-btn " data-key="org" data-type="weight" data-v="900">진하게</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- 탭 전환 -->
+    <div style="display:flex;gap:2px;padding:4px;background:var(--bg);border-radius:10px;border:1px solid var(--bdr);margin-bottom:14px">
+      <button id="tab-design" class="tab-btn on" onclick="switchTab('design')" style="flex:1;padding:9px;font-size:13px;font-weight:600;border:none;background:#fff;border-radius:8px;cursor:pointer;font-family:inherit;color:var(--tx);box-shadow:0 1px 4px rgba(0,0,0,.08)">🎨 디자인</button>
+      <button id="tab-text" class="tab-btn" onclick="switchTab('text')" style="flex:1;padding:9px;font-size:13px;font-weight:600;border:none;background:transparent;border-radius:8px;cursor:pointer;font-family:inherit;color:var(--mt)">✏️ 텍스트 스타일</button>
     </div>
 
-    <!-- 템플릿 -->
+    <!-- 디자인 탭 -->
+    <div id="pane-design">
+<!-- 템플릿 -->
     <div class="panel">
       <div class="ph"><i class="ti ti-layout pi"></i><h2>템플릿</h2></div>
       <div class="pb">
@@ -387,6 +192,160 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;back
     <div class="preview-actions">
       <button class="btn btp" id="btn-save"><i class="ti ti-download"></i> PNG 저장</button>
       <button class="btn bto" id="btn-reset"><i class="ti ti-refresh"></i> 초기화</button>
+    </div>
+    </div>
+
+    <!-- 텍스트 스타일 탭 -->
+    <div id="pane-text" style="display:none">
+<!-- 폰트 -->
+    <div class="panel">
+      <div class="ph"><i class="ti ti-typography pi"></i><h2>텍스트 스타일</h2></div>
+      <div class="pb" style="padding-bottom:4px">
+        <div style="padding-bottom:10px;border-bottom:1px solid var(--bdl);margin-bottom:4px">
+          <label style="font-size:12px;font-weight:600;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="use-shadow" style="accent-color:var(--ac)"/> 타이틀 그림자 효과
+          </label>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:14px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:10px">🔤 타이틀</div>
+          <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">폰트</div>
+          <div class="grid3" style="margin-bottom:10px">
+              <button class="sel-btn" data-key="title" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="title" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="title" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="title" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="title" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="title" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+              
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">크기</div>
+              <div class="size-btns" id="sz-title"><button class="size-btn" data-key="title" data-type="size" data-v="6">소</button><button class="size-btn" data-key="title" data-type="size" data-v="9">중</button><button class="size-btn on" data-key="title" data-type="size" data-v="12">대</button><button class="size-btn" data-key="title" data-type="size" data-v="15">특대</button></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">굵기</div>
+              <div class="wt-grid" id="wt-title"><button class="size-btn" data-key="title" data-type="weight" data-v="300">가늘게</button><button class="size-btn" data-key="title" data-type="weight" data-v="500">보통</button><button class="size-btn" data-key="title" data-type="weight" data-v="700">굵게</button><button class="size-btn on" data-key="title" data-type="weight" data-v="900">진하게</button></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:14px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:10px">🏷 소제목 태그</div>
+          <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">폰트</div>
+          <div class="grid3" style="margin-bottom:10px">
+              <button class="sel-btn" data-key="tag" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="tag" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="tag" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="tag" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="tag" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="tag" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+              
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">크기</div>
+              <div class="size-btns" id="sz-tag"><button class="size-btn" data-key="tag" data-type="size" data-v="1.5">소</button><button class="size-btn" data-key="tag" data-type="size" data-v="2.0">중</button><button class="size-btn on" data-key="tag" data-type="size" data-v="2.8">대</button><button class="size-btn" data-key="tag" data-type="size" data-v="3.5">특대</button></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">굵기</div>
+              <div class="wt-grid" id="wt-tag"><button class="size-btn" data-key="tag" data-type="weight" data-v="300">가늘게</button><button class="size-btn" data-key="tag" data-type="weight" data-v="500">보통</button><button class="size-btn on" data-key="tag" data-type="weight" data-v="700">굵게</button><button class="size-btn" data-key="tag" data-type="weight" data-v="900">진하게</button></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:14px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:10px">📅 날짜/시간</div>
+          <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">폰트</div>
+          <div class="grid3" style="margin-bottom:10px">
+              <button class="sel-btn" data-key="date" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="date" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="date" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="date" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="date" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="date" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+              
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">크기</div>
+              <div class="size-btns" id="sz-date"><button class="size-btn" data-key="date" data-type="size" data-v="1.5">소</button><button class="size-btn" data-key="date" data-type="size" data-v="2.0">중</button><button class="size-btn on" data-key="date" data-type="size" data-v="2.8">대</button><button class="size-btn" data-key="date" data-type="size" data-v="3.5">특대</button></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">굵기</div>
+              <div class="wt-grid" id="wt-date"><button class="size-btn" data-key="date" data-type="weight" data-v="300">가늘게</button><button class="size-btn" data-key="date" data-type="weight" data-v="500">보통</button><button class="size-btn on" data-key="date" data-type="weight" data-v="700">굵게</button><button class="size-btn" data-key="date" data-type="weight" data-v="900">진하게</button></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:14px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:10px">📍 장소</div>
+          <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">폰트</div>
+          <div class="grid3" style="margin-bottom:10px">
+              <button class="sel-btn" data-key="place" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="place" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="place" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="place" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="place" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="place" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+              
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">크기</div>
+              <div class="size-btns" id="sz-place"><button class="size-btn" data-key="place" data-type="size" data-v="1.5">소</button><button class="size-btn" data-key="place" data-type="size" data-v="2.0">중</button><button class="size-btn" data-key="place" data-type="size" data-v="2.8">대</button><button class="size-btn" data-key="place" data-type="size" data-v="3.5">특대</button></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">굵기</div>
+              <div class="wt-grid" id="wt-place"><button class="size-btn" data-key="place" data-type="weight" data-v="300">가늘게</button><button class="size-btn on" data-key="place" data-type="weight" data-v="500">보통</button><button class="size-btn" data-key="place" data-type="weight" data-v="700">굵게</button><button class="size-btn" data-key="place" data-type="weight" data-v="900">진하게</button></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:14px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:10px">📝 본문</div>
+          <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">폰트</div>
+          <div class="grid3" style="margin-bottom:10px">
+              <button class="sel-btn" data-key="body" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="body" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="body" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="body" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="body" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="body" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+              
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">크기</div>
+              <div class="size-btns" id="sz-body"><button class="size-btn" data-key="body" data-type="size" data-v="1.5">소</button><button class="size-btn on" data-key="body" data-type="size" data-v="2.0">중</button><button class="size-btn" data-key="body" data-type="size" data-v="2.8">대</button><button class="size-btn" data-key="body" data-type="size" data-v="3.5">특대</button></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">굵기</div>
+              <div class="wt-grid" id="wt-body"><button class="size-btn" data-key="body" data-type="weight" data-v="300">가늘게</button><button class="size-btn" data-key="body" data-type="weight" data-v="500">보통</button><button class="size-btn" data-key="body" data-type="weight" data-v="700">굵게</button><button class="size-btn" data-key="body" data-type="weight" data-v="900">진하게</button></div>
+            </div>
+          </div>
+        </div>
+        <div style="border-bottom:1px solid var(--bdl);padding:14px 0">
+          <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:10px">🏢 기관명</div>
+          <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">폰트</div>
+          <div class="grid3" style="margin-bottom:10px">
+              <button class="sel-btn" data-key="org" data-font="'TTTteokbokki','Jua',sans-serif" style="font-family:'TTTteokbokki','Jua',sans-serif;font-size:10px">떡볶이체</button>
+              <button class="sel-btn" data-key="org" data-font="'MapleStory','Do Hyeon',sans-serif" style="font-family:'MapleStory','Do Hyeon',sans-serif;font-size:10px">메이플체</button>
+              <button class="sel-btn" data-key="org" data-font="'MapoBackpacking','Jua',sans-serif" style="font-family:'MapoBackpacking','Jua',sans-serif;font-size:10px">배낭여행체</button>
+              <button class="sel-btn" data-key="org" data-font="'Jalnan','Black Han Sans',sans-serif" style="font-family:'Jalnan','Black Han Sans',sans-serif;font-size:10px">잘난체</button>
+              <button class="sel-btn" data-key="org" data-font="'Black Han Sans',sans-serif" style="font-family:'Black Han Sans',sans-serif;font-size:10px">블랙한산스</button>
+              <button class="sel-btn" data-key="org" data-font="'Noto Sans KR',sans-serif" style="font-family:'Noto Sans KR',sans-serif;font-size:10px">노토산스</button>
+              
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">크기</div>
+              <div class="size-btns" id="sz-org"><button class="size-btn" data-key="org" data-type="size" data-v="1.5">소</button><button class="size-btn" data-key="org" data-type="size" data-v="2.0">중</button><button class="size-btn" data-key="org" data-type="size" data-v="2.8">대</button><button class="size-btn" data-key="org" data-type="size" data-v="3.5">특대</button></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--mt);margin-bottom:5px">굵기</div>
+              <div class="wt-grid" id="wt-org"><button class="size-btn" data-key="org" data-type="weight" data-v="300">가늘게</button><button class="size-btn" data-key="org" data-type="weight" data-v="500">보통</button><button class="size-btn" data-key="org" data-type="weight" data-v="700">굵게</button><button class="size-btn on" data-key="org" data-type="weight" data-v="900">진하게</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
   </div>
 </div>
@@ -739,6 +698,18 @@ document.getElementById('btn-add-row').addEventListener('click', function() {
 ['f-tag','f-title','f-date','f-place','f-body','f-org','f-qr-label'].forEach(function(id) {
   document.getElementById(id).addEventListener('input', render);
 });
+
+// 탭 전환
+function switchTab(tab) {
+  document.getElementById('pane-design').style.display = tab === 'design' ? '' : 'none';
+  document.getElementById('pane-text').style.display   = tab === 'text'   ? '' : 'none';
+  document.getElementById('tab-design').style.background = tab === 'design' ? '#fff' : 'transparent';
+  document.getElementById('tab-design').style.color = tab === 'design' ? 'var(--tx)' : 'var(--mt)';
+  document.getElementById('tab-design').style.boxShadow = tab === 'design' ? '0 1px 4px rgba(0,0,0,.08)' : 'none';
+  document.getElementById('tab-text').style.background = tab === 'text' ? '#fff' : 'transparent';
+  document.getElementById('tab-text').style.color = tab === 'text' ? 'var(--tx)' : 'var(--mt)';
+  document.getElementById('tab-text').style.boxShadow = tab === 'text' ? '0 1px 4px rgba(0,0,0,.08)' : 'none';
+}
 
 // 저장
 document.getElementById('btn-save').addEventListener('click', function() {
