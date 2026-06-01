@@ -76,7 +76,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .notice-info{margin-bottom:20px}
 .notice-info-row{display:flex;gap:0;margin-bottom:6px;font-size:13px}
 .notice-info-key{width:90px;font-weight:700;color:var(--text);flex-shrink:0}
-.notice-info-val{color:var(--text-sub);flex:1}
+.notice-info-val{color:var(--text-sub);flex:1}.notice-info-val.multi{padding-left:14px;text-indent:-14px}
 .notice-body{font-size:13px;line-height:2;white-space:pre-wrap;color:var(--text);margin-bottom:24px;min-height:40px}
 .notice-highlights{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
 .notice-highlight{padding:6px 14px;border-radius:20px;background:var(--accent-light);
@@ -144,13 +144,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
         <input type="text" id="f-subtitle" placeholder="예) 함께 성장하는 여름!" oninput="preview()"/>
       </div>
       <div class="row2">
-        <div class="form-group">
-          <label>일시</label>
-          <input type="text" id="f-date" placeholder="예) 2025. 8. 1.(금) 10:00" oninput="preview()"/>
-        </div>
-        <div class="form-group">
-          <label>장소</label>
-          <input type="text" id="f-place" placeholder="예) 본관 2층 대강당" oninput="preview()"/>
+        <div class="form-group" style="margin-bottom:6px">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            일시 / 장소
+            <button type="button" id="btn-add-session" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-family:inherit;color:var(--text-sub);display:flex;align-items:center;gap:4px">
+              <i class="ti ti-plus"></i> 회기 추가
+            </button>
+          </label>
+          <div id="sessions-wrap" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
         </div>
       </div>
       <div class="row2">
@@ -219,8 +220,7 @@ function preview() {
   const org = g('f-org');
   const title = g('f-title');
   const subtitle = g('f-subtitle');
-  const date = g('f-date');
-  const place = g('f-place');
+  const sessions = getSessions();
   const target = g('f-target');
   const cost = g('f-cost');
   const apply = g('f-apply');
@@ -231,8 +231,15 @@ function preview() {
   const highlights = hlRaw ? hlRaw.split(',').map(s=>s.trim()).filter(Boolean) : [];
 
   const infoRows = [
-    {k:'일  시', v:date},
-    {k:'장  소', v:place},
+    ...sessions.length > 1
+      ? [
+          {k:'일  시', v: sessions.map((s,i) => s.date  ? (i+1)+'회기 - '+s.date  : '').filter(Boolean).join('<br><span style="display:inline-block;width:14px"></span>'), multiline:true},
+          {k:'장  소', v: sessions.map((s,i) => s.place ? (i+1)+'회기 - '+s.place : '').filter(Boolean).join('<br><span style="display:inline-block;width:14px"></span>'), multiline:true},
+        ].filter(r => r.v)
+      : [
+          {k:'일  시', v: sessions[0]?.date  || ''},
+          {k:'장  소', v: sessions[0]?.place || ''},
+        ].filter(r => r.v),
     {k:'대  상', v:target},
     {k:'참 가 비', v:cost},
     {k:'신청방법', v:apply},
@@ -251,7 +258,9 @@ function preview() {
   if(infoRows.length) {
     html += `<div class="notice-info">`;
     infoRows.forEach(r=>{
-      html += `<div class="notice-info-row"><div class="notice-info-key">${esc(r.k)}</div><div class="notice-info-val">: ${esc(r.v)}</div></div>`;
+      const val = r.multiline ? ': ' + r.v : ': ' + esc(r.v);
+      const multiCls = r.multiline ? ' multi' : '';
+      html += `<div class="notice-info-row"><div class="notice-info-key">${esc(r.k)}</div><div class="notice-info-val${multiCls}">${val}</div></div>`;
     });
     html += `</div>`;
   }
@@ -287,7 +296,42 @@ function setColor(el) {
   preview();
 }
 
-function set(id, val) { document.getElementById(id).value = val; }
+function set(id, val) { var el = document.getElementById(id); if(el) el.value = val; }
+
+function getSessions() {
+  var rows = document.querySelectorAll('.session-row');
+  var result = [];
+  rows.forEach(function(row) {
+    var d = row.querySelector('.sess-date').value.trim();
+    var p = row.querySelector('.sess-place').value.trim();
+    if(d || p) result.push({date:d, place:p});
+  });
+  if(!result.length) result.push({date:'', place:''});
+  return result;
+}
+
+function addSession() {
+  appendSession('', '');
+}
+
+function appendSession(date, place) {
+  var wrap = document.getElementById('sessions-wrap');
+  var idx = wrap.children.length + 1;
+  var div = document.createElement('div');
+  div.className = 'session-row';
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;background:#f8f8f6;border-radius:8px;padding:8px;border:1px solid var(--border-light)';
+  div.innerHTML = '<input type="text" class="sess-date" placeholder="예) 2025.8.1.(금) 10:00" style="border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none"/>'
+    + '<input type="text" class="sess-place" placeholder="예) 본관 2층" style="border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;outline:none"/>'
+    + '<button type="button" class="btn-remove-session" style="width:28px;height:28px;border:1px solid var(--red-border,#fecaca);border-radius:6px;background:var(--red-light,#fef2f2);color:#dc2626;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit">×</button>';
+  div.querySelector('.sess-date').value = date;
+  div.querySelector('.sess-place').value = place;
+  div.querySelectorAll('input').forEach(function(inp){ inp.addEventListener('input', preview); });
+  div.querySelector('.btn-remove-session').addEventListener('click', function(){
+    div.remove(); preview();
+  });
+  wrap.appendChild(div);
+  preview();
+}
 
 function loadTpl(type) {
   const tpls = {
@@ -361,15 +405,20 @@ function loadTpl(type) {
   const t = tpls[type];
   if(!t) return;
   set('f-org', t.org); set('f-title', t.title); set('f-subtitle', t.subtitle);
-  set('f-date', t.date); set('f-place', t.place); set('f-target', t.target);
+  set('f-target', t.target);
   set('f-cost', t.cost); set('f-apply', t.apply); set('f-body', t.body);
   set('f-highlights', t.highlights); set('f-contact', t.contact);
+  // 회기 초기화
+  document.getElementById('sessions-wrap').innerHTML = '';
+  appendSession(t.date, t.place);
   preview();
 }
 
 function clearAll() {
-  ['f-org','f-title','f-subtitle','f-date','f-place','f-target','f-cost','f-apply','f-body','f-highlights','f-contact']
+  ['f-org','f-title','f-subtitle','f-target','f-cost','f-apply','f-body','f-highlights','f-contact']
     .forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sessions-wrap').innerHTML = '';
+  appendSession('', '');
   preview();
 }
 
@@ -377,8 +426,8 @@ function copyText() {
   const org     = g('f-org');
   const title   = g('f-title');
   const subtitle= g('f-subtitle');
-  const date    = g('f-date');
-  const place   = g('f-place');
+  // 회기별 일시/장소
+  const sessions = getSessions();
   const target  = g('f-target');
   const cost    = g('f-cost');
   const apply   = g('f-apply');
@@ -400,9 +449,18 @@ function copyText() {
 
   txt += '\n' + line + '\n';
 
-  // 정보
-  if(date)   txt += `\n📅 일  시  ${date}\n`;
-  if(place)  txt += `📍 장  소  ${place}\n`;
+  // 정보 - 회기별 일시/장소
+  txt += '\n';
+  if(sessions.length > 1) {
+    const indent = '                 ';
+    const dateParts  = sessions.map((s,i) => s.date  ? (i+1)+'회기 - '+s.date  : '').filter(Boolean);
+    const placeParts = sessions.map((s,i) => s.place ? (i+1)+'회기 - '+s.place : '').filter(Boolean);
+    if(dateParts.length)  txt += `📅 일  시  ${dateParts.join('\n'+indent)}\n`;
+    if(placeParts.length) txt += `📍 장  소  ${placeParts.join('\n'+indent)}\n`;
+  } else {
+    if(sessions[0]?.date)  txt += `📅 일  시  ${sessions[0].date}\n`;
+    if(sessions[0]?.place) txt += `📍 장  소  ${sessions[0].place}\n`;
+  }
   if(target) txt += `👥 대  상  ${target}\n`;
   if(cost)   txt += `💰 참 가 비  ${cost}\n`;
   if(apply)  txt += `📝 신청방법  ${apply}\n`;
@@ -432,6 +490,7 @@ function copyText() {
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
+document.getElementById('btn-add-session').addEventListener('click', function(){ appendSession('',''); });
 loadTpl('program');
 </script>
 </body>
