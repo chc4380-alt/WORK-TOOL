@@ -450,12 +450,12 @@ button {
   <div class="card-body">
     <div class="row">
       <div class="field">
-        <label>동아리명 <span class="req">*</span></label>
-        <input type="text" id="동아리명" placeholder="예) 청소년밴드부">
+        <label>동아리명 <span style="font-size:11px;color:var(--text-sub);font-weight:400">(동아리 활동이 아니면 비워두세요)</span></label>
+        <input type="text" id="동아리명" placeholder="예) 청소년밴드부  (선택)">
       </div>
       <div class="field">
         <label>활동이름 <span class="req">*</span></label>
-        <input type="text" id="활동이름" placeholder="예) 정기공연">
+        <input type="text" id="활동이름" placeholder="예) 정기공연  /  볼링 단합활동">
       </div>
     </div>
     <div class="row">
@@ -1000,8 +1000,8 @@ async function generateAI() {
   const 활동이름 = document.getElementById('활동이름').value.trim();
   const 간단설명 = document.getElementById('간단설명').value.trim();
   
-  if(!동아리명||!활동이름) {
-    showStatus('mainStatus', '동아리명과 활동이름을 먼저 입력하세요.', 'error');
+  if(!활동이름) {
+    showStatus('mainStatus', '활동이름을 입력하세요.', 'error');
     return;
   }
 
@@ -1024,7 +1024,7 @@ async function generateAI() {
   
   const prompt = `당신은 광양시청소년문화센터 직원입니다. 아래 청소년 동아리 활동에 대한 기안문을 작성합니다.
 
-동아리명: ${동아리명}
+${동아리명 ? `동아리명: ${동아리명}` : '(동아리 활동 아님)'}
 활동명: ${활동이름}
 일시: ${document.getElementById('일시').value}
 장소: ${document.getElementById('장소').value}
@@ -1164,7 +1164,7 @@ function buildBudgetRows(items) {
 
 // ── HWPX 생성 (브라우저 전용, 서버 불필요) ────────────────────
 async function generateHWPX() {
-  const required = ['사업명','기안번호','기안자','기안일시','시행일시','동아리명','활동이름','일시','장소','참여인원'];
+  const required = ['사업명','기안번호','기안자','기안일시','시행일시','활동이름','일시','장소','참여인원'];
   for(const id of required) {
     if(!document.getElementById(id).value.trim()) {
       showStatus('mainStatus', `"${id}" 항목을 입력하세요.`, 'error');
@@ -1191,7 +1191,7 @@ async function generateHWPX() {
     const 일시     = document.getElementById('일시').value.trim();
     const 장소     = document.getElementById('장소').value.trim();
     const 참여인원 = document.getElementById('참여인원').value.trim();
-    const 붙임2   = document.getElementById('붙임2').value.trim() || `${동아리명} ${활동이름}`;
+    const 붙임2   = document.getElementById('붙임2').value.trim() || (동아리명 ? `${동아리명} ${활동이름}` : 활동이름);
     const 활동내용 = document.getElementById('활동내용').value.trim();
     const 법조항직접 = document.getElementById('법조항직접').value.trim();
     const 법조항번호 = document.getElementById('법조항').value.trim();
@@ -1209,7 +1209,7 @@ async function generateHWPX() {
     const totalStr = totalAmt.toLocaleString()+'원';
 
     // 을/를 판단
-    const lastChar = (동아리명+' '+활동이름).trimEnd().slice(-1);
+    const lastChar = (동아리명 ? 동아리명+' '+활동이름 : 활동이름).trimEnd().slice(-1);
     const code = lastChar.charCodeAt(0) - 0xAC00;
     const 을를 = (code>=0 && code<11172 && code%28!==0) ? '을' : '를';
 
@@ -1224,11 +1224,11 @@ async function generateHWPX() {
     xml = xml.replace('0000. 0. 0.', 기안일시);
     xml = xml.replace('0000. 0. 0.', 시행일시);
     // 제목
-    xml = replaceAll(xml, '동아리 명 + 활동 이름', `${동아리명} ${활동이름}`);
+    xml = replaceAll(xml, '동아리 명 + 활동 이름', 동아리명 ? `${동아리명} ${활동이름}` : 활동이름);
     // 을/를
     xml = replaceAll(xml, '을/를', 을를);
     // 제목과 동일 → 활동명 전체 교체
-    xml = replaceAll(xml, '제목과 동일', `${동아리명} ${활동이름}`);
+    xml = replaceAll(xml, '제목과 동일', 동아리명 ? `${동아리명} ${활동이름}` : 활동이름);
     // 일시·장소·참여인원
     xml = replaceAll(xml, '0000년 0월 0일(요일) 0:00~0:00(24시간제)', 일시);
     xml = replaceAll(xml, '장소명', 장소);
@@ -1238,7 +1238,7 @@ async function generateHWPX() {
     // 붙임2
     xml = replaceAll(xml, '동아리 명 또는 활동 제목', 붙임2);
     // 활동계획서 헤더
-    xml = replaceAll(xml, '동아리 명', 동아리명);
+    xml = replaceAll(xml, '동아리 명', 동아리명 || '');
     xml = replaceAll(xml, '활동 제목(동아리 명 표기X)', 활동이름);
     // 법조항
     const 법조항_m = 법조항번호.match(/(\d+)/);
@@ -1312,7 +1312,7 @@ async function generateHWPX() {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url;
-    a.download = `${동아리명}_${활동이름}_기안.hwpx`;
+    a.download = `${동아리명 ? 동아리명+'_' : ''}${활동이름}_기안.hwpx`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
