@@ -1225,10 +1225,10 @@ async function buildHwpx(xmlText) {
     const local = locals[i*2]; // lh
     // CRC, compSz, origSz를 local header에서 읽기
     const lv = new DataView(local.buffer, local.byteOffset);
-    const method = lv.getUint16(6,true);
-    const crc    = lv.getUint32(10,true);
-    const compSz = lv.getUint32(14,true);
-    const origSz = lv.getUint32(18,true);
+    const method = lv.getUint16(8,true);
+    const crc    = lv.getUint32(14,true);
+    const compSz = lv.getUint32(18,true);
+    const origSz = lv.getUint32(22,true);
     cdParts.push(cat(
       new Uint8Array([0x50,0x4B,0x01,0x02]),
       u16(20), u16(20),
