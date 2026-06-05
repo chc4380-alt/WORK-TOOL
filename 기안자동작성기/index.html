@@ -1413,120 +1413,108 @@ async function downloadHWPX() {
       return cnt;
     }
 
-    // ════ 기안용지 치환 (report-template.hwpx 플레이스홀더 기준) ════
+    // ════ 기안용지 치환 (report-template.hwpx 실제 플레이스홀더 기준) ════
     const periodStr = d.period ? d.period + ' ' : '';
     const titleLine1 = '2026년 광양시청소년문화센터 ' + (d.period || '');
     const titleLine2 = d.actName + ' 활동계획서';
 
-    // ── 기안용지 상단 메타
+    // ── 분류번호 / 기안자 / 날짜
     setT('프로그램명 26 – 번호', d.docNum);
     setT('홍 길 동', d.author);
     setAllT('0000. 0. 00.', d.docDate);
+
+    // ── 제목
     setT(' (활동명) 진행의 건', ' ' + d.actName + ' 진행의 건');
 
-    // ── 본문 핵심 문장
-    setT('❍ 2026년 광양시청소년문화센터 (활동명)을 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.',
-         ai.mainBody || '❍ 2026년 광양시청소년문화센터 ' + d.actName + '을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.');
+    // ── 기안용지 본문 핵심 문장 (들여쓰기 포함 정확히)
+    setT('❥ 2026년 광양시청소년문화센터 (활동명)을 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.',
+         ai.mainBody || '❥ 2026년 광양시청소년문화센터 ' + d.actName + '을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.');
 
-    // ── 아래 항목
-    setT('1. 활 동 명 : (활동명)', '1. 활 동 명 : ' + d.actName);
-    setT('2. 일    시 : 0000년 0월 00일(요일) 00:00~00:00(24시간제)', '2. 일    시 : ' + d.actDate);
-    setT('3. 장    소 : (장소명)', '3. 장    소 : ' + d.actPlace);
-    setT('4. 참여인원 : 00명 (남 00명, 여 00명)', '4. 참여인원 : ' + periodStr + d.participants);
-    setT('5. 활동내용 : (활동내용 한줄 요약)', '5. 활동내용 : ' + d.actName);
+    // ── 아래 항목 (앞 공백 포함 정확히 일치)
+    setT(' 1. 활 동 명 : (활동명) ', ' 1. 활 동 명 : ' + d.actName);
+    setT(' 2. 일    시 : 0000년 0월 00일(요일) 00:00~00:00(24시간제)', ' 2. 일    시 : ' + d.actDate);
+    setT(' 3. 장    소 : (장소명)', ' 3. 장    소 : ' + d.actPlace);
+    setT(' 4. 참여인원 : 00명 (남 00명, 여 00명)', ' 4. 참여인원 : ' + periodStr + d.participants);
+    setT(' 5. 활동내용 : (활동내용 한줄 요약)', ' 5. 활동내용 : ' + d.actName);
 
-    // ── 소요예산 (기안용지)
+    // ── 소요예산 (기안용지) - 이중 역슬래시 포함
     if (hasBudget && d.korAmount) {
-      setT(' 6. 소요예산 : 일금 이십사만삼천원(\\ 243,000원)',
-           ' 6. 소요예산 : 일금 ' + d.korAmount + '원(\\ ' + totalAmt + '원)');
-      setT('6. 소요예산 : 일금 이십사만삼천원(\\ 243,000원)',
-           '6. 소요예산 : 일금 ' + d.korAmount + '원(\\ ' + totalAmt + '원)');
+      setT(' 6. 소요예산 : 일금 이십사만삼천원(\\\\ 243,000원)',
+           ' 6. 소요예산 : 일금 ' + d.korAmount + '원(\\\\ ' + totalAmt + '원)');
     } else {
-      setAllT('6. 소요예산 : 일금 이십사만삼천원(\\ 243,000원)', ' ');
+      setT(' 6. 소요예산 : 일금 이십사만삼천원(\\\\ 243,000원)', ' ');
     }
 
     // ── 붙임
-    setT('붙    임 : 1. (활동명)', '붙    임 : 1. ' + (d.attaches[0] || ' '));
+    setT('붙    임 : 1. (활동명) ', '붙    임 : 1. ' + (d.attaches[0] || ' '));
     setT('활동계획서 1부.', ' ');
     setT('2. 세부내용 1부.', d.attaches[1] ? '2. ' + d.attaches[1] : ' ');
 
-    // ── 활동계획서 제목 두 줄 처리
-    // subList 안의 para를 복제해서 두 번째 줄 추가
+    // ── 활동계획서 제목 두 줄 처리 (para 복제)
     {
-      const HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
       let titleT = null;
-      for (const t of doc.getElementsByTagNameNS(HP, 't')) {
-        if ((t.textContent || '').includes('활동계획서') && (t.textContent || '').includes('광양시청소년문화센터')) {
+      for (const t of allTs()) {
+        const txt = t.textContent || '';
+        if (txt.includes('활동계획서') && txt.includes('광양시청소년문화센터') && txt.includes('(활동명)')) {
           titleT = t; break;
         }
       }
       if (titleT) {
-        const para = titleT.parentNode.parentNode; // run → p
+        const para = titleT.parentNode.parentNode;
         const subList = para.parentNode;
-        // 첫 번째 para: 센터명 + 기수
         titleT.textContent = titleLine1.trim();
         removeLineSeg(titleT);
-        // 두 번째 para: 활동명 활동계획서 (para 복제)
         const para2 = para.cloneNode(true);
-        const t2s = para2.getElementsByTagNameNS(HP, 't');
-        if (t2s.length > 0) {
-          t2s[0].textContent = titleLine2;
-          // linesegarray 제거
-          for (const c of [...para2.childNodes]) {
-            if (c.localName === 'linesegarray') para2.removeChild(c);
-          }
+        for (const t2 of [...para2.getElementsByTagNameNS(HP, 't')]) {
+          t2.textContent = titleLine2;
+        }
+        for (const c of [...para.childNodes]) {
+          if (c.localName === 'linesegarray') para.removeChild(c);
+        }
+        for (const c of [...para2.childNodes]) {
+          if (c.localName === 'linesegarray') para2.removeChild(c);
         }
         subList.appendChild(para2);
       }
     }
 
-    // ── 법령 칸: 작은 칸 = 조항명, 큰 칸 = ① ② 내용
+    // ── 법령 칸: 작은 칸 = 조항명, 큰 칸 = ① ② 조문
     {
-      // ai.lawRef = { article: "제64조(청소년동아리활동의 활성화)", items: ["① ...", "② ..."] }
       const lawRef = ai.lawRef || {};
       const articleStr = lawRef.article || '청소년활동진흥법 제64조(청소년동아리활동의 활성화)';
       const item1 = lawRef.item1 || '① 국가 및 지방자치단체는 청소년이 자율적으로 참여하여 조직하고 운영하는 다양한 형태의 동아리활동을 적극 지원하여야 한다.';
       const item2 = lawRef.item2 || '② 청소년활동시설은 제1항에 따른 동아리활동에 필요한 장소 및 장비 등을 제공하고 지원할 수 있다.';
-
       setT('청소년활동진흥법 제64조(청소년동아리활동의 활성화)', articleStr);
       setT('① 국가 및 지방자치단체는 청소년이 자율적으로 참여하여 조직하고 운영하는 다양한 형태의 동아리활동을 적극 지원하여야 한다.', item1);
       setT('② 청소년활동시설은 제1항에 따른 동아리활동에 필요한 장소 및 장비 등을 제공하고 지원할 수 있다.', item2);
     }
 
-    // ── ○ 1~2줄 문장  순차 치환
-    // 순서: [59,60,61]=운영목적3개, [65,66,67,68]=운영목표4개, [201,202,203,204]=기대효과4개
+    // ── ○ 1~2줄 문장  순차 치환 (목적3+목표4+효과4 = 11개)
     const pur = ai.purposes || [];
     const gls = ai.goals || [];
     const effs = ai.effects || [];
-
-    // 운영목적 3칸: 1,2번째 그대로, 3번째에 3+4 합쳐서
     const purFill = [
       pur[0] ? '○ ' + dot(pur[0]) : ' ',
       pur[1] ? '○ ' + dot(pur[1]) : ' ',
-      pur[2] && pur[3]
-        ? '○ ' + dot(pur[2]) + '\n○ ' + dot(pur[3])
-        : pur[2] ? '○ ' + dot(pur[2]) : ' ',
+      (pur[2] || pur[3])
+        ? (pur[2] ? '○ ' + dot(pur[2]) : '') + (pur[3] ? '\n○ ' + dot(pur[3]) : '')
+        : ' ',
     ];
-    // 운영목표 4칸
     const glFill = [
       gls[0] ? '○ ' + dot(gls[0]) : ' ',
       gls[1] ? '○ ' + dot(gls[1]) : ' ',
       gls[2] ? '○ ' + dot(gls[2]) : ' ',
       gls[3] ? '○ ' + dot(gls[3]) : ' ',
     ];
-    // 기대효과 4칸
     const effFill = [
       effs[0] ? '○ ' + dot(effs[0]) : ' ',
       effs[1] ? '○ ' + dot(effs[1]) : ' ',
       effs[2] ? '○ ' + dot(effs[2]) : ' ',
       effs[3] ? '○ ' + dot(effs[3]) : ' ',
     ];
-
-    // ○ 1~2줄 문장  전체를 순서대로 채움
-    // 총 11개: 목적3 + 목표4 + 효과4
     const allFills = [...purFill, ...glFill, ...effFill];
     let fillIdx = 0;
-    for (const t of [...doc.getElementsByTagNameNS(HP, 't')]) {
+    for (const t of allTs()) {
       if ((t.textContent || '') === '○ 1~2줄 문장 ' && fillIdx < allFills.length) {
         t.textContent = allFills[fillIdx];
         removeLineSeg(t);
@@ -1534,65 +1522,90 @@ async function downloadHWPX() {
       }
     }
 
-    // ── 운영개요
-    setT('○ 활 동 명 :', '○ 활 동 명 : ' + d.actName);
-    setT('(활동명)', ' ');
-    setT('○ 일    시 :', '○ 일    시 : ' + d.actDate);
+    // ── 운영개요 (앞 공백 + 활동명 공백 포함 정확히 일치)
+    setT('○ 활 동 명 : ', '○ 활 동 명 : ');  // 라벨 유지, 값은 다음 셀에
+    setT('(활동명) ', d.actName);             // [74] 활동명 셀 (뒤 공백 포함)
+    setT(' ○ 일    시 : ', ' ○ 일    시 : ' + d.actDate);
     setT('0000년 0월 00일(요일) 00:00~00:00(24시간제)', ' ');
-    setT('○ 장    소 :', '○ 장    소 : ' + d.actPlace);
+    setT(' ○ 장    소 : ', ' ○ 장    소 : ' + d.actPlace);
     setT('(장소명)', ' ');
-    setT('○ 참여인원 :', '○ 참여인원 : ' + periodStr + d.participants);
+    setT(' ○ 참여인원 : ', ' ○ 참여인원 : ' + periodStr + d.participants);
     setT('00명 (남 00명, 여 00명)', ' ');
-
-    // ── 주요내용
-    const items = ai.scheduleMainItems || [];
-    setT('- 세부운영내용 1', items[0] ? '- ' + items[0] : ' ');
-    setT('- 세부운영내용 2', items[1] ? '- ' + items[1] : ' ');
-    setT('- 세부운영내용 3', items[2] ? '- ' + items[2] : ' ');
-
-    // ── 소요예산 운영개요
+    setT('    - 세부운영내용 1', (ai.scheduleMainItems||[])[0] ? '    - ' + (ai.scheduleMainItems||[])[0] : ' ');
+    setT('    - 세부운영내용 2', (ai.scheduleMainItems||[])[1] ? '    - ' + (ai.scheduleMainItems||[])[1] : ' ');
+    setT('    - 세부운영내용 3', (ai.scheduleMainItems||[])[2] ? '    - ' + (ai.scheduleMainItems||[])[2] : ' ');
     if (hasBudget) {
-      setT('○ 소요예산 : 243,000원 (소요예산 간략히)', '○ 소요예산 : ' + totalAmt + '원');
+      setT(' ○ 소요예산 : 243,000원 (소요예산 간략히)', ' ○ 소요예산 : ' + totalAmt + '원');
     } else {
-      setT('○ 소요예산 : 243,000원 (소요예산 간략히)', ' ');
+      setT(' ○ 소요예산 : 243,000원 (소요예산 간략히)', ' ');
     }
 
-    // ── 안전교육 활동명
-    setAllT('(활동명)', d.actName);
+    // ── 안전교육 활동명/장소명 (이 시점엔 위 치환들이 이미 완료됨)
+    // 안전교육 칸의 (활동명)은 공백 없이 정확히 '(활동명)' 텍스트
+    for (const t of allTs()) {
+      const txt = t.textContent || '';
+      if (txt === '(활동명)') { t.textContent = d.actName; removeLineSeg(t); }
+      if (txt === '(장소명)') { t.textContent = d.schedules?.[0]?.place || d.actPlace || ' '; removeLineSeg(t); }
+    }
 
-    // ── 세부일정표 시간 치환 (6행)
+    // ── 세부일정표 시간 치환 (인덱스 기반 순차치환으로 겹침 방지)
     const scheds = d.schedules || [];
-    const timeSlots = [
-      ['11:00','11:10',"10''"],
-      ['11:10','12:30',"80''"],
-      ['12:30','13:00',"30''"],
-      ['13:00','15:00',"120''"],
-      ['15:00','15:50',"50''"],
-      ['15:50','16:00',"10''"],
-    ];
-    timeSlots.forEach((slot, i) => {
-      const s = scheds[i];
-      if (s) {
-        setT(slot[0], s.from || slot[0]);
-        setT(slot[1], s.to || slot[1]);
-        const durTxt = (s.duration || slot[2]).replace('시간', 'h').replace('분', 'm');
-        setT(slot[2], durTxt);
+    const APOS = '\u2018'; // U+2018 왼쪽 홑따옴표 (소요시간 표시)
+    // 템플릿 6행 구조: 시작/종료/소요/내용/비고 순서
+    // 시간 셀(시작,종료), 소요 셀, 내용 셀을 순서대로 수집 후 인덱스별 교체
+    {
+      const HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
+      const fromCells = [], toCells = [], durCells = [], contentCells = [];
+      for (const t of allTs()) {
+        const txt = t.textContent || '';
+        // 시작 시간: HH:MM 형태
+        if (/^\d{1,2}:\d{2}$/.test(txt) && fromCells.length + toCells.length < 12) {
+          if (fromCells.length === toCells.length) fromCells.push(t);
+          else toCells.push(t);
+        }
+        // 소요: 숫자+U+2018 형태
+        if (/^\d+\u2018$/.test(txt)) durCells.push(t);
+        // 내용: '활동내용' 정확히
+        if (txt.trim() === '활동내용') contentCells.push(t);
       }
-    });
-    let contentCount = 0;
-    for (const t of [...doc.getElementsByTagNameNS(HP, 't')]) {
-      if ((t.textContent || '').trim() === '활동내용' && contentCount < scheds.length) {
-        t.textContent = scheds[contentCount]?.content || '활동내용';
-        removeLineSeg(t); contentCount++;
+      // 시간 셀은 from/to 교대로 나옴 (from,to,from,to...)
+      // 실제로 allTs() 순서: 11:00(from0), 11:10(to0), 10'(dur0), 활동내용(c0), (장소명)
+      //                      11:10(from1), 12:30(to1), 80'(dur1), 활동내용(c1) ...
+      // from/to 셀을 인덱스 쌍으로 나누기
+      const timePairs = [];
+      let fArr = [], tArr = [];
+      for (const t of allTs()) {
+        const txt = t.textContent || '';
+        if (/^\d{1,2}:\d{2}$/.test(txt)) {
+          if (fArr.length === tArr.length) fArr.push(t);
+          else { tArr.push(t); timePairs.push([fArr[tArr.length-1], t]); }
+        }
+      }
+      // 각 행 치환
+      for (let ri = 0; ri < Math.min(timePairs.length, 6); ri++) {
+        const s = scheds[ri];
+        const [fT, tT] = timePairs[ri];
+        if (s?.from) { fT.textContent = s.from; removeLineSeg(fT); }
+        if (s?.to)   { tT.textContent = s.to;   removeLineSeg(tT); }
+        if (durCells[ri] && s) {
+          const durStr = s.duration ? s.duration.replace('시간','h').replace('분','m') : durCells[ri].textContent;
+          durCells[ri].textContent = durStr;
+          removeLineSeg(durCells[ri]);
+        }
+        if (contentCells[ri] && s?.content) {
+          contentCells[ri].textContent = s.content;
+          removeLineSeg(contentCells[ri]);
+        }
       }
     }
+
     // 총소요시간
     if (scheds.length > 0) {
-      const first = scheds[0], last = scheds[scheds.length-1];
-      if (first?.from && last?.to) {
-        const [fh,fm] = first.from.split(':').map(Number);
-        const [th,tm] = last.to.split(':').map(Number);
-        const totalMin = (th*60+tm)-(fh*60+fm);
+      const first = scheds[0], last = scheds[scheds.length - 1];
+      if (first?.from && last?.to && first.from.includes(':') && last.to.includes(':')) {
+        const [fh, fm] = first.from.split(':').map(Number);
+        const [th, tm] = last.to.split(':').map(Number);
+        const totalMin = (th * 60 + tm) - (fh * 60 + fm);
         if (totalMin > 0) setT('300', String(totalMin));
       }
     }
@@ -1601,7 +1614,7 @@ async function downloadHWPX() {
     if (hasBudget && d.budgets.length > 0) {
       const b = d.budgets[0];
       setT('식비 9,000원 * 27명 = 243,000원', b.calc || b.item || '');
-      setT('243,000원', (b.amount ? Number(b.amount.replace(/,/g,'')).toLocaleString() : '0') + '원');
+      setT('243,000원', (b.amount ? Number(b.amount.replace(/,/g, '')).toLocaleString() : '0') + '원');
       setAllT('243,000', totalAmt);
     }
 
