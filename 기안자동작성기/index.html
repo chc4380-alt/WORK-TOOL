@@ -1453,8 +1453,8 @@ async function downloadHWPX() {
     setT(' (활동명) 진행의 건', ' ' + d.actName + ' 진행의 건');
 
     // ── 기안용지 본문 핵심 문장 (들여쓰기 포함 정확히)
-    setT('❥ 2026년 광양시청소년문화센터 (활동명)을 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.',
-         ai.mainBody || '❥ 2026년 광양시청소년문화센터 ' + d.actName + '을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.');
+    setT('❍ 2026년 광양시청소년문화센터 (활동명)을 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.',
+         (ai.mainBody || '❍ 2026년 광양시청소년문화센터 ' + d.actName + '을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.').replace('(활동명)', d.actName));
 
     // ── 아래 항목 (앞 공백 포함 정확히 일치)
     setT(' 1. 활 동 명 : (활동명) ', ' 1. 활 동 명 : ' + d.actName);
@@ -1522,10 +1522,10 @@ async function downloadHWPX() {
     const purFill = [
       pur[0] ? '○ ' + dot(pur[0]) : ' ',
       pur[1] ? '○ ' + dot(pur[1]) : ' ',
-      (pur[2] || pur[3])
-        ? (pur[2] ? '○ ' + dot(pur[2]) : '') + (pur[3] ? '\n○ ' + dot(pur[3]) : '')
-        : ' ',
+      pur[2] ? '○ ' + dot(pur[2]) : ' ',
     ];
+    // 운영목적 4번째 항목: 3번째 단락 복제해서 독립 단락으로 삽입
+    const pur4Text = pur[3] ? '○ ' + dot(pur[3]) : null;
     const glFill = [
       gls[0] ? '○ ' + dot(gls[0]) : ' ',
       gls[1] ? '○ ' + dot(gls[1]) : ' ',
@@ -1540,12 +1540,27 @@ async function downloadHWPX() {
     ];
     const allFills = [...purFill, ...glFill, ...effFill];
     let fillIdx = 0;
+    let pur3Node = null; // 운영목적 3번째 t노드 기억
     for (const t of allTs()) {
       if ((t.textContent || '') === '○ 1~2줄 문장 ' && fillIdx < allFills.length) {
         t.textContent = allFills[fillIdx];
         removeLineSeg(t);
+        if (fillIdx === 2) pur3Node = t; // 운영목적 3번째 저장
         fillIdx++;
       }
+    }
+    // 운영목적 4번째: 3번째 단락 복제 후 삽입 (들여쓰기 동일하게)
+    if (pur4Text && pur3Node) {
+      const pur3Para = pur3Node.parentNode.parentNode; // run → p
+      const pur3Parent = pur3Para.parentNode;
+      const pur4Para = pur3Para.cloneNode(true);
+      for (const t of [...pur4Para.getElementsByTagNameNS(HP, 't')]) {
+        t.textContent = pur4Text;
+      }
+      for (const c of [...pur4Para.childNodes]) {
+        if (c.localName === 'linesegarray') pur4Para.removeChild(c);
+      }
+      pur3Para.parentNode.insertBefore(pur4Para, pur3Para.nextSibling);
     }
 
     // ── 운영개요 (앞 공백 + 활동명 공백 포함 정확히 일치)
@@ -1574,57 +1589,58 @@ async function downloadHWPX() {
       if (txt === '(장소명)') { t.textContent = d.schedules?.[0]?.place || d.actPlace || ' '; removeLineSeg(t); }
     }
 
-    // ── 세부일정표 시간 치환 (인덱스 기반 순차치환으로 겹침 방지)
+    // ── 세부일정표 시간 치환 (전체 t배열 인덱스 기반 - 겹침 없음)
     const scheds = d.schedules || [];
-    const APOS = '\u2018'; // U+2018 왼쪽 홑따옴표 (소요시간 표시)
-    // 템플릿 6행 구조: 시작/종료/소요/내용/비고 순서
-    // 시간 셀(시작,종료), 소요 셀, 내용 셀을 순서대로 수집 후 인덱스별 교체
     {
-      const HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
-      const fromCells = [], toCells = [], durCells = [], contentCells = [];
-      for (const t of allTs()) {
-        const txt = t.textContent || '';
-        // 시작 시간: HH:MM 형태
-        if (/^\d{1,2}:\d{2}$/.test(txt) && fromCells.length + toCells.length < 12) {
-          if (fromCells.length === toCells.length) fromCells.push(t);
-          else toCells.push(t);
-        }
-        // 소요: 숫자+U+2018 형태
-        if (/^\d+\u2018$/.test(txt)) durCells.push(t);
-        // 내용: '활동내용' 정확히
-        if (txt.trim() === '활동내용') contentCells.push(t);
-      }
-      // 시간 셀은 from/to 교대로 나옴 (from,to,from,to...)
-      // 실제로 allTs() 순서: 11:00(from0), 11:10(to0), 10'(dur0), 활동내용(c0), (장소명)
-      //                      11:10(from1), 12:30(to1), 80'(dur1), 활동내용(c1) ...
-      // from/to 셀을 인덱스 쌍으로 나누기
-      const timePairs = [];
-      let fArr = [], tArr = [];
-      for (const t of allTs()) {
-        const txt = t.textContent || '';
-        if (/^\d{1,2}:\d{2}$/.test(txt)) {
-          if (fArr.length === tArr.length) fArr.push(t);
-          else { tArr.push(t); timePairs.push([fArr[tArr.length-1], t]); }
-        }
-      }
-      // 각 행 치환
-      for (let ri = 0; ri < Math.min(timePairs.length, 6); ri++) {
+      // 전체 t노드 배열에서 세부일정 구간 직접 인덱스 접근
+      // 템플릿 고정 인덱스: 시작[96,101,105,109,113,117], 종료[97,102,106,110,114,118]
+      //                    소요[98,103,107,111,115,119], 내용[99,104,108,112,116,120]
+      const tAll = allTs();
+      const ROW_IDX = [
+        { from:96, to:97, dur:98, content:99, place:100 },
+        { from:101, to:102, dur:103, content:104, place:-1 },
+        { from:105, to:106, dur:107, content:108, place:-1 },
+        { from:109, to:110, dur:111, content:112, place:-1 },
+        { from:113, to:114, dur:115, content:116, place:-1 },
+        { from:117, to:118, dur:119, content:120, place:-1 },
+      ];
+      for (let ri = 0; ri < ROW_IDX.length; ri++) {
         const s = scheds[ri];
-        const [fT, tT] = timePairs[ri];
-        if (s?.from) { fT.textContent = s.from; removeLineSeg(fT); }
-        if (s?.to)   { tT.textContent = s.to;   removeLineSeg(tT); }
-        if (durCells[ri] && s) {
-          const durStr = s.duration ? s.duration.replace('시간','h').replace('분','m') : durCells[ri].textContent;
-          durCells[ri].textContent = durStr;
-          removeLineSeg(durCells[ri]);
+        const idx = ROW_IDX[ri];
+        if (!tAll[idx.from]) continue;
+        if (s) {
+          // 시작 시간
+          tAll[idx.from].textContent = s.from || tAll[idx.from].textContent;
+          removeLineSeg(tAll[idx.from]);
+          // 종료 시간
+          tAll[idx.to].textContent = s.to || tAll[idx.to].textContent;
+          removeLineSeg(tAll[idx.to]);
+          // 소요 시간 (분 단위, 예: "1h", "2h", "30m")
+          if (s.duration) {
+            tAll[idx.dur].textContent = s.duration.replace('시간','h').replace('분','m');
+            removeLineSeg(tAll[idx.dur]);
+          }
+          // 내용
+          if (s.content) {
+            tAll[idx.content].textContent = s.content;
+            removeLineSeg(tAll[idx.content]);
+          }
+          // 비고(장소)
+          if (idx.place > 0 && tAll[idx.place] && s.place) {
+            tAll[idx.place].textContent = s.place;
+            removeLineSeg(tAll[idx.place]);
+          }
         }
-        if (contentCells[ri] && s?.content) {
-          contentCells[ri].textContent = s.content;
-          removeLineSeg(contentCells[ri]);
-        }
+      }
+      // 사용하지 않는 행(입력값보다 템플릿 행이 많은 경우) 빈칸 처리
+      for (let ri = scheds.length; ri < ROW_IDX.length; ri++) {
+        const idx = ROW_IDX[ri];
+        if (tAll[idx.from]) { tAll[idx.from].textContent = ''; removeLineSeg(tAll[idx.from]); }
+        if (tAll[idx.to])   { tAll[idx.to].textContent = '';   removeLineSeg(tAll[idx.to]);   }
+        if (tAll[idx.dur])  { tAll[idx.dur].textContent = '';  removeLineSeg(tAll[idx.dur]);  }
+        if (tAll[idx.content]) { tAll[idx.content].textContent = ''; removeLineSeg(tAll[idx.content]); }
       }
     }
-
     // 총소요시간
     if (scheds.length > 0) {
       const first = scheds[0], last = scheds[scheds.length - 1];
