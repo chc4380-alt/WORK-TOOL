@@ -1681,6 +1681,28 @@ async function downloadHWPX() {
     let newXml = new XMLSerializer().serializeToString(doc);
     if (!newXml.startsWith('<?xml')) newXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + newXml;
 
+    // XMLSerializer가 자식 노드에 중복 추가하는 xmlns 제거
+    // 루트 요소의 xmlns 선언은 유지, 이후 중복은 제거
+    {
+      const seen = new Set();
+      // 루트 태그의 xmlns 먼저 수집
+      const rootMatch = newXml.match(/^<[^>]+>/);
+      if (rootMatch) {
+        const rootTag = rootMatch[0];
+        const rootNs = rootTag.match(/xmlns:[a-z0-9]+=["'][^"']+["']/g) || [];
+        rootNs.forEach(ns => seen.add(ns.replace(/"/g, "'")));
+      }
+      // 나머지에서 중복 xmlns 제거
+      const rootEnd = newXml.indexOf('>') + 1;
+      const rest = newXml.slice(rootEnd).replace(/\s+xmlns:[a-z0-9]+=["'][^"']+["']/g, m => {
+        const key = m.trim().replace(/"/g, "'");
+        if (seen.has(key)) return '';
+        seen.add(key);
+        return m;
+      });
+      newXml = newXml.slice(0, rootEnd) + rest;
+    }
+
     const fileEntries = [];
     const fileNames = Object.keys(zip.files);
     if (zip.file('mimetype')) {
@@ -1691,7 +1713,7 @@ async function downloadHWPX() {
       if (name === 'mimetype') continue;
       const entry = zip.file(name);
       if (!entry || entry.dir) continue;
-      const content = name === 'Contents/section0.xml' ? newXml : await entry.async('uint8array');
+      const content = name === 'Contents/section0.xml' ? new TextEncoder().encode(newXml) : await entry.async('uint8array');
       fileEntries.push({ name, content, compression: 'DEFLATE' });
     }
 
@@ -1702,7 +1724,7 @@ async function downloadHWPX() {
         compressionOptions: entry.compression === 'DEFLATE' ? { level: 6 } : undefined
       });
     }
-    const blob = await newZip.generateAsync({ type: 'blob', mimeType: 'application/hwp+zip' });
+    const blob = await newZip.generateAsync({ type: 'blob', mimeType: 'application/hwp+zip', platform: 'UNIX' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = d.actName + '_진행의건.hwpx'; a.click();
