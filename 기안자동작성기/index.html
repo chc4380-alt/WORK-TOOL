@@ -1145,6 +1145,7 @@ async function generate() {
   // 활동 분류
   const actType = document.querySelector('.type-btn.active')?.dataset.type || '동아리';
 
+  const periodInfo = period ? '기수/회차: ' + period : '(기수 없음)';
   const prompt = `당신은 광양시청소년문화센터의 기안문 작성 전문가입니다.
 아래 활동 정보를 바탕으로 기안문 AI 파트를 JSON으로 출력해주세요.
 
@@ -1154,33 +1155,31 @@ async function generate() {
 일시: ${actDate}
 장소: ${actPlace}
 참여인원: ${participants}
-${period ? `기수/회차: ${period}` : '(기수 없음)'}
+${periodInfo}
 
 적용할 청소년활동진흥법 조항:
 ${lawTexts || '청소년활동진흥법 제5조(청소년활동 지원)'}
 
-다음 JSON 형식으로만 출력하세요 (다른 텍스트 없이):
+[중요] 반드시 아래 JSON 형식으로만 출력하세요. 코드블록, 설명 없이 JSON만.
+문자열 안에 큰따옴표(")나 줄바꿈은 절대 사용하지 마세요.
+
 {
-  "mainBody": "❍ ~하오니 재가하여 주시기를 바랍니다. (한 문장)",
-  "lawRef": {
-    "article": "청소년활동진흥법 제○○조(조항명)",
-    "item1": "① 해당 법 조항 내용 그대로 또는 요약",
-    "item2": "② 해당 법 조항 내용 그대로 또는 요약 (없으면 빈 문자열)"
-  },
-  "purposes": ["운영목적1", "운영목적2", "운영목적3", "운영목적4"],
-  "goals": ["운영목표1", "운영목표2", "운영목표3", "운영목표4"],
+  "mainBody": "❍ 2026년 광양시청소년문화센터 ${actName}을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.",
+  "lawArticle": "청소년활동진흥법 제64조(청소년동아리활동의 활성화)",
+  "lawItem1": "① 국가 및 지방자치단체는 청소년이 자율적으로 참여하여 조직하고 운영하는 다양한 형태의 동아리활동을 적극 지원하여야 한다.",
+  "lawItem2": "② 청소년활동시설은 제1항에 따른 동아리활동에 필요한 장소 및 장비 등을 제공하고 지원할 수 있다.",
+  "purposes": ["운영목적 항목1", "운영목적 항목2", "운영목적 항목3", "운영목적 항목4"],
+  "goals": ["운영목표 항목1", "운영목표 항목2", "운영목표 항목3", "운영목표 항목4"],
   "scheduleMainItems": ["주요내용1", "주요내용2", "주요내용3"],
-  "effects": ["기대효과1", "기대효과2", "기대효과3", "기대효과4"]
+  "effects": ["기대효과 항목1", "기대효과 항목2", "기대효과 항목3", "기대효과 항목4"]
 }
 
 작성 규칙:
-- 경어체 사용하되 항목 문장은 "~한다.", "~할 수 있다."로 끝낼 것 (마침표 필수)
-- lawRef.article: 선택된 법령 중 가장 핵심 조항 하나만, 예) "청소년활동진흥법 제64조(청소년동아리활동의 활성화)"
-- lawRef.item1/item2: 실제 법 조문 내용을 ① ② 번호 포함하여 그대로 기재
-- purposes: 반드시 4개, 활동 분류(${actType})에 맞는 내용
-- goals: 반드시 4개
-- effects: 반드시 4개
-- mainBody: "❍ 2026년 광양시청소년문화센터 ${actName}을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다." 형태`;
+- lawArticle: 선택된 법령 중 핵심 조항 하나, 예) "청소년활동진흥법 제64조(청소년동아리활동의 활성화)"
+- lawItem1/lawItem2: 실제 법 조문을 ① ② 포함해서 기재. 조항이 하나면 lawItem2는 빈 문자열.
+- purposes/goals/effects: 반드시 4개씩. 각 항목은 마침표로 끝낼 것.
+- 모든 문자열 값에 큰따옴표(") 사용 금지. 줄바꿈 금지.
+- 활동 분류(${actType})에 맞는 어조로 작성.`;
 
   showPreviewShell({ docNum, docDate, author, period, participants, actName, actDate, actPlace, budgets, budgetTotal, korAmount, schedules, attaches, hasBudget, actType });
 
@@ -1212,8 +1211,35 @@ ${lawTexts || '청소년활동진흥법 제5조(청소년활동 지원)'}
     const raw = data.content?.[0]?.text?.trim();
     if (!raw) throw new Error('API 응답이 비어있습니다.');
 
-    const jsonStr = raw.replace(/```json|```/g, '').trim();
-    const ai = JSON.parse(jsonStr);
+    // JSON 파싱 강화: 코드블록 제거, 제어문자 정리
+    let jsonStr = raw
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
+    // 중괄호 범위만 추출 (앞뒤 불필요한 텍스트 제거)
+    const jsonStart = jsonStr.indexOf('{');
+    const jsonEnd = jsonStr.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      jsonStr = jsonStr.slice(jsonStart, jsonEnd + 1);
+    }
+    // 줄바꿈을 공백으로 정리 (JSON 문자열 안 줄바꿈 방지)
+    jsonStr = jsonStr.replace(/\n/g, ' ').replace(/\r/g, '');
+    let ai;
+    try {
+      ai = JSON.parse(jsonStr);
+    } catch(parseErr) {
+      // 파싱 실패시 상세 오류 표시
+      console.error('원본 응답:', raw);
+      throw new Error('JSON 파싱 실패: ' + parseErr.message + '\n\n원본 응답 앞 200자: ' + raw.slice(0, 200));
+    }
+    // lawRef 구조 통일 (flat 필드 → 중첩 객체로)
+    if (!ai.lawRef && (ai.lawArticle || ai.lawItem1)) {
+      ai.lawRef = {
+        article: ai.lawArticle || '',
+        item1: ai.lawItem1 || '',
+        item2: ai.lawItem2 || '',
+      };
+    }
 
     generatedData = { docNum, docDate, author, period, participants, actName, actDate, actPlace, budgets, budgetTotal, korAmount, schedules, attaches, hasBudget, actType, ai };
 
@@ -1303,7 +1329,7 @@ function showPreviewFull(d) {
       </table>
 
       <div class="doc-p ai-content">${ai.mainBody || ''}</div>
-      ${ai.lawRef ? `<div class="law-ref">📋 <strong>${ai.lawRef.article}</strong><br>${ai.lawRef.item1}${ai.lawRef.item2 ? '<br>' + ai.lawRef.item2 : ''}</div>` : ''}
+      ${(ai.lawRef || ai.lawArticle) ? `<div class="law-ref">📋 <strong>${(ai.lawRef?.article || ai.lawArticle) || ''}</strong><br>${(ai.lawRef?.item1 || ai.lawItem1) || ''}${((ai.lawRef?.item2 || ai.lawItem2)) ? '<br>' + (ai.lawRef?.item2 || ai.lawItem2) : ''}</div>` : ''}
       <div class="doc-p" style="text-align:center;margin:12px 0 8px;font-weight:700;">- 아    래 -</div>
       <div class="doc-p"> 1. 활 동 명 : ${d.actName}</div>
       <div class="doc-p"> 2. 일    시 : ${d.actDate}</div>
@@ -1481,9 +1507,9 @@ async function downloadHWPX() {
     // ── 법령 칸: 작은 칸 = 조항명, 큰 칸 = ① ② 조문
     {
       const lawRef = ai.lawRef || {};
-      const articleStr = lawRef.article || '청소년활동진흥법 제64조(청소년동아리활동의 활성화)';
-      const item1 = lawRef.item1 || '① 국가 및 지방자치단체는 청소년이 자율적으로 참여하여 조직하고 운영하는 다양한 형태의 동아리활동을 적극 지원하여야 한다.';
-      const item2 = lawRef.item2 || '② 청소년활동시설은 제1항에 따른 동아리활동에 필요한 장소 및 장비 등을 제공하고 지원할 수 있다.';
+      const articleStr = lawRef.article || ai.lawArticle || '청소년활동진흥법 제64조(청소년동아리활동의 활성화)';
+      const item1 = lawRef.item1 || ai.lawItem1 || '① 국가 및 지방자치단체는 청소년이 자율적으로 참여하여 조직하고 운영하는 다양한 형태의 동아리활동을 적극 지원하여야 한다.';
+      const item2 = lawRef.item2 || ai.lawItem2 || '② 청소년활동시설은 제1항에 따른 동아리활동에 필요한 장소 및 장비 등을 제공하고 지원할 수 있다.';
       setT('청소년활동진흥법 제64조(청소년동아리활동의 활성화)', articleStr);
       setT('① 국가 및 지방자치단체는 청소년이 자율적으로 참여하여 조직하고 운영하는 다양한 형태의 동아리활동을 적극 지원하여야 한다.', item1);
       setT('② 청소년활동시설은 제1항에 따른 동아리활동에 필요한 장소 및 장비 등을 제공하고 지원할 수 있다.', item2);
