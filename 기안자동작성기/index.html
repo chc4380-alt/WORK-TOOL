@@ -1679,28 +1679,44 @@ async function downloadHWPX() {
 
         // XML 직렬화 + ZIP 재생성
     let newXml = new XMLSerializer().serializeToString(doc);
-    if (!newXml.startsWith('<?xml')) newXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + newXml;
+    if (!newXml.startsWith('<?xml')) newXml = '<?xml version="1.0" encoding="UTF-8"?>\n' + newXml;
 
-    // XMLSerializer가 자식 노드에 중복 추가하는 xmlns 제거
-    // 루트 요소의 xmlns 선언은 유지, 이후 중복은 제거
+    // ── fix_namespaces: XMLSerializer가 바꼴 xmlns 프리픽스를 한콤 표준으로 복원
     {
-      const seen = new Set();
-      // 루트 태그의 xmlns 먼저 수집
-      const rootMatch = newXml.match(/^<[^>]+>/);
-      if (rootMatch) {
-        const rootTag = rootMatch[0];
-        const rootNs = rootTag.match(/xmlns:[a-z0-9]+=["'][^"']+["']/g) || [];
-        rootNs.forEach(ns => seen.add(ns.replace(/"/g, "'")));
+      const nsFixes = [
+        ['http://www.hancom.co.kr/hwpml/2011/head',      'hh'],
+        ['http://www.hancom.co.kr/hwpml/2011/core',      'hc'],
+        ['http://www.hancom.co.kr/hwpml/2011/paragraph', 'hp'],
+        ['http://www.hancom.co.kr/hwpml/2011/section',   'hs'],
+      ];
+      for (const [uri, correct] of nsFixes) {
+        const uriPos = newXml.indexOf(uri);
+        if (uriPos === -1) continue;
+        const nsPos  = newXml.lastIndexOf('xmlns:', uriPos);
+        const eqPos  = newXml.indexOf('=', nsPos);
+        const wrong  = newXml.slice(nsPos + 6, eqPos).trim();
+        if (wrong === correct) continue;
+        newXml = newXml.split('<'  + wrong + ':').join('<'  + correct + ':');
+        newXml = newXml.split('</' + wrong + ':').join('</' + correct + ':');
+        newXml = newXml.split(' '  + wrong + ':').join(' '  + correct + ':');
+        newXml = newXml.split('xmlns:' + wrong + '=').join('xmlns:' + correct + '=');
       }
-      // 나머지에서 중복 xmlns 제거
-      const rootEnd = newXml.indexOf('>') + 1;
-      const rest = newXml.slice(rootEnd).replace(/\s+xmlns:[a-z0-9]+=["'][^"']+["']/g, m => {
-        const key = m.trim().replace(/"/g, "'");
-        if (seen.has(key)) return '';
-        seen.add(key);
-        return m;
-      });
-      newXml = newXml.slice(0, rootEnd) + rest;
+      // 중복 xmlns 선언 제거
+      const seenX = {};
+      let outX = '';
+      let posX = 0;
+      while (posX < newXml.length) {
+        const xi = newXml.indexOf(' xmlns:', posX);
+        if (xi === -1) { outX += newXml.slice(posX); break; }
+        outX += newXml.slice(posX, xi);
+        const eq2 = newXml.indexOf('=', xi);
+        const q2  = newXml[eq2 + 1];
+        const qe2 = newXml.indexOf(q2, eq2 + 2);
+        const decl = newXml.slice(xi + 1, qe2 + 1);
+        if (seenX[decl]) { posX = qe2 + 1; }
+        else { seenX[decl] = true; outX += ' ' + decl; posX = qe2 + 1; }
+      }
+      newXml = outX;
     }
 
     const fileEntries = [];
