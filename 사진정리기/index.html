@@ -187,6 +187,19 @@
     .td-orig { display: none; }
     .td-new { max-width: 130px; }
   }
+
+  .err-box {
+    display: none;
+    background: #fff0f0;
+    border: 1px solid #f5c4c4;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: #9a2020;
+    word-break: break-all;
+  }
+  .err-box strong { display: block; margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -228,6 +241,12 @@
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     <div class="progress-label" id="progressLabel">분석 준비 중...</div>
+  </div>
+
+  <!-- 에러 박스 -->
+  <div class="err-box" id="errBox">
+    <strong>⚠️ 분석 오류</strong>
+    <span id="errMsg"></span>
   </div>
 
   <!-- 테이블 -->
@@ -319,12 +338,13 @@ function fieldChange(i, field, val) {
   document.getElementById(`new-${i}`).textContent = newName(photos[i]);
 }
 
-function setStatus(i, status) {
+function setStatus(i, status, errMsg) {
   const map = { wait:'s-wait', ing:'s-ing', done:'s-done', err:'s-err' };
   const label = { wait:'대기', ing:'분석중', done:'완료', err:'오류' };
   const el = document.getElementById(`st-${i}`);
   el.className = 'status-badge ' + map[status];
   el.textContent = label[status];
+  if (errMsg) el.title = errMsg;
   photos[i].status = status;
 }
 
@@ -364,12 +384,21 @@ async function analyzeAll() {
       setStatus(i, 'done');
     } catch(e) {
       console.error(e);
-      setStatus(i, 'err');
+      photos[i].errMsg = e.message || String(e);
+      setStatus(i, 'err', photos[i].errMsg);
     }
   }
 
   pf.style.width = '100%';
-  pl.textContent = `분석 완료! ${photos.filter(p=>p.status==='done').length}/${photos.length}장`;
+  const doneCount = photos.filter(p=>p.status==='done').length;
+  const errCount  = photos.filter(p=>p.status==='err').length;
+  pl.textContent = `분석 완료! ${doneCount}/${photos.length}장 성공` + (errCount > 0 ? ` / ⚠️ ${errCount}장 오류` : '');
+  if (errCount > 0) {
+    const firstErr = photos.find(p => p.status === 'err');
+    showError('오류 내용: ' + (firstErr?.errMsg || '알 수 없는 오류'));
+  } else {
+    hideError();
+  }
   btn.disabled = false; btn.textContent = '✨ 다시 분석';
   updateUI();
 }
@@ -398,11 +427,20 @@ async function analyzeOne(photo, key) {
       ]}]
     })
   });
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   const data = await resp.json();
+  if (!resp.ok) {
+    const errMsg = data?.error?.message || `HTTP ${resp.status}`;
+    throw new Error(`[${resp.status}] ${errMsg}`);
+  }
   const text = data.content?.map(c => c.text||'').join('').trim();
+  if (!text) throw new Error('API 응답이 비어있음');
   const clean = text.replace(/```json|```/g,'').trim();
-  const parsed = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}')+1));
+  let parsed;
+  try {
+    parsed = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}')+1));
+  } catch(je) {
+    throw new Error('JSON 파싱 실패: ' + clean.slice(0,80));
+  }
   return { day: String(parsed.day||'00').padStart(2,'0'), activity: parsed.activity||'기타활동' };
 }
 
