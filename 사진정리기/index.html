@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사진 정리기 — WORK-TOOL</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --primary: #1D9E75;
+    --primary-light: #E1F5EE;
+    --primary-dark: #0F6E56;
+    --bg: #f7f8f6;
+    --card: #ffffff;
+    --border: #e2e8e4;
+    --text: #1a1f1c;
+    --text-sub: #6b7a72;
+    --text-muted: #9aaa9f;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* 헤더 */
+  .topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar a { color: var(--text-sub); text-decoration: none; font-size: 13px; }
+  .topbar a:hover { color: var(--primary); }
+  .topbar .sep { color: var(--border); }
+  .topbar .title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .topbar-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* API 키 섹션 */
+  .api-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .api-section label { font-size: 13px; font-weight: 600; color: var(--text-sub); white-space: nowrap; }
+  .api-section input {
+    flex: 1;
+    min-width: 200px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 14px;
+    font-size: 13px;
+    font-family: monospace;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .api-section input:focus { border-color: var(--primary); }
+  .api-status { font-size: 12px; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  .api-status.ok { background: var(--primary-light); color: var(--primary-dark); }
+  .api-status.none { background: #fff3cd; color: #856404; }
+
+  /* 드롭존 */
+  .drop-zone {
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+  }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--primary); background: var(--primary-light); }
+  .drop-zone input { display: none; }
+  .drop-icon { font-size: 40px; margin-bottom: 12px; }
+  .drop-zone h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .drop-zone p { font-size: 13px; color: var(--text-sub); }
+
+  /* 액션 바 */
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
+  .btn-outline { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
+  .count-badge { font-size: 13px; color: var(--text-sub); margin-left: auto; }
+
+  /* 진행바 */
+  .progress-wrap { margin-bottom: 16px; display: none; }
+  .progress-track { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.3s; }
+  .progress-label { font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+
+  /* 테이블 */
+  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: #f0f4f2; }
+  thead th { padding: 12px 14px; text-align: left; font-weight: 600; font-size: 12px; color: var(--text-sub); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--primary-light); }
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  .td-num { color: var(--text-muted); font-size: 12px; width: 36px; text-align: center; }
+  .td-orig { color: var(--text-sub); font-size: 12px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .td-day input, .td-name input {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .td-day input { width: 54px; text-align: center; }
+  .td-name input { width: 100%; min-width: 160px; }
+  .td-day input:focus, .td-name input:focus { border-color: var(--primary); }
+  .td-new { color: var(--primary-dark); font-weight: 600; font-size: 12px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .s-wait { background: #f0f4f2; color: var(--text-sub); }
+  .s-ing { background: #dbeafe; color: #1d4ed8; }
+  .s-done { background: var(--primary-light); color: var(--primary-dark); }
+  .s-err { background: #fee2e2; color: #b91c1c; }
+
+  .thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+
+  /* 하단 다운로드 */
+  .dl-bar {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .dl-bar .dl-info { font-size: 13px; color: var(--text-sub); margin-right: auto; }
+
+  @media (max-width: 600px) {
+    .td-orig { display: none; }
+    .td-new { max-width: 130px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-dot"></div>
+  <a href="../">WORK-TOOL</a>
+  <span class="sep">›</span>
+  <span class="title">사진 정리기</span>
+</div>
+
+<div class="wrap">
+
+  <!-- API 키 -->
+  <div class="api-section">
+    <label>🔑 Claude API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="checkKey()">
+    <span class="api-status none" id="apiStatus">미입력</span>
+  </div>
+
+  <!-- 드롭존 -->
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)">
+    <div class="drop-icon">🖼️</div>
+    <h3>사진을 끌어다 놓거나 클릭해서 업로드</h3>
+    <p>여러 장 한 번에 가능 &nbsp;·&nbsp; JPG, PNG, HEIC 등</p>
+  </div>
+
+  <!-- 액션 바 -->
+  <div class="action-bar" id="actionBar" style="display:none">
+    <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeAll()">✨ AI 분석 시작</button>
+    <button class="btn btn-outline" id="zipBtn" onclick="downloadZip()" disabled>📦 ZIP 다운로드</button>
+    <button class="btn btn-outline" id="xlsBtn" onclick="downloadExcel()" disabled>📊 엑셀 다운로드</button>
+    <button class="btn btn-outline" onclick="clearAll()" style="margin-left:auto">🗑 초기화</button>
+    <span class="count-badge" id="countBadge">0장</span>
+  </div>
+
+  <!-- 진행바 -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel">분석 준비 중...</div>
+  </div>
+
+  <!-- 테이블 -->
+  <div class="table-wrap" id="tableWrap" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th class="td-num">#</th>
+          <th>미리보기</th>
+          <th class="td-orig">원본 파일명</th>
+          <th>일(日)</th>
+          <th>활동명</th>
+          <th>새 파일명</th>
+          <th>상태</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 다운로드 바 -->
+  <div class="dl-bar" id="dlBar" style="display:none">
+    <span class="dl-info" id="dlInfo"></span>
+    <button class="btn btn-primary" onclick="downloadZip()">📦 ZIP 다운로드</button>
+    <button class="btn btn-outline" onclick="downloadExcel()">📊 엑셀 다운로드</button>
+  </div>
+
+</div>
+
+<script>
+let photos = [];
+
+// 드래그앤드롭
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
+
+function checkKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  const st = document.getElementById('apiStatus');
+  if (k.startsWith('sk-ant')) { st.textContent = '입력됨 ✓'; st.className = 'api-status ok'; }
+  else { st.textContent = '미입력'; st.className = 'api-status none'; }
+}
+
+function handleFiles(files) {
+  const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+  imgs.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const idx = photos.length;
+      photos.push({ file: f, dataUrl: e.target.result, day: '', activity: '', status: 'wait' });
+      addRow(idx);
+      updateUI();
+    };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById('dropZone').style.display = 'none';
+  document.getElementById('actionBar').style.display = 'flex';
+  document.getElementById('tableWrap').style.display = 'block';
+}
+
+function ext(name) { return (name.match(/\.[^.]+$/) || ['.jpg'])[0].toLowerCase(); }
+
+function newName(p) {
+  if (!p.day && !p.activity) return '—';
+  return `${p.day}_${p.activity}${ext(p.file.name)}`;
+}
+
+function addRow(i) {
+  const p = photos[i];
+  const tbody = document.getElementById('tableBody');
+  const tr = document.createElement('tr');
+  tr.id = `row-${i}`;
+  tr.innerHTML = `
+    <td class="td-num">${i+1}</td>
+    <td><img class="thumb" src="${p.dataUrl}" alt=""></td>
+    <td class="td-orig">${p.file.name}</td>
+    <td class="td-day"><input type="text" id="day-${i}" value="${p.day}" placeholder="00" maxlength="2" oninput="fieldChange(${i},'day',this.value)"></td>
+    <td class="td-name"><input type="text" id="act-${i}" value="${p.activity}" placeholder="활동명" oninput="fieldChange(${i},'activity',this.value)"></td>
+    <td class="td-new" id="new-${i}">—</td>
+    <td><span class="status-badge s-wait" id="st-${i}">대기</span></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function fieldChange(i, field, val) {
+  photos[i][field] = val.trim();
+  document.getElementById(`new-${i}`).textContent = newName(photos[i]);
+}
+
+function setStatus(i, status) {
+  const map = { wait:'s-wait', ing:'s-ing', done:'s-done', err:'s-err' };
+  const label = { wait:'대기', ing:'분석중', done:'완료', err:'오류' };
+  const el = document.getElementById(`st-${i}`);
+  el.className = 'status-badge ' + map[status];
+  el.textContent = label[status];
+  photos[i].status = status;
+}
+
+function updateUI() {
+  document.getElementById('countBadge').textContent = `${photos.length}장`;
+  const done = photos.filter(p => p.status === 'done').length;
+  if (done > 0) {
+    document.getElementById('zipBtn').disabled = false;
+    document.getElementById('xlsBtn').disabled = false;
+    document.getElementById('dlBar').style.display = 'flex';
+    document.getElementById('dlInfo').textContent = `${done}/${photos.length}장 분석 완료`;
+  }
+}
+
+async function analyzeAll() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key.startsWith('sk-ant')) { alert('Claude API 키를 먼저 입력해주세요.'); return; }
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true; btn.textContent = '분석 중...';
+  const pw = document.getElementById('progressWrap');
+  const pf = document.getElementById('progressFill');
+  const pl = document.getElementById('progressLabel');
+  pw.style.display = 'block';
+
+  for (let i = 0; i < photos.length; i++) {
+    if (photos[i].status === 'done') continue;
+    setStatus(i, 'ing');
+    pl.textContent = `분석 중... (${i+1}/${photos.length})`;
+    pf.style.width = `${Math.round(i/photos.length*100)}%`;
+    try {
+      const res = await analyzeOne(photos[i], key);
+      photos[i].day = res.day;
+      photos[i].activity = res.activity;
+      document.getElementById(`day-${i}`).value = res.day;
+      document.getElementById(`act-${i}`).value = res.activity;
+      document.getElementById(`new-${i}`).textContent = newName(photos[i]);
+      setStatus(i, 'done');
+    } catch(e) {
+      console.error(e);
+      setStatus(i, 'err');
+    }
+  }
+
+  pf.style.width = '100%';
+  pl.textContent = `분석 완료! ${photos.filter(p=>p.status==='done').length}/${photos.length}장`;
+  btn.disabled = false; btn.textContent = '✨ 다시 분석';
+  updateUI();
+}
+
+async function analyzeOne(photo, key) {
+  const b64 = photo.dataUrl.split(',')[1];
+  const mt = photo.file.type || 'image/jpeg';
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 200,
+      system: `청소년문화센터 업무 사진을 분석하는 전문가입니다.
+사진을 보고 아래 JSON만 반환하세요. 다른 텍스트 없이.
+{"day":"일(두자리숫자,예:05)","activity":"활동명(한국어짧게,예:어울림마당)"}
+날짜 불명확하면 day:"00", 활동 불명확하면 activity:"기타활동"`,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
+        { type: 'text', text: '이 사진의 날짜(일)와 활동명을 분석해주세요.' }
+      ]}]
+    })
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = await resp.json();
+  const text = data.content?.map(c => c.text||'').join('').trim();
+  const clean = text.replace(/```json|```/g,'').trim();
+  const parsed = JSON.parse(clean.slice(clean.indexOf('{'), clean.lastIndexOf('}')+1));
+  return { day: String(parsed.day||'00').padStart(2,'0'), activity: parsed.activity||'기타활동' };
+}
+
+async function downloadZip() {
+  const zip = new JSZip();
+  for (const p of photos) {
+    if (!p.day && !p.activity) continue;
+    const name = newName(p);
+    const b64 = p.dataUrl.split(',')[1];
+    zip.file(name, b64, { base64: true });
+  }
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '사진_파일명변경.zip';
+  a.click();
+}
+
+function downloadExcel() {
+  const rows = [['번호','원본 파일명','일(日)','활동명','새 파일명','상태']];
+  photos.forEach((p, i) => {
+    const statusLabel = { wait:'대기', ing:'분석중', done:'완료', err:'오류' }[p.status] || '';
+    rows.push([i+1, p.file.name, p.day, p.activity, newName(p), statusLabel]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:6},{wch:36},{wch:8},{wch:24},{wch:36},{wch:8}];
+  // 헤더 스타일
+  ['A1','B1','C1','D1','E1','F1'].forEach(c => {
+    if (ws[c]) ws[c].s = { font:{bold:true,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'1D9E75'}}, alignment:{horizontal:'center'} };
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '사진정리목록');
+  XLSX.writeFile(wb, '사진정리목록.xlsx');
+}
+
+function clearAll() {
+  photos = [];
+  document.getElementById('tableBody').innerHTML = '';
+  document.getElementById('tableWrap').style.display = 'none';
+  document.getElementById('actionBar').style.display = 'none';
+  document.getElementById('dlBar').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.getElementById('dropZone').style.display = 'block';
+  document.getElementById('fileInput').value = '';
+}
+</script>
+</body>
+</html>
