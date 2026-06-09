@@ -238,7 +238,7 @@ body {
 /* 빠른 접근 */
 .quick-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   margin-bottom: 28px;
 }
@@ -458,8 +458,6 @@ body {
     <div class="nav-section">
       <div class="nav-section-label">바로가기</div>
       <a class="nav-item" href="./기안자동작성기/" target="_blank"><span class="ni">📝</span> 기안 자동작성기</a>
-      <a class="nav-item" href="./체크리스트/" target="_blank"><span class="ni">✅</span> 체크리스트</a>
-      <a class="nav-item" href="./랜덤추첨기/" target="_blank"><span class="ni">🎲</span> 랜덤 추첨기</a>
       <a class="nav-item" href="./사진정리기/" target="_blank"><span class="ni">🖼️</span> 사진 정리기</a>
     </div>
     <div class="nav-divider"></div>
@@ -493,17 +491,17 @@ body {
         <div class="quick-icon c-blue">📝</div>
         <div class="quick-info"><strong>기안 자동작성기</strong><span>바로 열기 →</span></div>
       </a>
+      <a class="quick-card" href="./안내문작성기/" target="_blank">
+        <div class="quick-icon c-yellow">📢</div>
+        <div class="quick-info"><strong>안내문 작성기</strong><span>바로 열기 →</span></div>
+      </a>
       <a class="quick-card" href="./만족도조사/" target="_blank">
         <div class="quick-icon c-green">📊</div>
         <div class="quick-info"><strong>만족도 분석기</strong><span>바로 열기 →</span></div>
       </a>
-      <a class="quick-card" href="./랜덤추첨기/" target="_blank">
-        <div class="quick-icon c-purple">🎲</div>
-        <div class="quick-info"><strong>랜덤 추첨기</strong><span>바로 열기 →</span></div>
-      </a>
-      <a class="quick-card" href="./체크리스트/" target="_blank">
-        <div class="quick-icon c-orange">✅</div>
-        <div class="quick-info"><strong>체크리스트</strong><span>바로 열기 →</span></div>
+      <a class="quick-card" href="./할일목록/" target="_blank">
+        <div class="quick-icon c-purple">📌</div>
+        <div class="quick-info"><strong>할일 목록 & 메모</strong><span>바로 열기 →</span></div>
       </a>
       <a class="quick-card" href="./사진정리기/" target="_blank">
         <div class="quick-icon c-teal">🖼️</div>
@@ -516,7 +514,6 @@ body {
       <button class="filter-btn active" onclick="filterCategory('all',this)">전체</button>
       <button class="filter-btn" onclick="filterCategory('doc',this)">📄 문서 작성</button>
       <button class="filter-btn" onclick="filterCategory('data',this)">📊 데이터 분석</button>
-      <button class="filter-btn" onclick="filterCategory('club',this)">🎯 동아리 관리</button>
       <button class="filter-btn" onclick="filterCategory('util',this)">🛠️ 업무 유틸</button>
     </div>
 
@@ -539,15 +536,6 @@ body {
         <div class="tool-card-foot"><span class="status">🟢 운영 중</span><span class="arrow">→</span></div>
       </a>
 
-      <a class="tool-card" href="./카드뉴스메이커/" target="_blank" data-cat="doc" data-name="카드뉴스 메이커 홍보물 SNS">
-        <div class="tool-card-thumb c-pink"><span class="emoji">🎨</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-pink">문서 작성</span>
-          <h4>카드뉴스 메이커</h4>
-          <p>SNS·홍보용 카드뉴스를 손쉽게 제작. 이미지·텍스트·QR 삽입 가능.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">🟢 운영 중</span><span class="arrow">→</span></div>
-      </a>
 
       <a class="tool-card" href="./안내문작성기/" target="_blank" data-cat="doc" data-name="안내문 카카오톡 공지 빠른 작성">
         <div class="tool-card-thumb c-yellow"><span class="emoji">📢</span></div>
@@ -569,68 +557,11 @@ body {
         <div class="tool-card-foot"><span class="status">🟢 운영 중</span><span class="arrow">→</span></div>
       </a>
 
-      <a class="tool-card coming" href="#" data-cat="club" data-name="동아리 관리 출석 명단">
-        <span class="badge-soon">준비중</span>
-        <div class="tool-card-thumb c-teal"><span class="emoji">👥</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-teal">동아리 관리</span>
-          <h4>동아리 출석 관리</h4>
-          <p>동아리별 출석 현황 기록 및 통계. 명단 관리·출석률 자동 계산.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">⚪ 준비중</span></div>
-      </a>
 
-      <a class="tool-card coming" href="#" data-cat="club" data-name="동아리 일정 캘린더 스케줄">
-        <span class="badge-soon">준비중</span>
-        <div class="tool-card-thumb c-orange"><span class="emoji">📅</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-orange">동아리 관리</span>
-          <h4>동아리 일정 관리</h4>
-          <p>동아리 활동 일정을 한눈에 관리. 월별 캘린더 뷰 지원.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">⚪ 준비중</span></div>
-      </a>
 
-      <a class="tool-card coming" href="#" data-cat="club" data-name="동아리 활동 보고서 서명부">
-        <span class="badge-soon">준비중</span>
-        <div class="tool-card-thumb c-purple"><span class="emoji">📋</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-purple">동아리 관리</span>
-          <h4>활동 보고서 자동생성</h4>
-          <p>동아리 활동 내용을 입력하면 보고서 및 서명부 자동 생성.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">⚪ 준비중</span></div>
-      </a>
 
-      <a class="tool-card" href="./QR코드생성기/" target="_blank" data-cat="util" data-name="QR코드 생성기 링크 URL">
-        <div class="tool-card-thumb c-blue"><span class="emoji">📱</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-blue">업무 유틸</span>
-          <h4>QR코드 생성기</h4>
-          <p>URL·텍스트를 QR코드로 즉시 변환. PNG 다운로드 지원.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">🟢 운영 중</span><span class="arrow">→</span></div>
-      </a>
 
-      <a class="tool-card" href="./체크리스트/" target="_blank" data-cat="util" data-name="체크리스트 메이커 할일 목록 점검">
-        <div class="tool-card-thumb c-green"><span class="emoji">✅</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-green">업무 유틸</span>
-          <h4>체크리스트 메이커</h4>
-          <p>행사·업무 체크리스트 간편 작성. 인쇄용 레이아웃 지원.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">🟢 운영 중</span><span class="arrow">→</span></div>
-      </a>
 
-      <a class="tool-card" href="./랜덤추첨기/" target="_blank" data-cat="util" data-name="랜덤 추첨기 뽑기 당첨자">
-        <div class="tool-card-thumb c-purple"><span class="emoji">🎲</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-purple">업무 유틸</span>
-          <h4>랜덤 추첨기</h4>
-          <p>명단 입력 후 공정한 랜덤 추첨. 이벤트·당첨자 선정에 활용.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">🟢 운영 중</span><span class="arrow">→</span></div>
-      </a>
 
       <a class="tool-card" href="./할일목록/" target="_blank" data-cat="util" data-name="할일 목록 메모 업무일지 투두">
         <div class="tool-card-thumb c-yellow"><span class="emoji">📌</span></div>
@@ -653,16 +584,6 @@ body {
         <div class="tool-card-foot"><span class="status">🟢 운영 중</span><span class="arrow">→</span></div>
       </a>
 
-      <a class="tool-card coming" href="#" data-cat="util" data-name="홍보 실적 보고서 자동 월별">
-        <span class="badge-soon">준비중</span>
-        <div class="tool-card-thumb c-red"><span class="emoji">📈</span></div>
-        <div class="tool-card-body">
-          <span class="tag t-red">업무 유틸</span>
-          <h4>홍보 실적 자동보고</h4>
-          <p>월별 SNS·홍보 실적 스크린샷을 분석해 보고서 자동 생성.</p>
-        </div>
-        <div class="tool-card-foot"><span class="status">⚪ 준비중</span></div>
-      </a>
 
     </div>
 
