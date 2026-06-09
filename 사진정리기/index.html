@@ -136,7 +136,7 @@ td{padding:9px 14px;vertical-align:middle}
     <table>
       <thead><tr>
         <th class="n">#</th><th>미리보기</th><th class="orig">원본 파일명</th>
-        <th>일(日)</th><th>활동명</th><th>새 파일명</th><th>상태</th>
+        <th>월</th><th>일</th><th>활동명</th><th>새 파일명</th><th>상태</th>
       </tr></thead>
       <tbody id="tb"></tbody>
     </table>
@@ -171,7 +171,7 @@ function handleFiles(files) {
     var r = new FileReader();
     r.onload = function(e) {
       var idx = photos.length;
-      photos.push({ file:f, dataUrl:e.target.result, day:'', activity:'', status:'wait', errMsg:'' });
+      photos.push({ file:f, dataUrl:e.target.result, month:'', day:'', activity:'', status:'wait', errMsg:'' });
       addRow(idx);
       document.getElementById('cnt').textContent = photos.length + '장';
     };
@@ -193,6 +193,7 @@ function addRow(i) {
     '<td class="n">'+(i+1)+'</td>'+
     '<td><img class="thumb" src="'+p.dataUrl+'" alt=""></td>'+
     '<td class="orig">'+p.file.name+'</td>'+
+    '<td><input class="day-in" id="m'+i+'" value="" placeholder="00" maxlength="2" oninput="fc('+i+',\'month\',this.value)"></td>'+
     '<td><input class="day-in" id="d'+i+'" value="" placeholder="00" maxlength="2" oninput="fc('+i+',\'day\',this.value)"></td>'+
     '<td><input class="act-in" id="a'+i+'" value="" placeholder="활동명" oninput="fc('+i+',\'activity\',this.value)"></td>'+
     '<td class="newname" id="nn'+i+'">—</td>'+
@@ -245,9 +246,11 @@ async function analyzeAll() {
     pf.style.width = Math.round(i/photos.length*100)+'%';
     try {
       var res = await callAPI(photos[i], key);
+      photos[i].month = res.month;
       photos[i].day = res.day;
       photos[i].activity = res.activity;
       photos[i].errMsg = '';
+      document.getElementById('m'+i).value = res.month;
       document.getElementById('d'+i).value = res.day;
       document.getElementById('a'+i).value = res.activity;
       document.getElementById('nn'+i).textContent = newName(photos[i]);
@@ -293,12 +296,12 @@ async function callAPI(photo, key) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 200,
-        system: '청소년문화센터 업무 사진 분석. 아래 JSON만 출력하고 다른 텍스트 절대 금지.\n{"day":"두자리일숫자","activity":"활동명한국어"}',
+        system: '청소년문화센터 업무 사진 분석. 아래 JSON만 출력하고 다른 텍스트 절대 금지.\n{"month":"두자리월숫자","day":"두자리일숫자","activity":"활동명한국어"}',
         messages: [{
           role: 'user',
           content: [
             { type:'image', source:{ type:'base64', media_type:mt, data:b64 } },
-            { type:'text', text:'날짜(일)와 활동명 분석. 모르면 day:00 activity:기타활동' }
+            { type:'text', text:'날짜(월,일)와 활동명 분석. 모르면 month:00 day:00 activity:기타활동' }
           ]
         }]
       })
@@ -331,6 +334,7 @@ async function callAPI(photo, key) {
   catch(je) { throw new Error('JSON 파싱 오류\n내용: '+clean.slice(0,200)); }
 
   return {
+    month:    String(parsed.month||'00').replace(/\D/g,'').padStart(2,'0'),
     day:      String(parsed.day||'00').replace(/\D/g,'').padStart(2,'0'),
     activity: String(parsed.activity||'기타활동').trim()
   };
@@ -344,12 +348,12 @@ async function dlZip() {
 }
 
 function dlExcel() {
-  var rows = [['번호','원본 파일명','일(日)','활동명','새 파일명','상태']];
+  var rows = [['번호','원본 파일명','월/일','활동명','새 파일명','상태']];
   photos.forEach(function(p,i){
-    rows.push([i+1,p.file.name,p.day,p.activity,newName(p),{wait:'대기',ing:'분석중',done:'완료',err:'오류'}[p.status]||'']);
+    rows.push([i+1,p.file.name,(p.month&&p.day?parseInt(p.month)+'/'+parseInt(p.day):''),p.activity,newName(p),{wait:'대기',ing:'분석중',done:'완료',err:'오류'}[p.status]||'']);
   });
   var ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols']=[{wch:6},{wch:36},{wch:8},{wch:24},{wch:36},{wch:8}];
+  ws['!cols']=[{wch:6},{wch:36},{wch:10},{wch:24},{wch:36},{wch:8}];
   var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'사진정리목록');
   XLSX.writeFile(wb,'사진정리목록.xlsx');
 }
