@@ -8,89 +8,89 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --primary: #1D9E75; --primary-light: #E1F5EE; --primary-dark: #0F6E56;
-  --bg: #f7f8f6; --card: #fff; --border: #e2e8e4;
-  --text: #1a1f1c; --text-sub: #6b7a72; --text-muted: #9aaa9f;
-  --radius: 12px; --radius-sm: 8px;
+  --primary:#1D9E75;--pl:#E1F5EE;--pd:#0F6E56;
+  --bg:#f7f8f6;--card:#fff;--border:#e2e8e4;
+  --text:#1a1f1c;--sub:#6b7a72;--muted:#9aaa9f;
+  --r:12px;--rs:8px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Pretendard','Apple SD Gothic Neo',sans-serif; background: var(--bg); color: var(--text); }
-.topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 100; }
-.topbar a { color: var(--text-sub); text-decoration: none; font-size: 13px; }
-.topbar .title { font-size: 15px; font-weight: 600; }
-.topbar-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; }
-.wrap { max-width: 920px; margin: 0 auto; padding: 28px 20px 80px; }
-
-/* API 섹션 */
-.api-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.api-section label { font-size: 13px; font-weight: 600; color: var(--text-sub); white-space: nowrap; }
-.api-section input { flex: 1; min-width: 200px; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 13px; font-family: monospace; background: var(--bg); color: var(--text); outline: none; }
-.api-section input:focus { border-color: var(--primary); }
-.api-status { font-size: 12px; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
-.api-status.ok { background: var(--primary-light); color: var(--primary-dark); }
-.api-status.none { background: #fff3cd; color: #856404; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text)}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.topbar a{color:var(--sub);text-decoration:none;font-size:13px}
+.title{font-size:15px;font-weight:600}
+.dot{width:8px;height:8px;background:var(--primary);border-radius:50%}
+.wrap{max-width:920px;margin:0 auto;padding:28px 20px 80px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:14px}
+.card label{font-size:13px;font-weight:600;color:var(--sub);display:block;margin-bottom:8px}
+.api-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.api-row input{flex:1;min-width:200px;border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;font-size:13px;font-family:monospace;background:var(--bg);color:var(--text);outline:none}
+.api-row input:focus{border-color:var(--primary)}
+.chip{font-size:12px;padding:4px 10px;border-radius:99px;white-space:nowrap}
+.chip-ok{background:var(--pl);color:var(--pd)}
+.chip-warn{background:#fff3cd;color:#856404}
 
 /* 드롭존 */
-.drop-zone { background: var(--card); border: 2px dashed var(--border); border-radius: var(--radius); padding: 48px 24px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px; }
-.drop-zone:hover, .drop-zone.drag { border-color: var(--primary); background: var(--primary-light); }
-.drop-zone input { display: none; }
-.drop-zone h3 { font-size: 16px; font-weight: 600; margin: 10px 0 6px; }
-.drop-zone p { font-size: 13px; color: var(--text-sub); }
+.drop-zone{border:2px dashed var(--border);border-radius:var(--r);padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--primary);background:var(--pl)}
+.drop-zone input{display:none}
+.drop-zone h3{font-size:16px;font-weight:600;margin:10px 0 6px}
+.drop-zone p{font-size:13px;color:var(--sub)}
 
-/* 버튼 */
-.action-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
-.btn-primary { background: var(--primary); color: #fff; }
-.btn-primary:hover { background: var(--primary-dark); }
-.btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
-.btn-outline { background: var(--card); color: var(--text); border: 1px solid var(--border); }
-.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
-.btn-outline:disabled { opacity: 0.4; cursor: not-allowed; }
-.count-badge { font-size: 13px; color: var(--text-sub); margin-left: auto; }
+/* 액션바 */
+.abar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-p{background:var(--primary);color:#fff}
+.btn-p:hover{background:var(--pd)}
+.btn-p:disabled{background:var(--muted);cursor:not-allowed}
+.btn-o{background:var(--card);color:var(--text);border:1px solid var(--border)}
+.btn-o:hover{border-color:var(--primary);color:var(--primary)}
+.btn-o:disabled{opacity:.4;cursor:not-allowed}
+.cnt{font-size:13px;color:var(--sub);margin-left:auto}
 
 /* 진행바 */
-.progress-wrap { margin-bottom: 14px; }
-.progress-track { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--primary); border-radius: 99px; transition: width 0.3s; }
-.progress-label { font-size: 12px; color: var(--text-sub); margin-top: 6px; }
+.prog-wrap{margin-bottom:14px}
+.prog-track{background:var(--border);border-radius:99px;height:6px;overflow:hidden}
+.prog-fill{height:100%;background:var(--primary);border-radius:99px;transition:width .3s}
+.prog-label{font-size:12px;color:var(--sub);margin-top:6px}
 
-/* 에러 박스 */
-.err-box { background: #fff0f0; border: 1px solid #f5c4c4; border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 14px; font-size: 13px; color: #9a2020; word-break: break-all; }
-.err-box strong { display: block; margin-bottom: 6px; font-size: 14px; }
-.err-detail { font-family: monospace; font-size: 12px; background: #ffeaea; padding: 8px 10px; border-radius: 6px; margin-top: 6px; white-space: pre-wrap; }
+/* 오류 박스 */
+.err-box{background:#fff0f0;border:1px solid #f5c4c4;border-radius:var(--rs);padding:14px 16px;margin-bottom:14px}
+.err-box b{display:block;font-size:14px;color:#9a2020;margin-bottom:6px}
+.err-msg{font-size:13px;color:#c0392b;margin-bottom:6px}
+.err-code{font-family:monospace;font-size:12px;background:#ffeaea;padding:8px 10px;border-radius:6px;white-space:pre-wrap;word-break:break-all;color:#7b241c}
 
 /* 테이블 */
-.table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead { background: #f0f4f2; }
-thead th { padding: 11px 14px; text-align: left; font-weight: 600; font-size: 12px; color: var(--text-sub); border-bottom: 1px solid var(--border); white-space: nowrap; }
-tbody tr { border-bottom: 1px solid var(--border); }
-tbody tr:last-child { border-bottom: none; }
-tbody tr:hover { background: var(--primary-light); }
-tbody td { padding: 9px 14px; vertical-align: middle; }
-.td-num { color: var(--text-muted); font-size: 12px; width: 36px; text-align: center; }
-.td-orig { color: var(--text-sub); font-size: 12px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.td-day input { width: 52px; text-align: center; border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 13px; background: var(--bg); outline: none; }
-.td-name input { width: 100%; min-width: 150px; border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 13px; background: var(--bg); outline: none; }
-.td-day input:focus, .td-name input:focus { border-color: var(--primary); }
-.td-new { color: var(--primary-dark); font-weight: 600; font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
-.sbadge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 99px; font-weight: 500; cursor: default; }
-.s-wait { background: #f0f4f2; color: var(--text-sub); }
-.s-ing  { background: #dbeafe; color: #1d4ed8; }
-.s-done { background: var(--primary-light); color: var(--primary-dark); }
-.s-err  { background: #fee2e2; color: #b91c1c; }
-.err-row td { background: #fff8f8 !important; }
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:#f0f4f2}
+th{padding:11px 14px;text-align:left;font-weight:600;font-size:12px;color:var(--sub);border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--pl)}
+td{padding:9px 14px;vertical-align:middle}
+.n{color:var(--muted);font-size:12px;width:36px;text-align:center}
+.orig{color:var(--sub);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.day-in{width:52px;text-align:center;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:13px;background:var(--bg);outline:none;font-family:inherit}
+.act-in{width:100%;min-width:140px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:13px;background:var(--bg);outline:none;font-family:inherit}
+.day-in:focus,.act-in:focus{border-color:var(--primary)}
+.newname{color:var(--pd);font-weight:600;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thumb{width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
+.sb{display:inline-block;font-size:11px;padding:3px 8px;border-radius:99px;font-weight:500;cursor:default}
+.sw{background:#f0f4f2;color:var(--sub)}
+.si{background:#dbeafe;color:#1d4ed8}
+.sd{background:var(--pl);color:var(--pd)}
+.se{background:#fee2e2;color:#b91c1c}
+.erow td{background:#fff8f8!important}
 
 /* 다운로드 바 */
-.dl-bar { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-top: 4px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.dl-info { font-size: 13px; color: var(--text-sub); margin-right: auto; }
+.dl-bar{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dl-info{font-size:13px;color:var(--sub);margin-right:auto}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div class="topbar-dot"></div>
+  <div class="dot"></div>
   <a href="../">WORK-TOOL</a>
   <span style="color:#e2e8e4">›</span>
   <span class="title">사진 정리기</span>
@@ -98,225 +98,189 @@ tbody td { padding: 9px 14px; vertical-align: middle; }
 
 <div class="wrap">
 
-  <!-- API 키 -->
-  <div class="api-section">
+  <div class="card">
     <label>🔑 Claude API Key</label>
-    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="checkKey()">
-    <span class="api-status none" id="apiStatus">미입력</span>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="checkKey()">
+      <span class="chip chip-warn" id="apiStatus">미입력</span>
+    </div>
   </div>
 
-  <!-- 드롭존 -->
-  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-    <input type="file" id="fileInput" multiple accept="image/*" onchange="handleFiles(this.files)">
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fi').click()">
+    <input type="file" id="fi" multiple accept="image/*" onchange="handleFiles(this.files)">
     <div style="font-size:40px">🖼️</div>
     <h3>사진을 끌어다 놓거나 클릭해서 업로드</h3>
     <p>여러 장 한 번에 가능 · JPG, PNG 등</p>
   </div>
 
-  <!-- 액션 바 -->
-  <div class="action-bar" id="actionBar" style="display:none">
-    <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeAll()">✨ AI 분석 시작</button>
-    <button class="btn btn-outline" id="zipBtn" onclick="downloadZip()" disabled>📦 ZIP 다운로드</button>
-    <button class="btn btn-outline" id="xlsBtn" onclick="downloadExcel()" disabled>📊 엑셀 다운로드</button>
-    <button class="btn btn-outline" onclick="clearAll()" style="margin-left:auto">🗑 초기화</button>
-    <span class="count-badge" id="countBadge">0장</span>
+  <div class="abar" id="abar" style="display:none">
+    <button class="btn btn-p" id="analyzeBtn" onclick="analyzeAll()">✨ AI 분석 시작</button>
+    <button class="btn btn-o" id="zipBtn" onclick="dlZip()" disabled>📦 ZIP 다운로드</button>
+    <button class="btn btn-o" id="xlsBtn" onclick="dlExcel()" disabled>📊 엑셀 다운로드</button>
+    <button class="btn btn-o" onclick="clearAll()" style="margin-left:auto">🗑 초기화</button>
+    <span class="cnt" id="cnt">0장</span>
   </div>
 
-  <!-- 진행바 -->
-  <div class="progress-wrap" id="progressWrap" style="display:none">
-    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
-    <div class="progress-label" id="progressLabel"></div>
+  <div class="prog-wrap" id="pw" style="display:none">
+    <div class="prog-track"><div class="prog-fill" id="pf" style="width:0%"></div></div>
+    <div class="prog-label" id="pl"></div>
   </div>
 
-  <!-- 에러 박스 -->
   <div class="err-box" id="errBox" style="display:none">
-    <strong>⚠️ 오류 발생</strong>
-    <div id="errText"></div>
-    <div class="err-detail" id="errDetail"></div>
+    <b>⚠️ 오류 발생</b>
+    <div class="err-msg" id="errMsg"></div>
+    <div class="err-code" id="errCode"></div>
   </div>
 
-  <!-- 테이블 -->
-  <div class="table-wrap" id="tableWrap" style="display:none">
+  <div class="tbl-wrap" id="tw" style="display:none">
     <table>
-      <thead>
-        <tr>
-          <th class="td-num">#</th>
-          <th>미리보기</th>
-          <th class="td-orig">원본 파일명</th>
-          <th>일(日)</th>
-          <th>활동명</th>
-          <th>새 파일명</th>
-          <th>상태</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
+      <thead><tr>
+        <th class="n">#</th><th>미리보기</th><th class="orig">원본 파일명</th>
+        <th>일(日)</th><th>활동명</th><th>새 파일명</th><th>상태</th>
+      </tr></thead>
+      <tbody id="tb"></tbody>
     </table>
   </div>
 
-  <!-- 다운로드 바 -->
   <div class="dl-bar" id="dlBar" style="display:none">
     <span class="dl-info" id="dlInfo"></span>
-    <button class="btn btn-primary" onclick="downloadZip()">📦 ZIP 다운로드</button>
-    <button class="btn btn-outline" onclick="downloadExcel()">📊 엑셀 다운로드</button>
+    <button class="btn btn-p" onclick="dlZip()">📦 ZIP</button>
+    <button class="btn btn-o" onclick="dlExcel()">📊 엑셀</button>
   </div>
 
 </div>
 
 <script>
-let photos = [];
+var photos = [];
 
-// 드래그앤드롭
-const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
+var dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', function(){ dz.classList.remove('drag'); });
+dz.addEventListener('drop', function(e){ e.preventDefault(); dz.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
 
 function checkKey() {
-  const k = document.getElementById('apiKey').value.trim();
-  const st = document.getElementById('apiStatus');
-  if (k.startsWith('sk-ant')) { st.textContent = '입력됨 ✓'; st.className = 'api-status ok'; }
-  else { st.textContent = '미입력'; st.className = 'api-status none'; }
+  var k = document.getElementById('apiKey').value.trim();
+  var s = document.getElementById('apiStatus');
+  if (k.startsWith('sk-ant')) { s.textContent='입력됨 ✓'; s.className='chip chip-ok'; }
+  else { s.textContent='미입력'; s.className='chip chip-warn'; }
 }
 
 function handleFiles(files) {
-  const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
-  imgs.forEach(f => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const idx = photos.length;
-      photos.push({ file: f, dataUrl: e.target.result, day: '', activity: '', status: 'wait', errMsg: '' });
+  var imgs = Array.from(files).filter(function(f){ return f.type.startsWith('image/'); });
+  imgs.forEach(function(f) {
+    var r = new FileReader();
+    r.onload = function(e) {
+      var idx = photos.length;
+      photos.push({ file:f, dataUrl:e.target.result, day:'', activity:'', status:'wait', errMsg:'' });
       addRow(idx);
-      updateCount();
+      document.getElementById('cnt').textContent = photos.length + '장';
     };
-    reader.readAsDataURL(f);
+    r.readAsDataURL(f);
   });
-  document.getElementById('dropZone').style.display = 'none';
-  document.getElementById('actionBar').style.display = 'flex';
-  document.getElementById('tableWrap').style.display = 'block';
+  dz.style.display = 'none';
+  document.getElementById('abar').style.display = 'flex';
+  document.getElementById('tw').style.display = 'block';
 }
 
-function ext(name) { return (name.match(/\.[^.]+$/) || ['.jpg'])[0].toLowerCase(); }
-
-function newName(p) {
-  if (!p.day || !p.activity) return '—';
-  return p.day + '_' + p.activity + ext(p.file.name);
-}
+function ext(name) { var m = name.match(/\.[^.]+$/); return m ? m[0].toLowerCase() : '.jpg'; }
+function newName(p) { return (p.day && p.activity) ? p.day+'_'+p.activity+ext(p.file.name) : '—'; }
 
 function addRow(i) {
-  const p = photos[i];
-  const tr = document.createElement('tr');
-  tr.id = 'row-' + i;
+  var p = photos[i];
+  var tr = document.createElement('tr');
+  tr.id = 'row'+i;
   tr.innerHTML =
-    '<td class="td-num">' + (i+1) + '</td>' +
-    '<td><img class="thumb" src="' + p.dataUrl + '" alt=""></td>' +
-    '<td class="td-orig">' + p.file.name + '</td>' +
-    '<td class="td-day"><input type="text" id="day-' + i + '" value="" placeholder="00" maxlength="2" oninput="fieldChange(' + i + ',\'day\',this.value)"></td>' +
-    '<td class="td-name"><input type="text" id="act-' + i + '" value="" placeholder="활동명" oninput="fieldChange(' + i + ',\'activity\',this.value)"></td>' +
-    '<td class="td-new" id="new-' + i + '">—</td>' +
-    '<td><span class="sbadge s-wait" id="st-' + i + '">대기</span></td>';
-  document.getElementById('tableBody').appendChild(tr);
+    '<td class="n">'+(i+1)+'</td>'+
+    '<td><img class="thumb" src="'+p.dataUrl+'" alt=""></td>'+
+    '<td class="orig">'+p.file.name+'</td>'+
+    '<td><input class="day-in" id="d'+i+'" value="" placeholder="00" maxlength="2" oninput="fc('+i+',\'day\',this.value)"></td>'+
+    '<td><input class="act-in" id="a'+i+'" value="" placeholder="활동명" oninput="fc('+i+',\'activity\',this.value)"></td>'+
+    '<td class="newname" id="nn'+i+'">—</td>'+
+    '<td><span class="sb sw" id="st'+i+'">대기</span></td>';
+  document.getElementById('tb').appendChild(tr);
 }
 
-function fieldChange(i, field, val) {
+function fc(i, field, val) {
   photos[i][field] = val.trim();
-  document.getElementById('new-' + i).textContent = newName(photos[i]);
+  document.getElementById('nn'+i).textContent = newName(photos[i]);
 }
 
-function setStatus(i, status) {
-  const map = { wait:'s-wait', ing:'s-ing', done:'s-done', err:'s-err' };
-  const label = { wait:'대기', ing:'분석중', done:'완료', err:'오류' };
-  const el = document.getElementById('st-' + i);
+function setSt(i, status) {
+  var ml = {wait:'sw',ing:'si',done:'sd',err:'se'};
+  var tl = {wait:'대기',ing:'분석중',done:'완료',err:'오류'};
+  var el = document.getElementById('st'+i);
   if (!el) return;
-  el.className = 'sbadge ' + map[status];
-  el.textContent = label[status];
+  el.className = 'sb '+ml[status];
+  el.textContent = tl[status];
   photos[i].status = status;
-  const row = document.getElementById('row-' + i);
-  if (row) row.className = status === 'err' ? 'err-row' : '';
+  var row = document.getElementById('row'+i);
+  if (row) row.className = status==='err' ? 'erow' : '';
 }
 
-function updateCount() {
-  document.getElementById('countBadge').textContent = photos.length + '장';
-}
-
-function showErr(text, detail) {
+function showErr(msg, code) {
   document.getElementById('errBox').style.display = 'block';
-  document.getElementById('errText').textContent = text;
-  document.getElementById('errDetail').textContent = detail || '';
+  document.getElementById('errMsg').textContent = msg;
+  document.getElementById('errCode').textContent = code || '';
 }
-
-function hideErr() {
-  document.getElementById('errBox').style.display = 'none';
-}
+function hideErr() { document.getElementById('errBox').style.display = 'none'; }
 
 async function analyzeAll() {
-  const key = document.getElementById('apiKey').value.trim();
+  var key = document.getElementById('apiKey').value.trim();
   if (!key.startsWith('sk-ant')) {
     showErr('API 키를 먼저 입력해주세요.', 'sk-ant 로 시작하는 Claude API 키가 필요합니다.');
     return;
   }
   hideErr();
+  var btn = document.getElementById('analyzeBtn');
+  btn.disabled = true; btn.textContent = '분석 중...';
+  document.getElementById('pw').style.display = 'block';
+  var pf = document.getElementById('pf');
+  var pl = document.getElementById('pl');
+  var firstErr = '';
 
-  const btn = document.getElementById('analyzeBtn');
-  btn.disabled = true;
-  btn.textContent = '분석 중...';
-  const pw = document.getElementById('progressWrap');
-  const pf = document.getElementById('progressFill');
-  const pl = document.getElementById('progressLabel');
-  pw.style.display = 'block';
-
-  let firstErrMsg = '';
-
-  for (let i = 0; i < photos.length; i++) {
+  for (var i = 0; i < photos.length; i++) {
     if (photos[i].status === 'done') continue;
-    setStatus(i, 'ing');
-    pl.textContent = '분석 중... (' + (i+1) + '/' + photos.length + ')';
-    pf.style.width = Math.round(i / photos.length * 100) + '%';
-
+    setSt(i, 'ing');
+    pl.textContent = '분석 중... ('+(i+1)+'/'+photos.length+')';
+    pf.style.width = Math.round(i/photos.length*100)+'%';
     try {
-      const res = await analyzeOne(photos[i], key);
+      var res = await callAPI(photos[i], key);
       photos[i].day = res.day;
       photos[i].activity = res.activity;
       photos[i].errMsg = '';
-      document.getElementById('day-' + i).value = res.day;
-      document.getElementById('act-' + i).value = res.activity;
-      document.getElementById('new-' + i).textContent = newName(photos[i]);
-      setStatus(i, 'done');
+      document.getElementById('d'+i).value = res.day;
+      document.getElementById('a'+i).value = res.activity;
+      document.getElementById('nn'+i).textContent = newName(photos[i]);
+      setSt(i, 'done');
     } catch(e) {
       photos[i].errMsg = e.message || String(e);
-      setStatus(i, 'err');
-      if (!firstErrMsg) firstErrMsg = photos[i].errMsg;
-      console.error('[사진 ' + (i+1) + ']', e);
+      setSt(i, 'err');
+      if (!firstErr) firstErr = photos[i].errMsg;
     }
   }
 
   pf.style.width = '100%';
-  const doneCount = photos.filter(p => p.status === 'done').length;
-  const errCount  = photos.filter(p => p.status === 'err').length;
-  pl.textContent = '완료! ' + doneCount + '/' + photos.length + '장 성공' + (errCount > 0 ? ' / ' + errCount + '장 오류' : '');
+  var done = photos.filter(function(p){return p.status==='done';}).length;
+  var errs = photos.filter(function(p){return p.status==='err';}).length;
+  pl.textContent = '완료 '+done+'/'+photos.length+'장' + (errs?' / ⚠️ '+errs+'장 오류':'');
 
-  if (errCount > 0) {
-    showErr(
-      errCount + '장 분석 실패. 아래 오류 내용을 확인하세요.',
-      firstErrMsg
-    );
-  }
+  if (errs > 0) showErr(errs+'장 분석 실패', firstErr);
 
-  btn.disabled = false;
-  btn.textContent = '✨ 다시 분석';
+  btn.disabled = false; btn.textContent = '✨ 다시 분석';
 
-  if (doneCount > 0) {
+  if (done > 0) {
     document.getElementById('zipBtn').disabled = false;
     document.getElementById('xlsBtn').disabled = false;
     document.getElementById('dlBar').style.display = 'flex';
-    document.getElementById('dlInfo').textContent = doneCount + '/' + photos.length + '장 완료';
+    document.getElementById('dlInfo').textContent = done+'/'+photos.length+'장 완료';
   }
 }
 
-async function analyzeOne(photo, key) {
-  const b64 = photo.dataUrl.split(',')[1];
-  const mt  = photo.file.type || 'image/jpeg';
+async function callAPI(photo, key) {
+  var b64 = photo.dataUrl.split(',')[1];
+  var mt  = photo.file.type || 'image/jpeg';
 
-  let resp;
+  var resp;
   try {
     resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -327,91 +291,78 @@ async function analyzeOne(photo, key) {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5',
         max_tokens: 200,
-        system: '청소년문화센터 업무 사진 분석 전문가. 아래 JSON만 출력. 다른 텍스트 금지.\n{"day":"두자리일(예:05)","activity":"활동명(한국어짧게)"}',
+        system: '청소년문화센터 업무 사진 분석. 아래 JSON만 출력하고 다른 텍스트 절대 금지.\n{"day":"두자리일숫자","activity":"활동명한국어"}',
         messages: [{
           role: 'user',
           content: [
-            { type: 'image', source: { type: 'base64', media_type: mt, data: b64 } },
-            { type: 'text', text: '날짜(일)와 활동명 분석. 불명확하면 day:00, activity:기타활동' }
+            { type:'image', source:{ type:'base64', media_type:mt, data:b64 } },
+            { type:'text', text:'날짜(일)와 활동명 분석. 모르면 day:00 activity:기타활동' }
           ]
         }]
       })
     });
   } catch(fetchErr) {
-    throw new Error('네트워크 오류: ' + fetchErr.message);
+    throw new Error('네트워크/CORS 오류: ' + fetchErr.message);
   }
 
-  let data;
-  try {
-    data = await resp.json();
-  } catch(jsonErr) {
-    throw new Error('응답 파싱 실패 (HTTP ' + resp.status + ')');
-  }
+  var raw;
+  try { raw = await resp.text(); } catch(e) { throw new Error('응답 읽기 실패'); }
+
+  var data;
+  try { data = JSON.parse(raw); } catch(e) { throw new Error('JSON 파싱 실패 (HTTP '+resp.status+'): '+raw.slice(0,200)); }
 
   if (!resp.ok) {
-    const msg = (data && data.error && data.error.message) ? data.error.message : 'HTTP ' + resp.status;
-    const type = (data && data.error && data.error.type) ? data.error.type : '';
-    throw new Error('[' + resp.status + '] ' + type + ': ' + msg);
+    var em = (data.error && data.error.message) ? data.error.message : raw.slice(0,200);
+    var et = (data.error && data.error.type)    ? data.error.type    : '';
+    throw new Error('[HTTP '+resp.status+'] '+et+'\n'+em);
   }
 
-  const text = (data.content || []).map(c => c.text || '').join('').trim();
-  if (!text) throw new Error('API 응답 내용 없음');
+  var text = (data.content||[]).map(function(c){return c.text||'';}).join('').trim();
+  if (!text) throw new Error('API 응답 내용 비어있음\n전체응답: '+raw.slice(0,300));
 
-  const clean = text.replace(/```json|```/g, '').trim();
-  const start = clean.indexOf('{');
-  const end   = clean.lastIndexOf('}');
-  if (start < 0 || end < 0) throw new Error('JSON 없음: ' + clean.slice(0, 100));
+  var clean = text.replace(/```json|```/g,'').trim();
+  var s = clean.indexOf('{'), e2 = clean.lastIndexOf('}');
+  if (s<0||e2<0) throw new Error('JSON 없음\n응답: '+clean.slice(0,200));
 
-  let parsed;
-  try {
-    parsed = JSON.parse(clean.slice(start, end + 1));
-  } catch(je) {
-    throw new Error('JSON 파싱 오류: ' + clean.slice(0, 100));
-  }
+  var parsed;
+  try { parsed = JSON.parse(clean.slice(s, e2+1)); }
+  catch(je) { throw new Error('JSON 파싱 오류\n내용: '+clean.slice(0,200)); }
 
   return {
-    day:      String(parsed.day || '00').replace(/\D/g, '').padStart(2, '0'),
-    activity: String(parsed.activity || '기타활동').trim()
+    day:      String(parsed.day||'00').replace(/\D/g,'').padStart(2,'0'),
+    activity: String(parsed.activity||'기타활동').trim()
   };
 }
 
-async function downloadZip() {
-  const zip = new JSZip();
-  photos.forEach(p => {
-    if (p.status !== 'done') return;
-    zip.file(newName(p), p.dataUrl.split(',')[1], { base64: true });
-  });
-  const blob = await zip.generateAsync({ type: 'blob' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '사진_파일명변경.zip';
-  a.click();
+async function dlZip() {
+  var zip = new JSZip();
+  photos.forEach(function(p){ if(p.status==='done') zip.file(newName(p), p.dataUrl.split(',')[1], {base64:true}); });
+  var blob = await zip.generateAsync({type:'blob'});
+  var a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='사진_파일명변경.zip'; a.click();
 }
 
-function downloadExcel() {
-  const rows = [['번호','원본 파일명','일(日)','활동명','새 파일명','상태']];
-  photos.forEach((p, i) => {
-    rows.push([i+1, p.file.name, p.day, p.activity, newName(p),
-      { wait:'대기', ing:'분석중', done:'완료', err:'오류' }[p.status] || '']);
+function dlExcel() {
+  var rows = [['번호','원본 파일명','일(日)','활동명','새 파일명','상태']];
+  photos.forEach(function(p,i){
+    rows.push([i+1,p.file.name,p.day,p.activity,newName(p),{wait:'대기',ing:'분석중',done:'완료',err:'오류'}[p.status]||'']);
   });
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = [{wch:6},{wch:36},{wch:8},{wch:24},{wch:36},{wch:8}];
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '사진정리목록');
-  XLSX.writeFile(wb, '사진정리목록.xlsx');
+  var ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:6},{wch:36},{wch:8},{wch:24},{wch:36},{wch:8}];
+  var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'사진정리목록');
+  XLSX.writeFile(wb,'사진정리목록.xlsx');
 }
 
 function clearAll() {
-  photos = [];
-  document.getElementById('tableBody').innerHTML = '';
-  document.getElementById('tableWrap').style.display = 'none';
-  document.getElementById('actionBar').style.display = 'none';
-  document.getElementById('dlBar').style.display = 'none';
-  document.getElementById('progressWrap').style.display = 'none';
-  document.getElementById('dropZone').style.display = 'block';
-  document.getElementById('fileInput').value = '';
+  photos=[];
+  document.getElementById('tb').innerHTML='';
+  document.getElementById('tw').style.display='none';
+  document.getElementById('abar').style.display='none';
+  document.getElementById('dlBar').style.display='none';
+  document.getElementById('pw').style.display='none';
+  dz.style.display='block';
+  document.getElementById('fi').value='';
   hideErr();
 }
 </script>
