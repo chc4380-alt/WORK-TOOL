@@ -1,0 +1,3654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청소년참여기구 관리 시스템</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ===== FLAT DESIGN — Windows 8/10 Intranet Style ===== */
+:root {
+  --blue:        #0078D4;
+  --blue-dark:   #005A9E;
+  --blue-light:  #C7E0F4;
+  --blue-pale:   #EFF6FC;
+  --green:       #107C10;
+  --green-light: #DFF6DD;
+  --orange:      #CA5010;
+  --orange-light:#FAE4D8;
+  --gray-bg:     #F3F3F3;
+  --gray-1:      #E1E1E1;
+  --gray-2:      #C8C8C8;
+  --gray-3:      #A0A0A0;
+  --gray-4:      #5C5C5C;
+  --gray-5:      #333333;
+  --white:       #FFFFFF;
+  --panel-bg:    #FFFFFF;
+  --accent-a:    #0078D4;
+  --accent-b:    #038387;
+  --red:         #A80000;
+  --red-light:   #FDE7E9;
+  --yellow:      #797673;
+  --yellow-light:#FFF4CE;
+  --purple:      #5C2D91;
+  --purple-light:#F4EAF9;
+  --shadow:      0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md:   0 2px 8px rgba(0,0,0,0.14);
+  --r:           2px;
+}
+/* 다크모드 */
+body.dark {
+  --blue:        #3AA0F3;
+  --blue-dark:   #1A6BB5;
+  --blue-light:  #1E3F5A;
+  --blue-pale:   #162436;
+  --green:       #4EC24E;
+  --green-light: #1A3A1A;
+  --orange:      #F09050;
+  --orange-light:#3A2010;
+  --gray-bg:     #1E1E1E;
+  --gray-1:      #2D2D2D;
+  --gray-2:      #444444;
+  --gray-3:      #888888;
+  --gray-4:      #BBBBBB;
+  --gray-5:      #EEEEEE;
+  --white:       #252525;
+  --panel-bg:    #2A2A2A;
+  --red:         #F04040;
+  --red-light:   #3A1010;
+  --yellow-light:#2A2510;
+  --purple:      #9B6FD8;
+  --purple-light:#2A1A3A;
+  --shadow:      0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:   0 2px 8px rgba(0,0,0,0.5);
+}
+body.dark .navbar { background: #1A1A1A; }
+body.dark .panel { background: var(--panel-bg); }
+body.dark .modal-wrap { background: #2A2A2A; }
+body.dark .tbl th { background: #1A2A3A; }
+body.dark .tbl tr:hover td { background: #222; }
+body.dark .home-tile { opacity: 0.92; }
+body.dark .signbook { background: #fff; color: #000; }
+body.dark .id-card { background: #fff; color: #000; }
+body.dark input, body.dark select, body.dark textarea {
+  background: #333 !important; color: #eee !important; border-color: #555 !important;
+}
+body.dark .date-picker-popup { background: #2A2A2A; border-color: #444; }
+body.dark .dp-day:hover { background: #1E3F5A; }
+body.dark .chart-wrap { background: var(--panel-bg); }
+body.dark .activity-log-card { background: var(--panel-bg); }
+body.dark .minutes-card { background: var(--panel-bg); }
+body.dark .sch-card { background: var(--panel-bg); }
+/* 저장 버튼 상태 */
+.topbar-btn.saved { background: rgba(16,124,16,0.4); }
+.topbar-btn.unsaved { background: rgba(202,80,16,0.5); }
+.topbar-btn.saving { opacity: 0.6; pointer-events: none; }
+.dark-toggle {
+  background: none; border: 1px solid rgba(255,255,255,0.3);
+  color: var(--white); font-size: 14px; cursor: pointer;
+  padding: 4px 8px; font-family: inherit; transition: all 0.2s;
+  line-height: 1;
+}
+.dark-toggle:hover { background: rgba(255,255,255,0.15); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+  background: var(--gray-bg);
+  color: var(--gray-5);
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* ===== 홈 화면 ===== */
+#homeScreen {
+  min-height: 100vh;
+  background: var(--blue-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.home-header { text-align: center; color: var(--white); margin-bottom: 60px; }
+.home-header .org-name { font-size: 13px; letter-spacing: 4px; opacity: 0.7; margin-bottom: 12px; text-transform: uppercase; }
+.home-header h1 { font-size: 32px; font-weight: 300; letter-spacing: -0.5px; margin-bottom: 8px; }
+.home-header .sub { font-size: 14px; opacity: 0.6; }
+.home-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; max-width: 700px; width: 100%; }
+.home-tile {
+  background: var(--blue);
+  color: var(--white);
+  padding: 40px 32px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+  border: none;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.home-tile:hover { background: #1082D8; }
+.home-tile.green { background: #0E7A0E; }
+.home-tile.green:hover { background: #138A13; }
+.home-tile .tile-icon { font-size: 36px; margin-bottom: 16px; display: block; }
+.home-tile .tile-title { font-size: 20px; font-weight: 400; margin-bottom: 6px; }
+.home-tile .tile-sub { font-size: 12px; opacity: 0.75; line-height: 1.6; }
+.home-tile .tile-badge {
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(255,255,255,0.2);
+  font-size: 11px; padding: 3px 8px;
+  letter-spacing: 0.5px;
+}
+.home-settings {
+  margin-top: 20px; color: rgba(255,255,255,0.5); font-size: 12px;
+  display: flex; gap: 20px;
+}
+.home-settings a { color: inherit; text-decoration: none; cursor: pointer; }
+.home-settings a:hover { color: rgba(255,255,255,0.9); }
+
+/* ===== 앱 레이아웃 ===== */
+#appScreen { display: none; flex-direction: column; min-height: 100vh; }
+
+/* 상단 바 */
+.topbar {
+  background: var(--blue-dark);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 44px;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.topbar-back {
+  background: none; border: none; color: var(--white);
+  font-size: 18px; cursor: pointer; padding: 6px 8px;
+  opacity: 0.8; transition: opacity 0.15s;
+  font-family: inherit;
+}
+.topbar-back:hover { opacity: 1; }
+.topbar-org { font-size: 11px; opacity: 0.6; }
+.topbar-title { font-size: 15px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.topbar-btn {
+  background: rgba(255,255,255,0.12); border: none; color: var(--white);
+  font-size: 12px; padding: 5px 10px; cursor: pointer;
+  font-family: inherit; transition: background 0.15s;
+}
+.topbar-btn:hover { background: rgba(255,255,255,0.22); }
+
+/* 탭 네비 */
+.navbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-1);
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.nav-btn {
+  padding: 11px 18px;
+  border: none; background: none;
+  font-family: inherit; font-size: 13px;
+  color: var(--gray-4);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.nav-btn:hover { color: var(--blue); background: var(--blue-pale); }
+.nav-btn.active { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+/* 콘텐츠 */
+.content { flex: 1; padding: 20px; max-width: 1280px; margin: 0 auto; width: 100%; }
+
+/* 패널 */
+.panel { background: var(--white); border: 1px solid var(--gray-1); padding: 20px; box-shadow: var(--shadow); }
+.panel.hidden { display: none; }
+.panel-title { font-size: 16px; font-weight: 600; color: var(--gray-5); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--blue); display: flex; align-items: center; gap: 8px; }
+
+/* ===== 버튼 ===== */
+.btn { padding: 8px 16px; border: none; font-family: inherit; font-size: 13px; cursor: pointer; font-weight: 400; transition: background 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--blue); color: var(--white); }
+.btn-primary:hover { background: var(--blue-dark); }
+.btn-secondary { background: var(--white); color: var(--gray-5); border: 1px solid var(--gray-2); }
+.btn-secondary:hover { background: var(--gray-bg); }
+.btn-success { background: var(--green); color: var(--white); }
+.btn-success:hover { background: #0A5F0A; }
+.btn-danger { background: var(--white); color: var(--red); border: 1px solid var(--red); }
+.btn-danger:hover { background: var(--red-light); }
+.btn-accent { background: var(--accent-b); color: var(--white); }
+.btn-accent:hover { background: #02696D; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-row { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ===== 폼 ===== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+.form-grid .full { grid-column: 1 / -1; }
+.form-group label { display: block; font-size: 12px; color: var(--gray-4); margin-bottom: 4px; font-weight: 600; letter-spacing: 0.3px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid var(--gray-2); border-radius: var(--r);
+  font-size: 13px; font-family: inherit;
+  background: var(--white); color: var(--gray-5);
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(0,120,212,0.15);
+}
+.form-group textarea { resize: vertical; min-height: 70px; }
+.section-label {
+  grid-column: 1 / -1;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--blue);
+  padding: 12px 0 4px;
+  border-bottom: 1px solid var(--blue-light);
+  margin-bottom: 4px;
+}
+
+/* ===== 테이블 ===== */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { background: var(--blue-pale); color: var(--blue-dark); padding: 9px 8px; text-align: left; font-weight: 600; font-size: 12px; border-bottom: 2px solid var(--blue); white-space: nowrap; }
+.tbl td { padding: 9px 8px; border-bottom: 1px solid var(--gray-1); color: var(--gray-5); }
+.tbl tr:hover td { background: #F8FBFF; }
+.action-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* ===== 대시보드 카드 ===== */
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 4px; margin-bottom: 20px; }
+.dash-card { padding: 16px 18px; color: var(--white); }
+.dash-card.blue { background: var(--blue); }
+.dash-card.green { background: var(--green); }
+.dash-card.orange { background: var(--orange); }
+.dash-card.teal { background: var(--accent-b); }
+.dash-card.purple { background: var(--purple); }
+.dash-card.gray { background: var(--gray-4); }
+.dash-label { font-size: 12px; opacity: 0.85; margin-bottom: 6px; }
+.dash-value { font-size: 26px; font-weight: 300; }
+.dash-sub { font-size: 11px; opacity: 0.75; margin-top: 3px; }
+
+/* ===== 검색바 ===== */
+.search-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.search-bar input, .search-bar select {
+  padding: 8px 10px; border: 1px solid var(--gray-2);
+  font-family: inherit; font-size: 13px; background: var(--white);
+}
+.search-bar input { flex: 1; min-width: 180px; }
+
+/* ===== 태그 ===== */
+.tag { display: inline-block; font-size: 11px; padding: 2px 7px; font-weight: 600; letter-spacing: 0.3px; }
+.tag-blue { background: var(--blue-pale); color: var(--blue-dark); }
+.tag-green { background: var(--green-light); color: var(--green); }
+.tag-orange { background: var(--orange-light); color: var(--orange); }
+.tag-red { background: var(--red-light); color: var(--red); }
+.tag-gray { background: var(--gray-bg); color: var(--gray-4); }
+.tag-purple { background: var(--purple-light); color: var(--purple); }
+
+/* ===== 모달 ===== */
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+.modal.show { display: flex; }
+.modal-wrap { background: var(--white); width: 100%; max-width: 680px; padding: 24px; position: relative; margin: auto; box-shadow: var(--shadow-md); }
+.modal-wrap.wide { max-width: 900px; }
+.modal-wrap.narrow { max-width: 480px; }
+.modal-title { font-size: 17px; font-weight: 600; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid var(--blue); color: var(--gray-5); display: flex; align-items: center; gap: 8px; }
+.close-btn { position: absolute; top: 14px; right: 14px; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--gray-3); line-height: 1; }
+.close-btn:hover { color: var(--gray-5); }
+
+/* ===== 일정 카드 ===== */
+.sch-card { border-left: 4px solid var(--blue); background: var(--white); border: 1px solid var(--gray-1); border-left: 4px solid var(--blue); padding: 14px 16px; margin-bottom: 8px; }
+.sch-card.joint { border-left-color: var(--purple); }
+.sch-card.past { border-left-color: var(--gray-2); opacity: 0.8; }
+.sch-card-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.sch-card-title { font-size: 15px; font-weight: 600; }
+.sch-card-date { font-size: 12px; color: var(--blue); font-weight: 600; }
+.sch-card-meta { font-size: 12px; color: var(--gray-3); display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.sch-card-content { font-size: 13px; color: var(--gray-4); white-space: pre-wrap; line-height: 1.6; }
+
+/* ===== 활동 기록 ===== */
+.activity-log-card {
+  border: 1px solid var(--gray-1);
+  background: var(--white);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.alc-head {
+  background: var(--blue-pale);
+  padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  cursor: pointer;
+}
+.alc-head-title { font-weight: 600; font-size: 14px; color: var(--blue-dark); }
+.alc-head-meta { font-size: 12px; color: var(--gray-3); }
+.alc-body { padding: 16px; display: none; }
+.alc-body.open { display: block; }
+
+/* 사진 갤러리 */
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
+.photo-item { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--gray-bg); cursor: pointer; }
+.photo-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.2s; }
+.photo-item:hover img { transform: scale(1.05); }
+.photo-item .photo-del { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: #fff; border: none; font-size: 12px; cursor: pointer; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; }
+.photo-item:hover .photo-del { display: flex; }
+.photo-add-btn { aspect-ratio: 1; border: 2px dashed var(--gray-2); background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--gray-3); font-size: 12px; gap: 6px; transition: all 0.15s; font-family: inherit; }
+.photo-add-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-pale); }
+
+/* ===== 출석 ===== */
+.attend-header-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--blue-pale); padding: 12px 16px; margin-bottom: 16px; border-left: 4px solid var(--blue); }
+.attend-header-bar label { font-size: 13px; color: var(--blue-dark); font-weight: 600; }
+.attend-header-bar input[type="date"], .attend-header-bar select { padding: 6px 10px; border: 1px solid var(--blue-light); font-family: inherit; font-size: 13px; }
+
+/* ===== 서명부 ===== */
+.signbook { background: var(--white); padding: 24px 32px; color: #000; font-family: 'Malgun Gothic', sans-serif; }
+.signbook .sb-title { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; color: #000; }
+.signbook .sb-activity { text-align: center; font-size: 13px; font-weight: 500; margin-bottom: 12px; color: #000; }
+.signbook .sb-info { font-size: 12px; margin: 4px 0; color: #000; }
+.signbook .sb-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+.signbook .sb-table th, .signbook .sb-table td { border: 1px solid #000; padding: 5px 3px; text-align: center; vertical-align: middle; color: #000; }
+.signbook .sb-table th { background: #D6E4F7; font-weight: 700; font-size: 11px; padding: 6px 3px; color: #000; }
+.signbook .sb-table td.sb-sig-cell { height: 36px; cursor: pointer; padding: 2px; position: relative; }
+.signbook .sb-table td.sb-sig-cell:hover { background: #FFFBF0; }
+.signbook .sb-table td.sb-sig-cell.sb-sig-default { background: #FFFBEE; }
+.signbook .sb-table td.sb-sig-cell.sb-sig-default:hover { background: #FFF3CC; }
+.signbook .sb-table td.sb-sig-cell img { max-height: 32px; max-width: 100%; margin: 0 auto; display: block; }
+.sb-sig-hint { position: absolute; bottom: 1px; right: 2px; font-size: 8px; color: #c89000; font-weight: 700; line-height: 1; pointer-events: none; }
+.signbook .sb-footer { text-align: right; margin-top: 10px; font-size: 13px; font-weight: 800; color: #000; letter-spacing: 0.5px; }
+
+/* ===== 회의록 ===== */
+.minutes-card { border: 1px solid var(--gray-1); margin-bottom: 8px; }
+.mc-head { padding: 12px 16px; background: var(--gray-bg); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; }
+.mc-head-title { font-weight: 600; font-size: 14px; }
+.mc-head-meta { font-size: 12px; color: var(--gray-3); }
+.mc-body { padding: 16px; display: none; }
+.mc-body.open { display: block; }
+.mc-section { margin-bottom: 14px; }
+.mc-section h4 { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--blue); text-transform: uppercase; margin-bottom: 6px; }
+.mc-section p { font-size: 13px; color: var(--gray-4); white-space: pre-wrap; line-height: 1.7; }
+
+/* ===== 인사카드 ===== */
+.id-card { background: var(--white); border: 1px solid #000; padding: 28px; max-width: 600px; margin: 0 auto; }
+.id-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2px solid var(--blue-dark); }
+.id-card-org { font-size: 11px; color: var(--gray-3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.id-card-title { font-size: 22px; font-weight: 700; letter-spacing: 6px; color: var(--gray-5); }
+.id-card-photo { width: 90px; height: 115px; border: 1px solid var(--gray-2); display: flex; align-items: center; justify-content: center; color: var(--gray-3); font-size: 11px; overflow: hidden; flex-shrink: 0; }
+.id-card-photo img { width: 100%; height: 100%; object-fit: cover; }
+.id-card-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.id-card-table th { background: var(--blue-pale); color: var(--blue-dark); padding: 7px 10px; font-weight: 600; font-size: 12px; width: 90px; text-align: center; border: 1px solid var(--gray-1); }
+.id-card-table td { padding: 7px 10px; border: 1px solid var(--gray-1); }
+.id-card-section-row td { background: var(--blue); color: var(--white); font-weight: 600; font-size: 12px; letter-spacing: 0.5px; text-align: center; padding: 5px; }
+.id-card-memo { min-height: 60px; white-space: pre-wrap; }
+
+/* ===== 차트 ===== */
+.chart-wrap { background: var(--white); border: 1px solid var(--gray-1); padding: 16px; margin-bottom: 16px; }
+.chart-title { font-size: 13px; font-weight: 600; color: var(--gray-4); margin-bottom: 12px; }
+.bar-chart { display: flex; flex-direction: column; gap: 6px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 12px; color: var(--gray-4); width: 60px; text-align: right; flex-shrink: 0; }
+.bar-track { flex: 1; background: var(--gray-1); height: 22px; position: relative; }
+.bar-fill { height: 100%; background: var(--blue); transition: width 0.5s; display: flex; align-items: center; padding-left: 8px; }
+.bar-fill.green { background: var(--green); }
+.bar-fill span { font-size: 11px; color: var(--white); white-space: nowrap; }
+
+/* ===== 토스트 ===== */
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--gray-5); color: var(--white); padding: 10px 18px; font-size: 13px; z-index: 500; opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(8px); max-width: 300px; box-shadow: var(--shadow-md); }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+.toast.warn { background: var(--orange); }
+
+/* ===== 서명 패드 ===== */
+.sign-canvas-wrap { border: 2px dashed var(--gray-2); background: var(--white); position: relative; touch-action: none; margin-bottom: 10px; }
+.sign-canvas { display: block; width: 100%; height: 220px; cursor: crosshair; touch-action: none; }
+.sign-canvas-wrap::before { content: '✍ 이곳에 서명해주세요'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: var(--gray-2); font-size: 16px; pointer-events: none; }
+.sign-canvas-wrap.has-drawing::before { opacity: 0; }
+
+/* ===== 사진 라이트박스 ===== */
+#lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:600; align-items:center; justify-content:center; flex-direction:column; gap:12px; }
+#lightbox.show { display:flex; }
+#lightbox img { max-width:90vw; max-height:80vh; object-fit:contain; }
+#lightbox .lb-btns { display:flex; gap:10px; }
+
+/* ===== 슬라이드쇼 ===== */
+#slideshow { display:none; position:fixed; inset:0; background:#000; z-index:700; }
+#slideshow.show { display:block; }
+#slideshow canvas { width:100%; height:100%; }
+#slideshow .ss-ctrl { position:absolute; bottom:20px; left:0; right:0; display:flex; justify-content:center; gap:12px; }
+#slideshow .ss-btn { background:rgba(255,255,255,0.2); border:none; color:#fff; padding:8px 16px; cursor:pointer; font-family:inherit; font-size:13px; }
+#slideshow .ss-btn:hover { background:rgba(255,255,255,0.35); }
+#slideshow .ss-info { position:absolute; top:16px; left:0; right:0; text-align:center; color:rgba(255,255,255,0.7); font-size:13px; }
+
+/* ===== 인쇄 ===== */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body * { visibility: hidden; }
+
+  /* 서명부 인쇄 */
+  body.print-signbook .signbook,
+  body.print-signbook .signbook * { visibility: visible !important; }
+  body.print-signbook .signbook {
+    position: fixed; left: 0; top: 0; width: 100%;
+    padding: 8mm 10mm 6mm 10mm; border: none; font-size: 9pt;
+  }
+  body.print-signbook .signbook .sb-title { font-size: 16pt; margin-bottom: 4mm; }
+  body.print-signbook .signbook .sb-activity { font-size: 10pt; margin-bottom: 6mm; }
+  body.print-signbook .signbook .sb-info { font-size: 9pt; }
+  body.print-signbook .signbook .sb-table { font-size: 8pt; }
+  body.print-signbook .signbook .sb-table th { padding: 3px 2px; font-size: 8pt; }
+  body.print-signbook .signbook .sb-table td { padding: 1px 2px; }
+  body.print-signbook .signbook .sb-table td.sb-sig-cell { height: 7mm; padding: 1px; }
+  body.print-signbook .signbook .sb-table td.sb-sig-cell img { max-height: 6mm; }
+  body.print-signbook .signbook .sb-footer { font-size: 10pt; margin-top: 3mm; text-align: right; font-weight: 800; color: #000; }
+
+  /* 인사카드 인쇄 */
+  body.print-idcard .id-card,
+  body.print-idcard .id-card * { visibility: visible !important; }
+  body.print-idcard .id-card { position: fixed; left: 0; top: 0; width: 100%; border: 1px solid #000; padding: 15mm; }
+
+  /* 위원 현황판 인쇄 */
+  body.print-roster .roster-wrap,
+  body.print-roster .roster-wrap * { visibility: visible !important; }
+  body.print-roster .roster-wrap { position: fixed; left: 0; top: 0; width: 100%; padding: 12mm 14mm; }
+
+  /* 활동 보고서 인쇄 */
+  body.print-actreport .act-report,
+  body.print-actreport .act-report * { visibility: visible !important; }
+  body.print-actreport .act-report { position: fixed; left: 0; top: 0; width: 100%; padding: 10mm 14mm; font-size: 9pt; }
+
+  .modal { position: static !important; background: none !important; padding: 0 !important; display: block !important; }
+  .modal-wrap { box-shadow: none; padding: 0; max-width: 100%; }
+  .close-btn, .btn-row, .print-btns, .topbar, .navbar, .attend-header-bar, .info-box { display: none !important; }
+  @page { size: A4 portrait; margin: 0; }
+}
+
+@media (max-width: 640px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .home-tiles { grid-template-columns: 1fr; }
+  .signbook { padding: 20px 12px; }
+  .id-card { padding: 16px; }
+}
+
+/* ===== 정보 박스 ===== */
+.info-box { background: var(--blue-pale); border-left: 3px solid var(--blue); padding: 10px 14px; font-size: 13px; color: var(--blue-dark); margin-bottom: 14px; line-height: 1.6; }
+.warn-box { background: var(--yellow-light); border-left: 3px solid #C19C00; padding: 10px 14px; font-size: 13px; color: #6B5300; margin-bottom: 14px; }
+.empty { text-align: center; padding: 40px 20px; color: var(--gray-3); font-size: 14px; }
+.divider { border: none; border-top: 1px solid var(--gray-1); margin: 16px 0; }
+
+/* ===== 상태 배지 ===== */
+.badge { display: inline-block; font-size: 11px; padding: 2px 7px; font-weight: 600; }
+.badge-active { background: var(--green-light); color: var(--green); }
+.badge-pause { background: var(--yellow-light); color: #6B5300; }
+.badge-out { background: var(--red-light); color: var(--red); }
+
+/* 탭 서브 */
+.sub-tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
+.sub-tab { padding: 6px 14px; font-size: 13px; cursor: pointer; border: 1px solid var(--gray-2); background: var(--white); font-family: inherit; color: var(--gray-4); transition: all 0.15s; }
+.sub-tab.active { background: var(--blue); color: var(--white); border-color: var(--blue); }
+
+/* ===== 위원 현황판 ===== */
+.roster-wrap { background:#fff; padding:28px 32px; color:#000; font-family:'Malgun Gothic',sans-serif; }
+.roster-title { text-align:center; font-size:22px; font-weight:700; margin-bottom:6px; letter-spacing:2px; }
+.roster-sub { text-align:center; font-size:12px; color:#666; margin-bottom:22px; }
+.roster-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:12px; }
+.roster-card { border:1px solid #ccc; padding:12px 8px; text-align:center; }
+.roster-card-photo { width:70px; height:88px; border:1px solid #ddd; margin:0 auto 8px; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#bbb; font-size:11px; background:#f8f8f8; }
+.roster-card-photo img { width:100%; height:100%; object-fit:cover; }
+.roster-card-name { font-size:14px; font-weight:700; margin-bottom:3px; }
+.roster-card-role { font-size:11px; color:#666; margin-bottom:2px; }
+.roster-card-school { font-size:10px; color:#999; }
+
+/* ===== 활동 보고서 ===== */
+.act-report { background:#fff; padding:32px 40px; color:#000; font-family:'Malgun Gothic',sans-serif; }
+.act-report-title { text-align:center; font-size:22px; font-weight:700; margin-bottom:4px; }
+.act-report-sub { text-align:center; font-size:12px; color:#666; margin-bottom:24px; }
+.act-report-section { margin-bottom:20px; page-break-inside:avoid; }
+.act-report-section h3 { font-size:14px; font-weight:700; border-left:4px solid #0078D4; padding-left:10px; margin-bottom:10px; }
+.act-report-info-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:10px; }
+.act-report-info-table th { background:#EFF6FC; border:1px solid #000; padding:5px 8px; text-align:left; width:80px; font-weight:600; }
+.act-report-info-table td { border:1px solid #000; padding:5px 8px; }
+.act-report-photos { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px; }
+.act-report-photo-item { aspect-ratio:1; overflow:hidden; border:1px solid #ddd; }
+.act-report-photo-item img { width:100%; height:100%; object-fit:cover; }
+
+/* ===== 날짜 피커 완전 재설계 ===== */
+.date-picker-wrap { position: relative; display: inline-block; }
+.date-picker-input { padding: 8px 10px; border: 1px solid var(--gray-2); font-family: inherit; font-size: 13px; background: var(--white); cursor: pointer; min-width: 150px; display: flex; align-items: center; gap: 6px; color: var(--gray-5); }
+.date-picker-input:hover { border-color: var(--blue); }
+
+/* 팝업 — 항상 입력 아래, 왼쪽 고정, 화면 넘치면 오른쪽 정렬 */
+.date-picker-popup {
+  position: fixed; z-index: 9999;
+  background: var(--white); border: 1px solid var(--gray-2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  width: 320px; padding: 0;
+  display: none; overflow: hidden;
+}
+.date-picker-popup.show { display: block; }
+
+/* 상단: 연/월 스크롤 드럼 */
+.dp-ymbar {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: 2px solid var(--blue);
+}
+.dp-ym-col {
+  display: flex; flex-direction: column; align-items: center;
+  border-right: 1px solid var(--gray-1); overflow: hidden;
+}
+.dp-ym-col:last-child { border-right: none; }
+.dp-ym-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--blue); padding: 6px 0 4px; width: 100%; text-align: center;
+  background: var(--blue-pale);
+}
+.dp-ym-scroll {
+  height: 110px; overflow-y: auto; width: 100%;
+  scroll-behavior: smooth; scrollbar-width: thin;
+  scrollbar-color: var(--blue-light) transparent;
+}
+.dp-ym-scroll::-webkit-scrollbar { width: 4px; }
+.dp-ym-scroll::-webkit-scrollbar-thumb { background: var(--blue-light); border-radius: 2px; }
+.dp-ym-item {
+  display: block; width: 100%; padding: 7px 4px;
+  text-align: center; font-size: 14px; cursor: pointer;
+  border: none; background: none; font-family: inherit;
+  color: var(--gray-4); transition: all 0.1s;
+  border-bottom: 1px solid transparent;
+}
+.dp-ym-item:hover { background: var(--blue-pale); color: var(--blue); }
+.dp-ym-item.dp-ym-selected {
+  background: var(--blue); color: #fff; font-weight: 700;
+}
+
+/* 하단: 일 달력 */
+.dp-cal { padding: 10px 10px 8px; }
+.dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+.dp-day-header { font-size: 10px; font-weight: 700; color: var(--gray-3); text-align: center; padding: 3px 0; }
+.dp-day {
+  font-size: 12px; text-align: center; padding: 5px 2px;
+  cursor: pointer; border: none; background: none; font-family: inherit;
+  color: var(--gray-5); border-radius: 2px;
+}
+.dp-day:hover { background: var(--blue-pale); color: var(--blue); }
+.dp-day.today { font-weight: 700; color: var(--blue); }
+.dp-day.selected { background: var(--blue); color: #fff !important; }
+.dp-day.other-month { color: var(--gray-2); }
+.dp-day.sun { color: var(--red); }
+.dp-today-btn {
+  display: block; width: calc(100% - 20px); margin: 0 10px 8px;
+  padding: 6px; border: 1px solid var(--blue-light);
+  background: var(--blue-pale); color: var(--blue);
+  font-size: 12px; cursor: pointer; font-family: inherit; text-align: center;
+}
+.dp-today-btn:hover { background: var(--blue-light); }
+
+/* 다크모드 대응 */
+body.dark .date-picker-popup { background: #2A2A2A; border-color: #444; }
+body.dark .dp-ym-label { background: #1A2A3A; }
+body.dark .dp-ym-item { color: #aaa; }
+body.dark .dp-ym-item:hover { background: #1E3F5A; color: var(--blue); }
+body.dark .dp-day { color: #ccc; }
+body.dark .dp-day:hover { background: #1E3F5A; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- WORK-TOOL Hub 뒤로가기 바 -->
+<div style="position:fixed;top:0;left:0;right:0;height:40px;background:#1e6eb5;display:flex;align-items:center;padding:0 16px;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+  <a href="../" style="color:white;text-decoration:none;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;font-family:'Noto Sans KR',sans-serif;">
+    <span style="font-size:16px;">←</span> WORK-TOOL Hub
+  </a>
+  <span style="color:rgba(255,255,255,0.5);margin:0 10px;">|</span>
+  <span style="color:rgba(255,255,255,0.9);font-size:13px;font-family:'Noto Sans KR',sans-serif;">🎯 청소년참여기구 관리 시스템</span>
+</div>
+<div style="height:40px;"></div><!-- 바 높이만큼 밀기 -->
+
+<!-- ===================== 홈 화면 ===================== -->
+<div id="homeScreen">
+  <div class="home-header">
+    <div class="org-name" id="homeOrgName">광양시청소년문화센터</div>
+    <h1>청소년참여기구 관리 시스템</h1>
+    <div class="sub">Youth Participation Organization Management System</div>
+  </div>
+  <div class="home-tiles">
+    <button class="home-tile" onclick="enterOrg('A')">
+      <span class="tile-badge">기구 A</span>
+      <span class="tile-icon">🏛️</span>
+      <div class="tile-title">청소년참여위원회</div>
+      <div class="tile-sub">Youth Participation Committee<br>위원 관리 · 활동 기록 · 출석부</div>
+    </button>
+    <button class="home-tile green" onclick="enterOrg('B')">
+      <span class="tile-badge">기구 B</span>
+      <span class="tile-icon">🏢</span>
+      <div class="tile-title">청소년운영위원회</div>
+      <div class="tile-sub">Youth Operation Committee<br>위원 관리 · 활동 기록 · 출석부</div>
+    </button>
+  </div>
+  <div class="home-settings">
+    <a onclick="openHomeSettings()">⚙ 기관 설정</a>
+    <a onclick="openJointScheduleHome()">🔗 합동 일정 관리</a>
+    <a onclick="doImportHome()">📂 데이터 불러오기</a>
+    <a onclick="doExportHome()">💾 데이터 저장</a>
+    <a onclick="toggleDark()" id="homeDarkBtn">🌙 다크모드</a>
+  </div>
+</div>
+
+<!-- ===================== 앱 화면 ===================== -->
+<div id="appScreen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="topbar-back" onclick="goHome()">◀</button>
+      <div>
+        <div class="topbar-org" id="topOrgName"></div>
+        <div class="topbar-title" id="topTitle"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="dark-toggle" onclick="toggleDark()" id="darkToggleBtn" title="다크모드 전환">🌙</button>
+      <button class="topbar-btn" onclick="openGDrivePanel()">☁ Drive</button>
+      <button class="topbar-btn" id="btnSaveFile" onclick="doSaveToFile()" title="파일에 저장 (처음엔 위치 선택)">💾 저장</button>
+      <button class="topbar-btn" onclick="doPickSaveLocation()" title="저장 위치 변경">📁</button>
+      <button class="topbar-btn" onclick="doExportXLSX()">📊 엑셀</button>
+      <button class="topbar-btn" onclick="doImport()">📂 불러오기</button>
+      <button class="topbar-btn" onclick="openSettingsModal()">⚙ 설정</button>
+    </div>
+  </div>
+
+  <div class="navbar" id="navbar">
+    <button class="nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">🏠 대시보드</button>
+    <button class="nav-btn" data-tab="members" onclick="switchTab('members')">👥 위원 목록</button>
+    <button class="nav-btn" data-tab="add" onclick="switchTab('add')">➕ 위원 등록</button>
+    <button class="nav-btn" data-tab="schedule" onclick="switchTab('schedule')">📅 일정</button>
+    <button class="nav-btn" data-tab="attend" onclick="switchTab('attend')">✍ 출석·서명부</button>
+    <button class="nav-btn" data-tab="activity" onclick="switchTab('activity')">📖 활동 기록</button>
+    <button class="nav-btn" data-tab="minutes" onclick="switchTab('minutes')">🗳 회의록</button>
+    <button class="nav-btn" data-tab="report" onclick="switchTab('report')">📊 보고서·통계</button>
+  </div>
+
+  <div class="content">
+
+    <!-- 대시보드 -->
+    <div class="panel" id="panel-dashboard">
+      <div id="dashContent"></div>
+    </div>
+
+    <!-- 위원 목록 -->
+    <div class="panel hidden" id="panel-members">
+      <div class="search-bar">
+        <input type="text" id="memberSearch" placeholder="이름, 학교, 역할로 검색..." oninput="renderMembers()">
+        <select id="memberFilterStatus" onchange="renderMembers()">
+          <option value="">전체 상태</option>
+          <option>활동중</option><option>휴직</option><option>탈퇴</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="switchTab('add'); resetMemberForm()">➕ 새 위원 등록</button>
+        <button class="btn btn-secondary btn-sm" onclick="openRosterPrint()">🪪 위원 현황판 인쇄</button>
+      </div>
+      <div id="memberListContainer"></div>
+    </div>
+
+    <!-- 위원 등록/수정 -->
+    <div class="panel hidden" id="panel-add">
+      <div class="panel-title">👤 위원 등록 / 수정</div>
+      <input type="hidden" id="mId">
+      <input type="file" id="mPhotoFile" accept="image/*" style="display:none" onchange="onMPhotoSelected(event)">
+      <div class="form-grid">
+        <div class="section-label">사진 등록</div>
+        <div class="full" style="display:flex; gap:20px; align-items:flex-start; background:var(--gray-bg); padding:14px; flex-wrap:wrap;">
+          <div style="position:relative; flex-shrink:0;">
+            <div id="mPhotoPreview" onclick="document.getElementById('mPhotoFile').click()"
+              style="width:90px;height:115px;border:2px dashed var(--gray-2);background:var(--white);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--gray-3);cursor:pointer;overflow:hidden;font-size:12px;gap:6px;">
+              <span style="font-size:28px;">📷</span><span>사진 추가</span>
+            </div>
+            <button type="button" id="mPhotoDelBtn" onclick="removeMPhoto()" style="display:none;position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;align-items:center;justify-content:center;">×</button>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px;">증명사진 (3×4cm 권장)</div>
+            <div style="font-size:12px;color:var(--gray-3);line-height:1.8;margin-bottom:10px;">JPG/PNG · 인사카드에 자동 표시<br>드래그&amp;드롭으로도 추가 가능</div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('mPhotoFile').click()">📷 사진 선택</button>
+          </div>
+        </div>
+
+        <div class="section-label">기본 인적사항</div>
+        <div class="form-group"><label>이름 *</label><input type="text" id="mName" required></div>
+        <div class="form-group"><label>성별</label><select id="mGender"><option value="">선택</option><option>남</option><option>여</option></select></div>
+        <div class="form-group"><label>생년월일</label><input type="date" id="mBirth"></div>
+        <div class="form-group"><label>본인 연락처</label><input type="tel" id="mPhone" placeholder="010-0000-0000"></div>
+        <div class="form-group full"><label>주소</label><input type="text" id="mAddress"></div>
+
+        <div class="section-label">학교 정보</div>
+        <div class="form-group"><label>학교명</label><input type="text" id="mSchool" placeholder="예: 광양중, 광양고"></div>
+        <div class="form-group"><label>학년</label>
+          <select id="mGrade"><option value="">선택</option>
+            <option>초4</option><option>초5</option><option>초6</option>
+            <option>중1</option><option>중2</option><option>중3</option>
+            <option>고1</option><option>고2</option><option>고3</option>
+            <option>학교 밖</option>
+          </select>
+        </div>
+
+        <div class="section-label">보호자 정보</div>
+        <div class="form-group"><label>보호자 성명</label><input type="text" id="mGuardName"></div>
+        <div class="form-group"><label>관계</label><input type="text" id="mGuardRel" placeholder="부/모"></div>
+        <div class="form-group"><label>보호자 연락처</label><input type="tel" id="mGuardPhone"></div>
+        <div class="form-group"><label>비상연락망</label><input type="tel" id="mEmergency"></div>
+
+        <div class="section-label">참여기구 활동 정보</div>
+        <div class="form-group"><label>위촉일</label><input type="date" id="mJoinDate"></div>
+        <div class="form-group"><label>기구 내 역할</label><input type="text" id="mRole" placeholder="위원장/부위원장/위원"></div>
+        <div class="form-group"><label>기수</label><input type="text" id="mGen" placeholder="예: 5기"></div>
+        <div class="form-group"><label>활동 상태</label>
+          <select id="mStatus"><option>활동중</option><option>휴직</option><option>탈퇴</option></select>
+        </div>
+        <div class="form-group full"><label>활동 이력 / 수상 / 특이사항</label>
+          <textarea id="mHistory" placeholder="활동 내역, 수상경력, 알레르기 등"></textarea>
+        </div>
+
+        <div class="section-label">담당자 의견</div>
+        <div class="form-group full"><label>상담 · 관찰 기록</label>
+          <textarea id="mNote" rows="4" placeholder="상담 내용, 성향, 관찰된 특징 등"></textarea>
+        </div>
+
+        <div class="section-label">대표 서명</div>
+        <div class="full" style="display:flex;gap:20px;align-items:flex-start;background:var(--gray-bg);padding:14px;flex-wrap:wrap;">
+          <div id="mSignPreview" onclick="openMSignPad()" style="width:160px;height:60px;border:2px dashed var(--gray-2);background:var(--white);display:flex;align-items:center;justify-content:center;color:var(--gray-3);font-size:12px;cursor:pointer;overflow:hidden;">
+            서명 없음
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px;">회원 대표 서명</div>
+            <div style="font-size:12px;color:var(--gray-3);line-height:1.8;margin-bottom:10px;">등록 시 서명부에 자동 채워집니다</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openMSignPad()">✍ 서명 등록</button>
+              <button type="button" class="btn btn-danger btn-sm" id="mSignDelBtn" onclick="removeMSign()" style="display:none">삭제</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="resetMemberForm(); switchTab('members')">취소</button>
+        <button class="btn btn-primary" onclick="saveMember()">💾 저장</button>
+      </div>
+    </div>
+
+    <!-- 일정 -->
+    <div class="panel hidden" id="panel-schedule">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-primary btn-sm" onclick="openSchForm()">➕ 일정 등록</button>
+          <select id="schFilter" onchange="renderSchedule()" style="padding:7px 10px;border:1px solid var(--gray-2);font-family:inherit;font-size:13px;">
+            <option value="upcoming">다가오는 일정</option>
+            <option value="past">지난 일정</option>
+            <option value="all">전체 일정</option>
+          </select>
+        </div>
+        <span style="font-size:12px;color:var(--gray-3);" id="schSummary"></span>
+      </div>
+      <div id="jointNotice" style="display:none;" class="info-box">🔗 합동 일정이 포함된 일정은 보라색 테두리로 표시됩니다.</div>
+      <div id="scheduleContainer"></div>
+    </div>
+
+    <!-- 출석·서명부 -->
+    <div class="panel hidden" id="panel-attend">
+      <div class="attend-header-bar">
+        <label>📅 활동일</label>
+        <input type="date" id="attendDate" onchange="onAttendDateChange()">
+        <label>일정 연결</label>
+        <select id="attendSch" onchange="onAttendSchChange()"><option value="">— 일정 없음 —</option></select>
+        <button class="btn btn-primary btn-sm" onclick="openTabletMode()">👥 태블릿 서명 모드</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearAllSigs()">🗑 서명 초기화</button>
+        <button class="btn btn-secondary btn-sm" onclick="printAs('signbook')">🖨 인쇄</button>
+      </div>
+      <div id="attendInfoBox"></div>
+      <div id="signbookContainer"></div>
+    </div>
+
+    <!-- 활동 기록 -->
+    <div class="panel hidden" id="panel-activity">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div class="panel-title" style="margin:0">📖 연간 활동 기록</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <select id="actYear" onchange="renderActivity()" style="padding:7px 10px;border:1px solid var(--gray-2);font-family:inherit;font-size:13px;"></select>
+          <select id="actViewMode" onchange="renderActivity()" style="padding:7px 10px;border:1px solid var(--gray-2);font-family:inherit;font-size:13px;">
+            <option value="list">📋 활동 목록</option>
+            <option value="photo">📸 사진 목록</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="openActForm()">➕ 활동 추가</button>
+          <button class="btn btn-accent btn-sm" onclick="startSlideshow()">🎬 영상 슬라이드쇼</button>
+          <button class="btn btn-secondary btn-sm" onclick="openActReport()">📄 활동 보고서</button>
+        </div>
+      </div>
+      <div id="activityContainer"></div>
+    </div>
+
+    <!-- 회의록 -->
+    <div class="panel hidden" id="panel-minutes">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div class="panel-title" style="margin:0">🗳 회의록</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="openMinutesForm()">➕ 담당자 작성</button>
+          <button class="btn btn-accent btn-sm" onclick="openYouthMinutesMode()">✏ 청소년 직접 작성</button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('minutesFileInput').click()">📎 파일 업로드</button>
+          <input type="file" id="minutesFileInput" accept=".txt,.md" style="display:none" onchange="importMinutesFile(event)">
+        </div>
+      </div>
+      <div id="minutesContainer"></div>
+    </div>
+
+    <!-- 보고서·통계 -->
+    <div class="panel hidden" id="panel-report">
+      <div class="panel-title">📊 보고서 및 통계</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+        <button class="btn btn-primary" onclick="exportMembersXLSX()">📋 위원 명단 엑셀</button>
+        <button class="btn btn-primary" onclick="exportAttendXLSX()">📋 출석부 엑셀</button>
+        <button class="btn btn-primary" onclick="exportAnnualReport()">📋 연간 보고서 엑셀</button>
+        <button class="btn btn-secondary" onclick="exportAllXLSX()">📋 전체 데이터 내보내기</button>
+      </div>
+      <div id="reportContent"></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /appScreen -->
+
+<!-- ===================== 모달들 ===================== -->
+
+<!-- 일정 등록 모달 -->
+<div class="modal" id="schModal">
+  <div class="modal-wrap">
+    <button class="close-btn" onclick="closeSchForm()">×</button>
+    <div class="modal-title">📅 일정 등록 / 수정</div>
+    <input type="hidden" id="schId">
+    <div class="form-grid">
+      <div class="form-group full"><label>활동 제목 *</label><input type="text" id="schTitle" placeholder="예: 제1회 청소년참여위원회 정기회의"></div>
+      <div class="form-group"><label>날짜 *</label><input type="date" id="schDate"></div>
+      <div class="form-group"><label>시간</label><input type="text" id="schTime" placeholder="예: 14:00~17:00"></div>
+      <div class="form-group full"><label>장소</label><input type="text" id="schLocation"></div>
+      <div class="form-group full"><label>활동 내용</label><textarea id="schContent" rows="3"></textarea></div>
+      <div class="form-group full"><label>준비물 / 참고사항</label><textarea id="schNote" rows="2"></textarea></div>
+      <div class="form-group">
+        <label>합동 일정</label>
+        <select id="schJoint">
+          <option value="">단독 일정</option>
+          <option value="joint">합동 일정 (양 기구 공통)</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeSchForm()">취소</button>
+      <button class="btn btn-primary" onclick="saveSchedule()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 활동 기록 등록 모달 -->
+<div class="modal" id="actModal">
+  <div class="modal-wrap wide">
+    <button class="close-btn" onclick="closeActForm()">×</button>
+    <div class="modal-title">📖 활동 기록 등록 / 수정</div>
+    <input type="hidden" id="actId">
+    <div class="form-grid">
+      <div class="form-group full"><label>활동 제목 *</label><input type="text" id="actTitle" placeholder="예: 제1차 정기회의"></div>
+      <div class="form-group"><label>날짜 *</label><input type="date" id="actDate"></div>
+      <div class="form-group"><label>장소</label><input type="text" id="actLocation"></div>
+      <div class="form-group full"><label>활동 내용</label><textarea id="actContent" rows="4" placeholder="활동 목표, 진행 내용, 결과, 소감 등을 자유롭게 기록하세요."></textarea></div>
+      <div class="form-group full"><label>특이사항 / 메모</label><textarea id="actMemo" rows="2"></textarea></div>
+    </div>
+    <hr class="divider">
+    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">📸 사진 첨부</div>
+    <input type="file" id="actPhotoInput" accept="image/*" multiple style="display:none" onchange="onActPhotosAdded(event)">
+    <div id="actPhotoGrid" class="photo-grid">
+      <button type="button" class="photo-add-btn" onclick="document.getElementById('actPhotoInput').click()">
+        <span style="font-size:24px;">＋</span>
+        <span>사진 추가</span>
+      </button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeActForm()">취소</button>
+      <button class="btn btn-primary" onclick="saveActivity()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 회의록 모달 -->
+<div class="modal" id="minutesModal">
+  <div class="modal-wrap">
+    <button class="close-btn" onclick="closeMinutesForm()">×</button>
+    <div class="modal-title">🗳 회의록 작성 / 수정</div>
+    <input type="hidden" id="minId">
+    <div class="form-grid">
+      <div class="form-group full"><label>회의 제목 *</label><input type="text" id="minTitle" placeholder="예: 제3차 정기회의"></div>
+      <div class="form-group"><label>날짜 *</label><input type="date" id="minDate"></div>
+      <div class="form-group"><label>장소</label><input type="text" id="minLocation"></div>
+      <div class="form-group"><label>사회자</label><input type="text" id="minChair"></div>
+      <div class="form-group"><label>기록자</label><input type="text" id="minWriter"></div>
+      <div class="form-group full"><label>참석자</label><input type="text" id="minAttendees" placeholder="예: 홍길동, 김철수 외 8명"></div>
+      <div class="form-group full"><label>회의 안건</label><textarea id="minAgenda" rows="3" placeholder="안건 목록을 기록하세요."></textarea></div>
+      <div class="form-group full"><label>논의 내용</label><textarea id="minDiscussion" rows="4" placeholder="주요 논의 사항을 기록하세요."></textarea></div>
+      <div class="form-group full"><label>결정 사항</label><textarea id="minDecision" rows="3" placeholder="결정된 사항을 기록하세요."></textarea></div>
+      <div class="form-group full"><label>담당자 / 후속 조치</label><textarea id="minAction" rows="2" placeholder="각 사항별 담당자와 기한을 기록하세요."></textarea></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeMinutesForm()">취소</button>
+      <button class="btn btn-primary" onclick="saveMinutes()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 서명 선택 팝업 -->
+<div class="modal" id="sigChoiceModal">
+  <div class="modal-wrap narrow" style="max-width:380px;">
+    <button class="close-btn" onclick="closeModal('sigChoiceModal')">×</button>
+    <div class="modal-title" id="sigChoiceName" style="font-size:18px;">✍ 서명 선택</div>
+    <div id="sigChoiceDefaultPreview" style="margin-bottom:16px;border:1px solid var(--gray-1);padding:10px;text-align:center;background:var(--gray-bg);min-height:60px;display:flex;align-items:center;justify-content:center;">
+      <span style="color:var(--gray-3);font-size:12px;">대표서명 미리보기</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <button id="sigChoiceApplyBtn" class="btn btn-success" style="padding:16px 8px;font-size:14px;flex-direction:column;gap:6px;display:flex;align-items:center;justify-content:center;" onclick="applySigChoice('default')">
+        <span style="font-size:22px;">✅</span>
+        <span>대표서명 적용</span>
+        <span style="font-size:11px;opacity:0.8;">저장된 서명 사용</span>
+      </button>
+      <button class="btn btn-primary" style="padding:16px 8px;font-size:14px;flex-direction:column;gap:6px;display:flex;align-items:center;justify-content:center;" onclick="applySigChoice('new')">
+        <span style="font-size:22px;">✏️</span>
+        <span>직접 서명</span>
+        <span style="font-size:11px;opacity:0.8;">새로 서명하기</span>
+      </button>
+    </div>
+    <div style="margin-top:10px;">
+      <button class="btn btn-secondary" style="width:100%;padding:10px;" onclick="applySigChoice('clear')">🗑 이 칸 서명 지우기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 서명 패드 모달 -->
+<div class="modal" id="signPadModal">
+  <div class="modal-wrap narrow">
+    <button class="close-btn" onclick="closeSignPad()">×</button>
+    <div class="modal-title">✍ 서명</div>
+    <div style="background:var(--blue-pale);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--blue-dark);">
+      <strong id="signPadName">이름</strong> 님, 아래에 서명해주세요.
+    </div>
+    <div id="signSaveDefaultWrap" style="display:none;background:var(--green-light);padding:10px 14px;margin-bottom:10px;font-size:13px;color:var(--green);">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;">
+        <input type="checkbox" id="signSaveDefault" style="width:auto;"> 이 서명을 대표 서명으로 저장
+      </label>
+    </div>
+    <div class="sign-canvas-wrap" id="signCanvasWrap">
+      <canvas class="sign-canvas" id="signCanvas"></canvas>
+    </div>
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="clearSignCanvas()">🔄 다시 서명</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="closeSignPad()">취소</button>
+        <button class="btn btn-primary" onclick="saveSignature()">💾 저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 인사카드 모달 -->
+<div class="modal" id="idCardModal">
+  <div class="modal-wrap wide">
+    <button class="close-btn" onclick="closeModal('idCardModal')">×</button>
+    <div id="idCardContent"></div>
+    <div class="print-btns btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('idCardModal')">닫기</button>
+      <button class="btn btn-primary" onclick="printAs('idcard')">🖨 인쇄</button>
+    </div>
+  </div>
+</div>
+
+<!-- 설정 모달 -->
+<div class="modal" id="settingsModal">
+  <div class="modal-wrap narrow">
+    <button class="close-btn" onclick="closeModal('settingsModal')">×</button>
+    <div class="modal-title">⚙ 기구 정보 설정</div>
+    <div class="form-group" style="margin-bottom:12px;"><label>서명부 제목</label><input type="text" id="setSignTitle" placeholder="예: 2026년 청소년참여위원회 서명부"></div>
+    <div class="form-group" style="margin-bottom:12px;"><label>기구 이름</label><input type="text" id="setOrgNameInput"></div>
+    <div class="form-group" style="margin-bottom:12px;"><label>기관명</label><input type="text" id="setInstName" placeholder="예: 광양시청소년문화센터"></div>
+    <div class="form-group" style="margin-bottom:12px;"><label>담당자 성명</label><input type="text" id="setAdvisor"></div>
+    <div class="form-group" style="margin-bottom:12px;"><label>연도</label><input type="number" id="setYear" placeholder="예: 2026"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('settingsModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 홈 설정 모달 -->
+<div class="modal" id="homeSettingsModal">
+  <div class="modal-wrap narrow">
+    <button class="close-btn" onclick="closeModal('homeSettingsModal')">×</button>
+    <div class="modal-title">⚙ 기관 공통 설정</div>
+    <div class="form-group" style="margin-bottom:12px;"><label>기관명</label><input type="text" id="homeOrgInput" placeholder="예: 광양시청소년문화센터"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('homeSettingsModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveHomeSettings()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 청소년 회의록 직접 작성 모달 -->
+<div class="modal" id="youthMinutesModal">
+  <div class="modal-wrap wide">
+    <button class="close-btn" onclick="closeModal('youthMinutesModal')">×</button>
+    <div class="modal-title" style="background:var(--accent-b);color:#fff;padding:14px 20px;margin:-24px -24px 20px;">
+      ✏ 청소년 회의록 작성
+    </div>
+    <div class="info-box" style="margin-bottom:16px;">
+      📌 청소년이 직접 작성하는 회의록입니다. 작성 후 <strong>제출하기</strong>를 누르면 저장됩니다.
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>회의 제목 *</label><input type="text" id="yMinTitle" placeholder="예: 제1차 정기회의"></div>
+      <div class="form-group">
+        <label>날짜 *</label>
+        <div class="date-picker-wrap" id="dp_yMinDate_wrap">
+          <div class="date-picker-input" onclick="toggleDatePicker('yMinDate')">
+            <span>📅</span><span id="dp_yMinDate_display">날짜 선택</span>
+          </div>
+          <div class="date-picker-popup" id="dp_yMinDate_popup"></div>
+          <input type="hidden" id="yMinDate">
+        </div>
+      </div>
+      <div class="form-group"><label>장소</label><input type="text" id="yMinLocation" placeholder="예: 3층 회의실"></div>
+      <div class="form-group"><label>사회자 이름</label><input type="text" id="yMinChair"></div>
+      <div class="form-group"><label>기록자 이름</label><input type="text" id="yMinWriter"></div>
+      <div class="form-group full"><label>참석 인원</label><input type="text" id="yMinAttendees" placeholder="이름을 쉼표로 구분해서 적어주세요 (예: 홍길동, 김철수, 이영희)"></div>
+      <div class="form-group full">
+        <label>오늘 회의에서 무엇을 이야기했나요? (논의 내용)</label>
+        <textarea id="yMinDiscussion" rows="4" placeholder="회의에서 나눈 이야기들을 자유롭게 적어주세요."></textarea>
+      </div>
+      <div class="form-group full">
+        <label>결정된 사항이 있나요? (결정 내용)</label>
+        <textarea id="yMinDecision" rows="3" placeholder="오늘 결정된 내용을 적어주세요."></textarea>
+      </div>
+      <div class="form-group full">
+        <label>다음에 해야 할 일이 있나요? (담당자 / 다음 할 일)</label>
+        <textarea id="yMinAction" rows="2" placeholder="예: 홍길동 - 자료 조사 (다음 주까지), 김철수 - 장소 예약"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>오늘 회의 안건 목록</label>
+        <textarea id="yMinAgenda" rows="2" placeholder="오늘 다룬 안건을 번호로 적어주세요 (예: 1. 행사 기획, 2. 역할 분담)"></textarea>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:20px;">
+      <button class="btn btn-secondary" onclick="closeModal('youthMinutesModal')">취소</button>
+      <button class="btn btn-accent" style="font-size:15px;padding:10px 28px;" onclick="saveYouthMinutes()">📨 제출하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 위원 현황판 인쇄 모달 -->
+<div class="modal" id="rosterModal">
+  <div class="modal-wrap wide">
+    <button class="close-btn" onclick="closeModal('rosterModal')">×</button>
+    <div id="rosterContent"></div>
+    <div class="btn-row print-btns">
+      <button class="btn btn-secondary" onclick="closeModal('rosterModal')">닫기</button>
+      <button class="btn btn-primary" onclick="printAs('roster')">🖨 인쇄</button>
+    </div>
+  </div>
+</div>
+
+<!-- 활동 보고서 모달 -->
+<div class="modal" id="actReportModal">
+  <div class="modal-wrap wide">
+    <button class="close-btn" onclick="closeModal('actReportModal')">×</button>
+    <div id="actReportContent"></div>
+    <div class="btn-row print-btns">
+      <button class="btn btn-secondary" onclick="closeModal('actReportModal')">닫기</button>
+      <button class="btn btn-primary" onclick="printAs('actreport')">🖨 인쇄</button>
+    </div>
+  </div>
+</div>
+
+<!-- JSON 저장 링크 설정 모달 -->
+<div class="modal" id="jsonLinkModal">
+  <div class="modal-wrap narrow">
+    <button class="close-btn" onclick="closeModal('jsonLinkModal')">×</button>
+    <div class="modal-title">🔗 JSON 저장 파일명 / 경로 설정</div>
+    <div class="info-box" style="margin-bottom:14px;">
+      백업 파일명을 고정하면 매번 같은 이름으로 저장되어 Google Drive에서 덮어쓰기가 편리합니다.<br>
+      <span style="font-size:11px;opacity:0.8;">예: <code>청소년참여기구_최신.json</code></span>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;">
+      <label>파일명 (확장자 .json 포함)</label>
+      <input type="text" id="jsonLinkInput" placeholder="예: 청소년참여기구_최신.json">
+    </div>
+    <div id="jsonLinkPreview" style="font-size:12px;color:var(--gray-3);margin-bottom:14px;padding:8px;background:var(--gray-bg);">설정된 경로 없음</div>
+    <div class="info-box" style="background:var(--yellow-light);border-color:#C19C00;color:#6B5300;margin-bottom:14px;font-size:12px;">
+      💡 <strong>사용 방법</strong><br>
+      1. 파일명을 설정하고 저장<br>
+      2. 상단 💾 JSON 백업 클릭 → 설정한 파일명으로 다운로드<br>
+      3. 같은 파일명으로 Google Drive에 업로드(덮어쓰기)<br>
+      4. 다른 PC: Drive에서 같은 파일 다운로드 → 📂 불러오기
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-danger btn-sm" onclick="clearJsonLink()">초기화</button>
+      <button class="btn btn-secondary" onclick="closeModal('jsonLinkModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveJsonLink()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Google Drive 연동 안내 패널 -->
+<div class="modal" id="gdriveModal">
+  <div class="modal-wrap" style="max-width:580px;">
+    <button class="close-btn" onclick="closeModal('gdriveModal')">×</button>
+    <div class="modal-title">☁ Google Drive 연동 가이드</div>
+
+    <div style="background:var(--blue-pale);border-left:4px solid var(--blue);padding:14px 16px;margin-bottom:18px;font-size:13px;line-height:1.8;color:var(--blue-dark);">
+      <strong>이 시스템은 HTML 단일 파일입니다.</strong><br>
+      서버 없이 작동하기 때문에 실시간 자동 동기화는 불가능하지만,<br>
+      아래 방법으로 <strong>여러 컴퓨터에서 항상 최신 데이터</strong>를 사용할 수 있습니다.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+      <div style="background:var(--gray-bg);padding:14px;border:1px solid var(--gray-1);">
+        <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px;">📤 저장할 때</div>
+        <ol style="font-size:12px;color:var(--gray-4);line-height:2;padding-left:16px;">
+          <li>상단 <strong>💾 JSON 백업</strong> 클릭</li>
+          <li>다운로드된 JSON 파일을<br><strong>Google Drive에 업로드</strong></li>
+          <li>(덮어쓰기 또는 날짜별 저장)</li>
+        </ol>
+      </div>
+      <div style="background:var(--gray-bg);padding:14px;border:1px solid var(--gray-1);">
+        <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:8px;">📥 다른 PC에서 열 때</div>
+        <ol style="font-size:12px;color:var(--gray-4);line-height:2;padding-left:16px;">
+          <li>Google Drive에서<br>JSON 파일 <strong>다운로드</strong></li>
+          <li>이 시스템에서<br><strong>📂 불러오기</strong> 클릭</li>
+          <li>파일 선택 → 즉시 연동 완료</li>
+        </ol>
+      </div>
+    </div>
+
+    <div style="background:#E6F1FB;border-left:3px solid var(--blue);padding:12px 14px;font-size:12px;color:#0C447C;line-height:1.8;margin-bottom:16px;">
+      💡 <strong>더 편리하게 사용하는 팁</strong><br>
+      · Google Drive에 <strong>바로가기 폴더</strong>를 만들어 JSON 파일을 항상 같은 위치에 저장하세요.<br>
+      · <strong>Google Drive 앱(PC용)</strong>을 설치하면 파일 탐색기에서 바로 접근 가능합니다.<br>
+      · 파일명을 <code style="background:rgba(0,0,0,0.06);padding:1px 4px;">청소년참여기구_최신.json</code>으로 고정하면 매번 같은 파일을 덮어쓸 수 있어요.
+    </div>
+
+    <div style="background:var(--green-light);border-left:3px solid var(--green);padding:12px 14px;font-size:12px;color:var(--green);line-height:1.8;margin-bottom:16px;">
+      ✅ <strong>지금 바로 백업하기</strong>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="doSaveToFile()">💾 JSON 저장 (위치 지정)</button>
+      <button class="btn btn-success" onclick="doExportXLSX()">📊 엑셀 백업 다운로드</button>
+      <button class="btn btn-secondary" onclick="doPickSaveLocation()">📁 저장 위치 변경</button>
+      <button class="btn btn-secondary" onclick="doImport()">📂 JSON 불러오기</button>
+      <button class="btn btn-secondary" onclick="window.open('https://drive.google.com','_blank')">☁ Google Drive 열기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 합동 일정 모달 -->
+<div class="modal" id="jointModal">
+  <div class="modal-wrap">
+    <button class="close-btn" onclick="closeModal('jointModal')">×</button>
+    <div class="modal-title">🔗 합동 일정 관리</div>
+    <div class="info-box">두 기구(참여위원회 · 운영위원회)가 함께하는 합동 일정을 관리합니다. 각 기구의 일정 탭에도 함께 표시됩니다.</div>
+    <button class="btn btn-primary btn-sm" onclick="openJointSchForm()" style="margin-bottom:14px;">➕ 합동 일정 등록</button>
+    <div id="jointList"></div>
+  </div>
+</div>
+
+<!-- 합동 일정 등록 모달 -->
+<div class="modal" id="jointSchFormModal">
+  <div class="modal-wrap narrow">
+    <button class="close-btn" onclick="closeModal('jointSchFormModal')">×</button>
+    <div class="modal-title">🔗 합동 일정 등록</div>
+    <input type="hidden" id="jSchId">
+    <div class="form-group" style="margin-bottom:10px;"><label>제목 *</label><input type="text" id="jSchTitle"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>날짜 *</label><input type="date" id="jSchDate"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>시간</label><input type="text" id="jSchTime" placeholder="예: 14:00~17:00"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>장소</label><input type="text" id="jSchLocation"></div>
+    <div class="form-group" style="margin-bottom:10px;"><label>내용</label><textarea id="jSchContent" rows="3"></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeModal('jointSchFormModal')">취소</button>
+      <button class="btn btn-primary" onclick="saveJointSchedule()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 라이트박스 -->
+<div id="lightbox">
+  <img id="lightboxImg" src="" alt="">
+  <div class="lb-btns">
+    <button class="btn btn-secondary" onclick="downloadLightboxImg()">⬇ 다운로드</button>
+    <button class="btn btn-secondary" onclick="closeLightbox()">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- 슬라이드쇼 -->
+<div id="slideshow">
+  <canvas id="ssCanvas"></canvas>
+  <div class="ss-info" id="ssInfo"></div>
+  <div class="ss-ctrl">
+    <button class="ss-btn" onclick="ssPrev()">◀ 이전</button>
+    <button class="ss-btn" id="ssPlayBtn" onclick="ssTogglePlay()">⏸ 일시정지</button>
+    <button class="ss-btn" onclick="ssNext()">다음 ▶</button>
+    <button class="ss-btn" onclick="stopSlideshow()">✕ 닫기</button>
+  </div>
+</div>
+
+<!-- 태블릿 서명 모드 -->
+<div id="tabletMode" style="display:none;position:fixed;inset:0;background:var(--gray-bg);z-index:400;overflow-y:auto;padding:20px;">
+  <div style="background:var(--blue-dark);color:#fff;padding:20px;margin-bottom:20px;text-align:center;position:relative;">
+    <h2 id="tabletTitle" style="margin:0 0 6px;font-size:20px;font-weight:400;">서명 모드</h2>
+    <div id="tabletSub" style="font-size:13px;opacity:0.8;"></div>
+    <button onclick="closeTabletMode()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.2);border:none;color:#fff;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:12px;">닫기</button>
+  </div>
+  <div id="tabletSummary" style="text-align:center;margin-bottom:14px;font-size:14px;font-weight:600;color:var(--blue-dark);"></div>
+  <div id="tabletList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;max-width:900px;margin:0 auto;"></div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<!-- 숨겨진 input들 -->
+<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(event)">
+<input type="file" id="importFileInputHome" accept=".json" style="display:none" onchange="importDataHome(event)">
+
+<script>
+// =====================================================
+// 전역 데이터 구조
+// =====================================================
+const ORG_A = 'A'; // 참여위원회
+const ORG_B = 'B'; // 운영위원회
+
+let currentOrg = null;
+
+// 전체 앱 데이터 (localStorage 저장)
+function emptyOrgData() {
+  return {
+    settings: { signTitle:'', orgName:'', instName:'광양시청소년문화센터', advisor:'', year: new Date().getFullYear() },
+    members: [],
+    schedules: [],
+    attendance: {}, // { 'YYYY-MM-DD': { scheduleId, byMember:{id:status}, signatures:{id:dataURL} } }
+    activities: [], // { id, title, date, location, content, memo, photos:[{name,dataURL}] }
+    minutes: []    // { id, title, date, location, chair, writer, attendees, agenda, discussion, decision, action }
+  };
+}
+
+let appData = {
+  globalSettings: { orgName: '광양시청소년문화센터' },
+  jointSchedules: [], // 합동 일정
+  A: emptyOrgData(),
+  B: emptyOrgData()
+};
+
+appData.A.settings.orgName = '청소년참여위원회';
+appData.B.settings.orgName = '청소년운영위원회';
+
+// =====================================================
+// 저장/로드
+// =====================================================
+function saveAll() {
+  try {
+    const json = JSON.stringify(appData);
+    localStorage.setItem('youthOrgSystem_v1', json);
+    // 파일 핸들 있으면 미저장 표시
+    if (_fsFileHandle) updateSaveBtn('unsaved', '💾 저장*');
+  } catch(e) {
+    toast('저장 용량 초과. 일부 사진을 삭제해주세요.', 'error');
+  }
+}
+
+function loadAll() {
+  try {
+    const raw = localStorage.getItem('youthOrgSystem_v1');
+    if (raw) {
+      const loaded = JSON.parse(raw);
+      // 마이그레이션: 필드 누락 방지
+      if (!loaded.A) loaded.A = emptyOrgData();
+      if (!loaded.B) loaded.B = emptyOrgData();
+      if (!loaded.jointSchedules) loaded.jointSchedules = [];
+      if (!loaded.globalSettings) loaded.globalSettings = { orgName: '광양시청소년문화센터' };
+      appData = loaded;
+    }
+  } catch(e) { console.error(e); }
+}
+
+// =====================================================
+// 유틸
+// =====================================================
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function todayISO() { return new Date().toISOString().slice(0,10); }
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  return `${dt.getFullYear()}.${String(dt.getMonth()+1).padStart(2,'0')}.${String(dt.getDate()).padStart(2,'0')}`;
+}
+// 요일 포함 전체 날짜 (활동기록·회의록·일정용)
+function fmtDateFull(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T00:00:00');
+  const days = ['일','월','화','수','목','금','토'];
+  const dow = days[dt.getDay()];
+  return `${dt.getFullYear()}년 ${dt.getMonth()+1}월 ${dt.getDate()}일 (${dow})`;
+}
+function fmtBD6(bd) {
+  if (!bd) return '';
+  return bd.replace(/-/g,'').slice(2,8);
+}
+function schoolGradeStr(m) {
+  if (!m.school && !m.grade) return '';
+  return [m.school, m.grade].filter(Boolean).join(' ');
+}
+function getOrgData() { return appData[currentOrg]; }
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 3000);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+
+// =====================================================
+// 홈 화면
+// =====================================================
+function showHome() {
+  document.getElementById('homeScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('homeOrgName').textContent = appData.globalSettings.orgName || '광양시청소년문화센터';
+}
+
+function enterOrg(org) {
+  currentOrg = org;
+  document.getElementById('homeScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  const d = getOrgData();
+  document.getElementById('topOrgName').textContent = appData.globalSettings.orgName;
+  document.getElementById('topTitle').textContent = d.settings.orgName || (org === 'A' ? '청소년참여위원회' : '청소년운영위원회');
+  switchTab('dashboard');
+  // 연도 셀렉트 채우기
+  fillYearSelect();
+}
+
+function goHome() {
+  showHome();
+  currentOrg = null;
+}
+
+function openHomeSettings() {
+  document.getElementById('homeOrgInput').value = appData.globalSettings.orgName || '';
+  openModal('homeSettingsModal');
+}
+
+function saveHomeSettings() {
+  appData.globalSettings.orgName = document.getElementById('homeOrgInput').value.trim() || '광양시청소년문화센터';
+  saveAll();
+  document.getElementById('homeOrgName').textContent = appData.globalSettings.orgName;
+  closeModal('homeSettingsModal');
+  toast('저장되었습니다', 'success');
+}
+
+function openJointScheduleHome() {
+  renderJointList();
+  openModal('jointModal');
+}
+
+// =====================================================
+// 탭 전환
+// =====================================================
+function switchTab(tab) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.panel').forEach(p => {
+    p.classList.toggle('hidden', p.id !== 'panel-' + tab);
+  });
+  if (tab === 'dashboard') renderDashboard();
+  else if (tab === 'members') renderMembers();
+  else if (tab === 'add') { setTimeout(()=>{ wrapDateInput('mBirth'); wrapDateInput('mJoinDate'); },50); }
+  else if (tab === 'schedule') renderSchedule();
+  else if (tab === 'attend') renderAttend();
+  else if (tab === 'activity') renderActivity();
+  else if (tab === 'minutes') renderMinutes();
+  else if (tab === 'report') renderReport();
+}
+
+// =====================================================
+// 설정
+// =====================================================
+function openSettingsModal() {
+  const s = getOrgData().settings;
+  document.getElementById('setSignTitle').value = s.signTitle || '';
+  document.getElementById('setOrgNameInput').value = s.orgName || '';
+  document.getElementById('setInstName').value = s.instName || appData.globalSettings.orgName || '';
+  document.getElementById('setAdvisor').value = s.advisor || '';
+  document.getElementById('setYear').value = s.year || new Date().getFullYear();
+  openModal('settingsModal');
+}
+
+function saveSettings() {
+  const s = getOrgData().settings;
+  s.signTitle = document.getElementById('setSignTitle').value.trim();
+  s.orgName = document.getElementById('setOrgNameInput').value.trim();
+  s.instName = document.getElementById('setInstName').value.trim();
+  s.advisor = document.getElementById('setAdvisor').value.trim();
+  s.year = parseInt(document.getElementById('setYear').value) || new Date().getFullYear();
+  document.getElementById('topTitle').textContent = s.orgName;
+  saveAll();
+  closeModal('settingsModal');
+  toast('설정이 저장되었습니다', 'success');
+}
+
+// =====================================================
+// 대시보드
+// =====================================================
+function renderDashboard() {
+  const d = getOrgData();
+  const members = d.members;
+  const active = members.filter(m => m.status === '활동중');
+  const today = todayISO();
+  const now = new Date();
+  const thisMonth = now.getMonth() + 1;
+
+  // 출석률 계산
+  const attDates = Object.keys(d.attendance).sort();
+  let recentRate = '-';
+  if (attDates.length > 0) {
+    const last = attDates[attDates.length-1];
+    const rec = d.attendance[last];
+    const total = active.length;
+    if (total > 0) {
+      const present = active.filter(m => {
+        const s = (rec.byMember||{})[m.id];
+        return s === 'present' || s === 'late';
+      }).length;
+      recentRate = Math.round(present/total*100) + '%';
+    }
+  }
+
+  // 이번달 일정
+  const monthSch = d.schedules.filter(s => {
+    const [y,mo] = s.date.split('-').map(Number);
+    return y === now.getFullYear() && mo === thisMonth;
+  });
+  const upcomingSch = d.schedules.filter(s => s.date >= today).sort((a,b) => a.date.localeCompare(b.date)).slice(0,5);
+
+  // 생일
+  const bdayThis = members.filter(m => {
+    if (!m.birth) return false;
+    const mo = parseInt(m.birth.split('-')[1]);
+    return mo === thisMonth;
+  });
+
+  const html = `
+    <div class="dash-grid">
+      <div class="dash-card blue">
+        <div class="dash-label">전체 위원</div>
+        <div class="dash-value">${members.length}명</div>
+        <div class="dash-sub">활동중 ${active.length}명</div>
+      </div>
+      <div class="dash-card blue">
+        <div class="dash-label">👦 남자</div>
+        <div class="dash-value">${active.filter(m=>m.gender==='남').length}명</div>
+        <div class="dash-sub">활동 중 기준</div>
+      </div>
+      <div class="dash-card purple">
+        <div class="dash-label">👧 여자</div>
+        <div class="dash-value">${active.filter(m=>m.gender==='여').length}명</div>
+        <div class="dash-sub">활동 중 기준</div>
+      </div>
+      <div class="dash-card orange">
+        <div class="dash-label">이번 달 일정</div>
+        <div class="dash-value">${monthSch.length}건</div>
+        <div class="dash-sub">${now.getFullYear()}년 ${thisMonth}월</div>
+      </div>
+      <div class="dash-card teal">
+        <div class="dash-label">활동 기록</div>
+        <div class="dash-value">${d.activities.length}건</div>
+        <div class="dash-sub">사진 ${d.activities.reduce((s,a)=>s+(a.photos||[]).length,0)}장</div>
+      </div>
+      <div class="dash-card gray">
+        <div class="dash-label">최근 출석률</div>
+        <div class="dash-value">${recentRate}</div>
+        <div class="dash-sub">${attDates.length > 0 ? fmtDate(attDates[attDates.length-1]) : '기록없음'}</div>
+      </div>
+    </div>
+
+    ${upcomingSch.length > 0 ? `
+    <div class="chart-wrap">
+      <div class="chart-title">📅 다가오는 일정</div>
+      ${upcomingSch.map(s=>`
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-1);">
+          <div style="font-size:12px;font-weight:600;color:var(--blue);min-width:80px;">${fmtDate(s.date)}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;">${s.title}</div>
+            ${s.location ? `<div style="font-size:12px;color:var(--gray-3);">📍 ${s.location}</div>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    ${bdayThis.length > 0 ? `
+    <div class="chart-wrap">
+      <div class="chart-title">🎂 이번 달 생일 (${thisMonth}월)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${bdayThis.map(m=>`
+          <div style="background:var(--purple-light);border:1px solid #C9A8E0;padding:8px 14px;">
+            <div style="font-weight:600;font-size:13px;color:var(--purple);">${m.name}</div>
+            <div style="font-size:11px;color:var(--gray-3);">${schoolGradeStr(m)} · ${fmtBD6(m.birth)||''}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    ${renderMonthlyChart()}
+  `;
+  document.getElementById('dashContent').innerHTML = html;
+}
+
+function renderMonthlyChart() {
+  const d = getOrgData();
+  const monthCounts = Array(12).fill(0);
+  d.schedules.forEach(s => {
+    if (!s.date) return;
+    const mo = parseInt(s.date.split('-')[1]) - 1;
+    monthCounts[mo]++;
+  });
+  const max = Math.max(...monthCounts, 1);
+  const months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  return `
+    <div class="chart-wrap">
+      <div class="chart-title">📊 월별 활동 횟수</div>
+      <div class="bar-chart">
+        ${months.map((m,i) => `
+          <div class="bar-row">
+            <div class="bar-label">${m}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${monthCounts[i]/max*100}%">
+                ${monthCounts[i]>0?`<span>${monthCounts[i]}건</span>`:''}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// =====================================================
+// 위원 관리
+// =====================================================
+function renderMembers() {
+  const d = getOrgData();
+  const q = (document.getElementById('memberSearch')?.value||'').toLowerCase();
+  const fs = document.getElementById('memberFilterStatus')?.value || '';
+  let list = d.members.filter(m => {
+    const match = !q || (m.name||'').toLowerCase().includes(q) || (m.school||'').toLowerCase().includes(q) || (m.role||'').toLowerCase().includes(q);
+    const st = !fs || m.status === fs;
+    return match && st;
+  });
+  const statusBadge = s => s === '활동중' ? '<span class="badge badge-active">활동중</span>' : s === '휴직' ? '<span class="badge badge-pause">휴직</span>' : '<span class="badge badge-out">탈퇴</span>';
+  // 출석 통계 계산
+  const calcAttend = (memberId) => {
+    let p=0, l=0, a=0, e=0, tot=0;
+    Object.values(d.attendance).forEach(rec => {
+      const s = (rec.byMember||{})[memberId];
+      if (s) { tot++; if(s==='present')p++; else if(s==='late')l++; else if(s==='absent')a++; else if(s==='excused')e++; }
+    });
+    const rate = tot > 0 ? Math.round((p+l)/tot*100) : null;
+    return { p, l, a, e, tot, rate };
+  };
+  if (list.length === 0) {
+    document.getElementById('memberListContainer').innerHTML = '<div class="empty">등록된 위원이 없습니다.<br><br><button class="btn btn-primary" onclick="switchTab(\'add\')">➕ 위원 등록하기</button></div>';
+    return;
+  }
+  const html = `<div style="overflow-x:auto;"><table class="tbl">
+    <thead><tr>
+      <th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>역할</th><th>출석률</th><th>상태</th><th>작업</th>
+    </tr></thead>
+    <tbody>${list.map((m,i) => {
+      const att = calcAttend(m.id);
+      const rateColor = att.rate === null ? 'var(--gray-3)' : att.rate >= 80 ? 'var(--green)' : att.rate >= 60 ? 'var(--orange)' : 'var(--red)';
+      return `<tr>
+      <td>${i+1}</td>
+      <td><strong>${m.name||''}</strong></td>
+      <td>${schoolGradeStr(m)}</td>
+      <td>${m.gender||''}</td>
+      <td>${fmtBD6(m.birth)||''}</td>
+      <td>${m.phone||''}</td>
+      <td>${m.role||''}</td>
+      <td title="출석${att.p} 지각${att.l} 결석${att.a} 사유${att.e} / 총${att.tot}회">
+        <span style="font-weight:700;color:${rateColor};">${att.rate !== null ? att.rate+'%' : '-'}</span>
+        ${att.tot > 0 ? `<span style="font-size:10px;color:var(--gray-3);margin-left:4px;">(${att.p+att.l}/${att.tot})</span>` : ''}
+      </td>
+      <td>${statusBadge(m.status||'활동중')}</td>
+      <td><div class="action-btns">
+        <button class="btn btn-secondary btn-sm" onclick="viewIdCard('${m.id}')">📋 인사카드</button>
+        <button class="btn btn-secondary btn-sm" onclick="editMember('${m.id}')">✏ 수정</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')">삭제</button>
+      </div></td>
+    </tr>`;}).join('')}
+    </tbody>
+  </table></div>`;
+  document.getElementById('memberListContainer').innerHTML = html;
+}
+
+let _editMId = null;
+let _mPhotoData = null;
+let _mSignData = null;
+let _mPhotoDeleted = false;  // 사용자가 명시적으로 사진 삭제했는지
+let _mSignDeleted = false;   // 사용자가 명시적으로 서명 삭제했는지
+
+function resetMemberForm() {
+  _editMId = null;
+  _mPhotoData = null;
+  _mSignData = null;
+  _mPhotoDeleted = false;
+  _mSignDeleted = false;
+  ['mId','mName','mPhone','mAddress','mSchool','mJoinDate','mRole','mGen','mHistory','mNote'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['mGender','mGrade','mStatus'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  const pp = document.getElementById('mPhotoPreview');
+  pp.innerHTML = '<span style="font-size:28px;">📷</span><span>사진 추가</span>';
+  document.getElementById('mPhotoDelBtn').style.display = 'none';
+  const sp = document.getElementById('mSignPreview');
+  sp.innerHTML = '서명 없음';
+  sp.style.backgroundImage = '';
+  document.getElementById('mSignDelBtn').style.display = 'none';
+}
+
+function onMPhotoSelected(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    _mPhotoData = ev.target.result;
+    _mPhotoDeleted = false;
+    const pp = document.getElementById('mPhotoPreview');
+    pp.innerHTML = `<img src="${_mPhotoData}" style="width:100%;height:100%;object-fit:cover;">`;
+    document.getElementById('mPhotoDelBtn').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removeMPhoto() {
+  _mPhotoData = null;
+  _mPhotoDeleted = true;
+  const pp = document.getElementById('mPhotoPreview');
+  pp.innerHTML = '<span style="font-size:28px;">📷</span><span>사진 추가</span>';
+  document.getElementById('mPhotoDelBtn').style.display = 'none';
+}
+
+function editMember(id) {
+  const d = getOrgData();
+  const m = d.members.find(x => x.id === id);
+  if (!m) return;
+  _editMId = id;
+  _mPhotoData = m.photo || null;
+  _mSignData = m.signature || null;
+  _mPhotoDeleted = false;
+  _mSignDeleted = false;
+  document.getElementById('mId').value = id;
+  ['name','phone','address','school','joinDate','role','gen','history','note'].forEach(f => {
+    const el = document.getElementById('m' + f.charAt(0).toUpperCase() + f.slice(1));
+    if (el) el.value = m[f] || '';
+  });
+  document.getElementById('mBirth').value = m.birth || '';
+  document.getElementById('mGender').value = m.gender || '';
+  document.getElementById('mGrade').value = m.grade || '';
+  document.getElementById('mStatus').value = m.status || '활동중';
+  wrapDateInput('mBirth'); if(m.birth) selectDate('mBirth', m.birth);
+  wrapDateInput('mJoinDate'); if(m.joinDate) selectDate('mJoinDate', m.joinDate);
+  // photo
+  const pp = document.getElementById('mPhotoPreview');
+  if (_mPhotoData) {
+    pp.innerHTML = `<img src="${_mPhotoData}" style="width:100%;height:100%;object-fit:cover;">`;
+    document.getElementById('mPhotoDelBtn').style.display = 'flex';
+  }
+  // sign
+  const sp = document.getElementById('mSignPreview');
+  if (_mSignData) {
+    sp.innerHTML = `<img src="${_mSignData}" style="max-width:100%;max-height:100%;">`;
+    document.getElementById('mSignDelBtn').style.display = 'inline-flex';
+  }
+  switchTab('add');
+}
+
+function deleteMember(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+  const d = getOrgData();
+  d.members = d.members.filter(m => m.id !== id);
+  saveAll();
+  renderMembers();
+  toast('삭제되었습니다');
+}
+
+function saveMember() {
+  const name = document.getElementById('mName').value.trim();
+  if (!name) { toast('이름을 입력해주세요', 'warn'); return; }
+  const d = getOrgData();
+  const id = _editMId || uid();
+
+  // 기존 위원 찾기 또는 새 객체 생성
+  let memberIdx = d.members.findIndex(m => m.id === id);
+  if (memberIdx === -1) {
+    d.members.push({ id });
+    memberIdx = d.members.length - 1;
+  }
+  // 직접 배열 인덱스로 참조해서 확실하게 수정
+  const m = d.members[memberIdx];
+  m.id = id;
+  m.name = name;
+  m.gender = document.getElementById('mGender').value;
+  m.birth = document.getElementById('mBirth').value;
+  m.phone = document.getElementById('mPhone').value;
+  m.address = document.getElementById('mAddress').value;
+  m.school = document.getElementById('mSchool').value;
+  m.grade = document.getElementById('mGrade').value;
+  m.guardName = document.getElementById('mGuardName').value;
+  m.guardRel = document.getElementById('mGuardRel').value;
+  m.guardPhone = document.getElementById('mGuardPhone').value;
+  m.emergency = document.getElementById('mEmergency').value;
+  m.joinDate = document.getElementById('mJoinDate').value;
+  m.role = document.getElementById('mRole').value;
+  m.gen = document.getElementById('mGen').value;
+  m.status = document.getElementById('mStatus').value;
+  m.history = document.getElementById('mHistory').value;
+  m.note = document.getElementById('mNote').value;
+  if (_mPhotoDeleted) {
+    m.photo = null;
+  } else if (_mPhotoData) {
+    m.photo = _mPhotoData;
+  }
+  // 대표서명: _mSignData가 null이 아닌 값(dataURL)일 때만 업데이트, null이면 기존 서명 유지
+  // 단, 사용자가 명시적으로 서명 삭제 버튼을 눌렀으면(_mSignDeleted) null로 저장
+  if (_mSignDeleted) {
+    m.signature = null;
+  } else if (_mSignData) {
+    m.signature = _mSignData;
+  }
+  // (둘 다 아니면 기존 signature 유지)
+  saveAll();
+  toast(_editMId ? '수정되었습니다' : '등록되었습니다', 'success');
+  resetMemberForm();
+  switchTab('members');
+}
+
+// ===== 인사카드 =====
+function viewIdCard(id) {
+  const d = getOrgData();
+  const m = d.members.find(x => x.id === id);
+  if (!m) return;
+  const s = d.settings;
+  document.getElementById('idCardContent').innerHTML = `
+    <div class="id-card">
+      <div class="id-card-header">
+        <div>
+          <div class="id-card-org">${s.instName || appData.globalSettings.orgName} · ${s.orgName}</div>
+          <div class="id-card-title">인 사 카 드</div>
+        </div>
+        <div class="id-card-photo">
+          ${m.photo ? `<img src="${m.photo}" alt="사진">` : '사진'}
+        </div>
+      </div>
+      <table class="id-card-table">
+        <tr><th>이름</th><td colspan="3"><strong style="font-size:15px;">${m.name||''}</strong></td></tr>
+        <tr><th>성별</th><td>${m.gender||''}</td><th>생년월일</th><td>${fmtDate(m.birth)||''}</td></tr>
+        <tr><th>학교/학년</th><td colspan="3">${schoolGradeStr(m)}</td></tr>
+        <tr><th>연락처</th><td>${m.phone||''}</td><th>주소</th><td>${m.address||''}</td></tr>
+        <tr class="id-card-section-row"><td colspan="4">보호자 정보</td></tr>
+        <tr><th>보호자</th><td>${m.guardName||''} (${m.guardRel||''})</td><th>연락처</th><td>${m.guardPhone||''}</td></tr>
+        <tr><th>비상연락</th><td colspan="3">${m.emergency||''}</td></tr>
+        <tr class="id-card-section-row"><td colspan="4">참여기구 활동 정보</td></tr>
+        <tr><th>위촉일</th><td>${fmtDate(m.joinDate)||''}</td><th>역할</th><td>${m.role||''}</td></tr>
+        <tr><th>기수</th><td>${m.gen||''}</td><th>상태</th><td>${m.status||'활동중'}</td></tr>
+        <tr><th>활동이력</th><td colspan="3" class="id-card-memo">${m.history||''}</td></tr>
+        <tr class="id-card-section-row"><td colspan="4">담당자 의견</td></tr>
+        <tr><td colspan="4" class="id-card-memo">${m.note||''}</td></tr>
+        <tr><th>서명</th><td colspan="3" style="height:50px;">${m.signature?`<img src="${m.signature}" style="max-height:44px;">`:''}</td></tr>
+      </table>
+      <div style="text-align:right;margin-top:12px;font-size:12px;color:var(--gray-3);">
+        ${s.instName||''} ${s.advisor||''} / ${s.year||''}년도
+      </div>
+    </div>`;
+  openModal('idCardModal');
+}
+
+// =====================================================
+// 일정 관리
+// =====================================================
+function openSchForm(id) {
+  document.getElementById('schId').value = id || '';
+  const defaultDate = todayISO();
+  if (id) {
+    const s = getOrgData().schedules.find(x => x.id === id);
+    if (s) {
+      document.getElementById('schTitle').value = s.title||'';
+      document.getElementById('schTime').value = s.time||'';
+      document.getElementById('schLocation').value = s.location||'';
+      document.getElementById('schContent').value = s.content||'';
+      document.getElementById('schNote').value = s.note||'';
+      document.getElementById('schJoint').value = s.joint ? 'joint' : '';
+      wrapDateInput('schDate'); selectDate('schDate', s.date||defaultDate);
+    }
+  } else {
+    ['schTitle','schTime','schLocation','schContent','schNote'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('schJoint').value='';
+    wrapDateInput('schDate'); selectDate('schDate', defaultDate);
+  }
+  openModal('schModal');
+}
+function closeSchForm() { closeModal('schModal'); }
+
+function saveSchedule() {
+  const title = document.getElementById('schTitle').value.trim();
+  const date = document.getElementById('schDate').value;
+  if (!title || !date) { toast('제목과 날짜를 입력해주세요','warn'); return; }
+  const d = getOrgData();
+  const id = document.getElementById('schId').value || uid();
+  const existing = d.schedules.find(s => s.id === id);
+  const obj = existing || {};
+  obj.id = id;
+  obj.title = title;
+  obj.date = date;
+  obj.time = document.getElementById('schTime').value;
+  obj.location = document.getElementById('schLocation').value;
+  obj.content = document.getElementById('schContent').value;
+  obj.note = document.getElementById('schNote').value;
+  obj.joint = document.getElementById('schJoint').value === 'joint';
+  if (!existing) d.schedules.push(obj);
+  saveAll();
+  closeSchForm();
+  renderSchedule();
+  toast('일정이 저장되었습니다', 'success');
+}
+
+function deleteSchedule(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  const d = getOrgData();
+  d.schedules = d.schedules.filter(s => s.id !== id);
+  saveAll();
+  renderSchedule();
+  toast('삭제되었습니다');
+}
+
+function renderSchedule() {
+  const d = getOrgData();
+  const filter = document.getElementById('schFilter')?.value || 'upcoming';
+  const today = todayISO();
+  // 단독 일정(현재 기구) + 합동 일정(jointSchedules)만 표시
+  let solo = [...d.schedules.filter(s => !s.joint)];
+  const joint = appData.jointSchedules.map(j => ({...j, _joint:true}));
+  let list = [...solo, ...joint];
+  if (filter === 'upcoming') list = list.filter(s => s.date >= today);
+  else if (filter === 'past') list = list.filter(s => s.date < today);
+  list = list.sort((a,b) => filter==='past' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+  document.getElementById('schSummary').textContent = `총 ${list.length}건`;
+  const hasJoint = appData.jointSchedules.length > 0;
+  document.getElementById('jointNotice').style.display = hasJoint ? 'block' : 'none';
+  if (list.length === 0) {
+    document.getElementById('scheduleContainer').innerHTML = '<div class="empty">등록된 일정이 없습니다.</div>';
+    return;
+  }
+  document.getElementById('scheduleContainer').innerHTML = list.map(s => `
+    <div class="sch-card ${s.date < today ? 'past' : ''} ${s._joint ? 'joint' : ''}">
+      <div class="sch-card-head">
+        <div class="sch-card-title">${s._joint ? '🔗 [합동] ' : ''}${s.title}</div>
+        <div class="sch-card-date">${fmtDateFull(s.date)}${s.time ? ' ' + s.time : ''}</div>
+      </div>
+      <div class="sch-card-meta">
+        ${s.location ? `<span>📍 ${s.location}</span>` : ''}
+      </div>
+      ${s.content ? `<div class="sch-card-content">${s.content}</div>` : ''}
+      ${!s._joint ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="openSchForm('${s.id}')">✏ 수정</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">삭제</button>
+        <button class="btn btn-accent btn-sm" onclick="goToAttend('${s.date}','${s.id}')">✍ 출석 체크</button>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+function goToAttend(date, schId) {
+  switchTab('attend');
+  document.getElementById('attendDate').value = date;
+  onAttendDateChange();
+  if (schId) {
+    setTimeout(() => {
+      const sel = document.getElementById('attendSch');
+      if (sel) sel.value = schId;
+      onAttendSchChange();
+    }, 100);
+  }
+}
+
+// =====================================================
+// 출석 · 서명부
+// =====================================================
+function onAttendDateChange() {
+  const date = getAttendDate();
+  const d = getOrgData();
+  const sel = document.getElementById('attendSch');
+  const today = todayISO();
+
+  // 모든 일정 정렬
+  const allSch = [...d.schedules].sort((a,b) => a.date.localeCompare(b.date));
+  const upcoming = allSch.filter(s => s.date >= today);
+  const past = allSch.filter(s => s.date < today).reverse(); // 최신순
+
+  sel.innerHTML = '<option value="">— 일정 없음 —</option>';
+
+  if (upcoming.length > 0) {
+    const grp = document.createElement('optgroup');
+    grp.label = '▶ 다가오는 일정';
+    upcoming.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `${fmtDate(s.date)} ${s.title}`;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  }
+
+  if (past.length > 0) {
+    const grp = document.createElement('optgroup');
+    grp.label = '◀ 지난 일정';
+    past.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `${fmtDate(s.date)} ${s.title}`;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  }
+
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  const rec = d.attendance[date];
+  if (rec.scheduleId) sel.value = rec.scheduleId;
+  renderSignbook();
+}
+
+function onAttendSchChange() {
+  const date = getAttendDate();
+  if (!date) return;
+  const d = getOrgData();
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  d.attendance[date].scheduleId = document.getElementById('attendSch').value;
+  const sch = d.schedules.find(s=>s.id===d.attendance[date].scheduleId);
+  renderSignbook();
+  saveAll();
+}
+
+function renderAttend() {
+  const today = todayISO();
+  // attendDate를 피커로 교체
+  const el = document.getElementById('attendDate');
+  if (el && el.type !== 'hidden') {
+    el.type = 'hidden';
+    if (!el.value) el.value = today;
+    const wrap = document.createElement('div');
+    wrap.className = 'date-picker-wrap';
+    wrap.id = 'dp_attendDate_wrap';
+    wrap.innerHTML = `
+      <div class="date-picker-input" onclick="toggleDatePicker('attendDate')">
+        <span>📅</span><span id="dp_attendDate_display">${fmtDate(el.value||today)}</span>
+      </div>
+      <div class="date-picker-popup" id="dp_attendDate_popup"></div>
+    `;
+    el.parentNode.insertBefore(wrap, el);
+    wrap.appendChild(el);
+    initDatePicker('attendDate', el.value||today);
+  }
+  onAttendDateChange();
+}
+
+let _signCurrentMemberId = null;
+let _signCurrentDate = null;
+let _signFromTablet = false;
+
+// attendDate 값 안전하게 읽기 (hidden 변환 후에도 동작)
+function getAttendDate() {
+  const el = document.getElementById('attendDate');
+  return el ? el.value : '';
+}
+
+function renderSignbook() {
+  const date = getAttendDate();
+  if (!date) { document.getElementById('signbookContainer').innerHTML = '<div class="empty">날짜를 선택해주세요.</div>'; return; }
+  const d = getOrgData();
+  const s = d.settings;
+  const active = d.members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  const rec = d.attendance[date];
+  const sch = rec.scheduleId ? d.schedules.find(x=>x.id===rec.scheduleId) : null;
+  const statusMap = { present:'출석', late:'지각', absent:'결석', excused:'사유결석' };
+  const presentN = active.filter(m=>rec.byMember[m.id]==='present').length;
+  const total = active.length;
+  document.getElementById('attendInfoBox').innerHTML = `
+    <div class="info-box" style="margin-bottom:12px;">
+      ${sch ? `<strong>📌 ${sch.title}</strong> · ${sch.location||''}<br>` : ''}
+      출석: ${presentN}명 / 전체: ${total}명 (출석률 ${total>0?Math.round(presentN/total*100)+'%':'-'})
+    </div>`;
+
+  const html = `
+    <div class="signbook">
+      <div class="sb-title">${s.signTitle || s.orgName + ' 서명부'}</div>
+      ${sch ? `<div class="sb-activity">${sch.title}</div>` : ''}
+      <div class="sb-info">
+        일시: ${fmtDate(date)}${sch && sch.time ? ' ' + sch.time : ''}
+        &nbsp;&nbsp;
+        장소: ${sch && sch.location ? sch.location : (s.instName || '')}
+      </div>
+      <br>
+      <table class="sb-table">
+        <colgroup><col style="width:32px"><col style="width:68px"><col style="width:90px"><col style="width:36px"><col style="width:66px"><col style="width:105px"><col></colgroup>
+        <thead><tr>
+          <th>순</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>서명</th>
+        </tr></thead>
+        <tbody>
+          ${active.map((m,i) => {
+            const todaySig = rec.signatures[m.id];
+            // '__cleared__' 는 명시적 삭제 표시 — 대표서명도 표시 안 함
+            const isCleared = todaySig === '__cleared__';
+            const actualSig = (!isCleared && todaySig) ? todaySig : '';
+            const defaultSig = (!isCleared && m.signature) ? m.signature : '';
+            const displaySig = actualSig || defaultSig;
+            const isDefault = !actualSig && !!defaultSig;
+            return `<tr>
+              <td style="color:#000;">${i+1}</td>
+              <td style="color:#000;"><strong>${m.name}</strong></td>
+              <td style="color:#000;">${schoolGradeStr(m)}</td>
+              <td style="color:#000;">${m.gender||''}</td>
+              <td style="color:#000;">${fmtBD6(m.birth)||''}</td>
+              <td style="color:#000;">${m.phone||''}</td>
+              <td class="sb-sig-cell${isDefault?' sb-sig-default':''}"
+                  onclick="handleSigCellClick('${m.id}','${date}')">
+                ${displaySig
+                  ? `<img src="${displaySig}" alt="서명">${isDefault?'<span class="sb-sig-hint">대표</span>':''}`
+                  : '<span style="color:#ccc;font-size:10px;display:block;text-align:center;line-height:34px;">클릭</span>'}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <div class="sb-footer"><strong>${s.instName || '광양시청소년문화센터'}</strong></div>
+    </div>`;
+  document.getElementById('signbookContainer').innerHTML = html;
+}
+
+function setAttendStatus(date, memberId, status) {
+  const d = getOrgData();
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  d.attendance[date].byMember[memberId] = status;
+  saveAll();
+}
+
+// ─── 서명 셀 클릭 → 선택 팝업 ───
+let _sigChoiceMemberId = null;
+let _sigChoiceDate = null;
+
+function handleSigCellClick(memberId, date) {
+  const d = getOrgData();
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  const m = d.members.find(x => x.id === memberId);
+  _sigChoiceMemberId = memberId;
+  _sigChoiceDate = date;
+
+  document.getElementById('sigChoiceName').textContent = `✍ ${m?.name || ''}`;
+
+  const preview = document.getElementById('sigChoiceDefaultPreview');
+  const applyBtn = document.getElementById('sigChoiceApplyBtn');
+  // __cleared__ 상태여도 대표서명이 있으면 다시 적용 가능하도록 표시
+  if (m?.signature) {
+    preview.innerHTML = `<img src="${m.signature}" style="max-height:54px;max-width:100%;display:block;margin:0 auto;">`;
+    applyBtn.style.opacity = '1';
+    applyBtn.disabled = false;
+  } else {
+    preview.innerHTML = `<span style="color:var(--gray-3);font-size:12px;">대표서명 없음<br><small>위원 등록에서 설정 가능</small></span>`;
+    applyBtn.style.opacity = '0.4';
+    applyBtn.disabled = true;
+  }
+
+  openModal('sigChoiceModal');
+}
+
+function applySigChoice(choice) {
+  const d = getOrgData();
+  const date = _sigChoiceDate;
+  if (!date) { closeModal('sigChoiceModal'); return; }
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  if (!d.attendance[date].signatures) d.attendance[date].signatures = {};
+  const m = d.members.find(x => x.id === _sigChoiceMemberId);
+
+  closeModal('sigChoiceModal');
+
+  if (choice === 'default') {
+    if (m?.signature) {
+      d.attendance[date].signatures[_sigChoiceMemberId] = m.signature;
+      saveAll();
+      renderSignbook();
+      toast(`${m.name} 대표서명 적용`, 'success');
+    } else {
+      toast('대표서명이 없습니다. 위원 등록에서 서명을 추가해주세요.', 'warn');
+    }
+  } else if (choice === 'new') {
+    setTimeout(() => openSignPad(_sigChoiceMemberId, date, false), 200);
+  } else if (choice === 'clear') {
+    // 명시적 삭제 — 대표서명도 이 날짜에는 표시 안 함
+    d.attendance[date].signatures[_sigChoiceMemberId] = '__cleared__';
+    saveAll();
+    renderSignbook();
+    toast(`${m?.name || ''} 서명이 삭제되었습니다`);
+  }
+}
+
+function clearAllSigs() {
+  const date = getAttendDate();
+  if (!date) { toast('날짜를 먼저 선택해주세요', 'warn'); return; }
+  if (!confirm('서명을 모두 지우겠습니까?\n(대표서명도 이 날짜에는 표시되지 않습니다)')) return;
+  const d = getOrgData();
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  if (!d.attendance[date].signatures) d.attendance[date].signatures = {};
+  // 활동 중인 위원 전원에 명시적 삭제 표시
+  const active = d.members.filter(m => m.status === '활동중');
+  active.forEach(m => {
+    d.attendance[date].signatures[m.id] = '__cleared__';
+  });
+  saveAll();
+  renderSignbook();
+  toast('서명이 모두 초기화되었습니다');
+}
+
+// ===== 서명 패드 =====
+let _signCtx, _signDrawing = false;
+
+function openSignPad(memberId, date, fromTablet) {
+  _signCurrentMemberId = memberId;
+  _signCurrentDate = date;
+  _signFromTablet = fromTablet;
+  const d = getOrgData();
+  const m = d.members.find(x => x.id === memberId);
+  document.getElementById('signPadName').textContent = m ? m.name : '위원';
+  // 서명부/태블릿 모두 대표서명 저장 옵션 표시
+  document.getElementById('signSaveDefaultWrap').style.display = 'block';
+  document.getElementById('signSaveDefault').checked = false;
+  document.getElementById('signPadModal')._mode = null;
+  const canvas = document.getElementById('signCanvas');
+  _signCtx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 400;
+  canvas.height = 220;
+  _signCtx.clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('signCanvasWrap').classList.remove('has-drawing');
+  setupSignCanvas(canvas);
+  openModal('signPadModal');
+}
+
+function setupSignCanvas(canvas) {
+  const getPos = e => {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * (canvas.width/r.width), y: (src.clientY - r.top) * (canvas.height/r.height) };
+  };
+  canvas.onmousedown = canvas.ontouchstart = e => {
+    e.preventDefault();
+    _signDrawing = true;
+    const p = getPos(e);
+    _signCtx.beginPath();
+    _signCtx.moveTo(p.x, p.y);
+    _signCtx.lineWidth = 2.5;
+    _signCtx.strokeStyle = '#000';
+    _signCtx.lineCap = 'round';
+    document.getElementById('signCanvasWrap').classList.add('has-drawing');
+  };
+  canvas.onmousemove = canvas.ontouchmove = e => {
+    e.preventDefault();
+    if (!_signDrawing) return;
+    const p = getPos(e);
+    _signCtx.lineTo(p.x, p.y);
+    _signCtx.stroke();
+  };
+  canvas.onmouseup = canvas.ontouchend = () => { _signDrawing = false; };
+}
+
+function clearSignCanvas() {
+  const c = document.getElementById('signCanvas');
+  _signCtx.clearRect(0,0,c.width,c.height);
+  document.getElementById('signCanvasWrap').classList.remove('has-drawing');
+}
+
+function saveSignature() {
+  const modal = document.getElementById('signPadModal');
+  const canvas = document.getElementById('signCanvas');
+  const dataURL = canvas.toDataURL('image/png');
+
+  // ① 위원 등록 폼용 서명
+  if (modal._mode === 'member') {
+    _mSignData = dataURL;
+    _mSignDeleted = false;
+    const sp = document.getElementById('mSignPreview');
+    if (sp) {
+      sp.innerHTML = `<img src="${_mSignData}" style="max-width:100%;max-height:100%;">`;
+    }
+    const delBtn = document.getElementById('mSignDelBtn');
+    if (delBtn) delBtn.style.display = 'inline-flex';
+    modal._mode = null;
+    closeSignPad();
+    return;
+  }
+
+  // ② 서명부 / 태블릿용 서명
+  const d = getOrgData();
+  if (!d.attendance[_signCurrentDate]) {
+    d.attendance[_signCurrentDate] = { scheduleId:'', byMember:{}, signatures:{} };
+  }
+  d.attendance[_signCurrentDate].signatures[_signCurrentMemberId] = dataURL;
+
+  // 대표서명으로 저장 체크박스
+  if (document.getElementById('signSaveDefault')?.checked) {
+    const m = d.members.find(x => x.id === _signCurrentMemberId);
+    if (m) m.signature = dataURL;
+  }
+
+  saveAll();
+  closeSignPad();
+  if (_signFromTablet) renderTabletList();
+  else renderSignbook();
+}
+
+function closeSignPad() {
+  const modal = document.getElementById('signPadModal');
+  modal.style.zIndex = '';
+  modal._mode = null;
+  closeModal('signPadModal');
+}
+
+// ===== 태블릿 서명 모드 =====
+function openTabletMode() {
+  const date = document.getElementById('attendDate')?.value || todayISO();
+  _signCurrentDate = date;
+  const d = getOrgData();
+  const sch = d.attendance[date]?.scheduleId ? d.schedules.find(s=>s.id===d.attendance[date].scheduleId) : null;
+  document.getElementById('tabletTitle').textContent = sch ? sch.title : '서명 모드';
+  document.getElementById('tabletSub').textContent = fmtDate(date) + ' · ' + (d.settings.orgName||'');
+  renderTabletList();
+  document.getElementById('tabletMode').style.display = 'block';
+}
+
+function renderTabletList() {
+  const d = getOrgData();
+  const date = _signCurrentDate;
+  const active = d.members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if (!d.attendance[date]) d.attendance[date] = { scheduleId:'', byMember:{}, signatures:{} };
+  const sigs = d.attendance[date].signatures;
+  const signed = active.filter(m=>sigs[m.id]).length;
+  document.getElementById('tabletSummary').textContent = `서명 완료: ${signed} / ${active.length}명`;
+  document.getElementById('tabletList').innerHTML = active.map(m=>{
+    const isSigned = !!sigs[m.id];
+    return `<div style="background:${isSigned?'#DFF6DD':'#fff'};border:2px solid ${isSigned?'var(--green)':'var(--gray-2)'};padding:16px;cursor:pointer;transition:all 0.15s;" onclick="openSignPadTablet('${m.id}')">
+      <div style="font-size:18px;font-weight:600;margin-bottom:4px;color:${isSigned?'var(--green)':'var(--gray-5)'};">${m.name}</div>
+      <div style="font-size:12px;color:var(--gray-3);">${schoolGradeStr(m)} · ${m.gender||''}</div>
+      <div style="margin-top:8px;font-size:12px;font-weight:600;color:${isSigned?'var(--green)':'var(--orange)'};">${isSigned?'✔ 서명 완료':'서명 대기중'}</div>
+    </div>`;
+  }).join('');
+}
+
+function openSignPadTablet(memberId) {
+  // 태블릿 모드에서 호출 — 서명 패드 모달이 태블릿 위에 표시되어야 함
+  _signCurrentMemberId = memberId;
+  _signCurrentDate = _signCurrentDate || todayISO();
+  _signFromTablet = true;
+
+  const d = getOrgData();
+  const m = d.members.find(x => x.id === memberId);
+  document.getElementById('signPadName').textContent = m ? m.name : '위원';
+  document.getElementById('signSaveDefaultWrap').style.display = 'block';
+  document.getElementById('signSaveDefault').checked = false;
+  document.getElementById('signPadModal')._mode = null; // 서명부 모드
+
+  const canvas = document.getElementById('signCanvas');
+  _signCtx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 400;
+  canvas.height = 220;
+  _signCtx.clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('signCanvasWrap').classList.remove('has-drawing');
+  setupSignCanvas(canvas);
+
+  // 서명 패드 모달을 태블릿 위(z-index 500)에 표시
+  const modal = document.getElementById('signPadModal');
+  modal.style.zIndex = '500';
+  modal.classList.add('show');
+}
+
+function closeTabletMode() {
+  document.getElementById('tabletMode').style.display = 'none';
+  renderSignbook();
+}
+
+// ===== 위원 서명 (등록 폼) =====
+function openMSignPad() {
+  const canvas = document.getElementById('signCanvas');
+  _signCurrentMemberId = '__member_form__';
+  document.getElementById('signPadName').textContent = document.getElementById('mName').value || '위원';
+  document.getElementById('signSaveDefaultWrap').style.display = 'none';
+  _signCtx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 400;
+  canvas.height = 220;
+  _signCtx.clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('signCanvasWrap').classList.remove('has-drawing');
+  setupSignCanvas(canvas);
+  if (_mSignData) {
+    const img = new Image();
+    img.onload = () => { _signCtx.drawImage(img,0,0,canvas.width,canvas.height); };
+    img.src = _mSignData;
+    document.getElementById('signCanvasWrap').classList.add('has-drawing');
+  }
+  // 모드 설정
+  document.getElementById('signPadModal')._mode = 'member';
+  openModal('signPadModal');
+}
+
+function removeMSign() {
+  _mSignData = null;
+  _mSignDeleted = true;
+  document.getElementById('mSignPreview').innerHTML = '서명 없음';
+  document.getElementById('mSignDelBtn').style.display = 'none';
+}
+
+// =====================================================
+// 활동 기록
+// =====================================================
+let _editActId = null;
+let _actPhotos = []; // {name, dataURL}
+
+function fillYearSelect() {
+  const sel = document.getElementById('actYear');
+  if (!sel) return;
+  const now = new Date().getFullYear();
+  sel.innerHTML = '';
+  for (let y = now+1; y >= now-3; y--) {
+    sel.innerHTML += `<option value="${y}" ${y===now?'selected':''}>${y}년</option>`;
+  }
+}
+
+function openActForm(id) {
+  _editActId = id || null;
+  _actPhotos = [];
+  const defaultDate = todayISO();
+  if (id) {
+    const a = getOrgData().activities.find(x=>x.id===id);
+    if (a) {
+      document.getElementById('actId').value = id;
+      document.getElementById('actTitle').value = a.title||'';
+      document.getElementById('actLocation').value = a.location||'';
+      document.getElementById('actContent').value = a.content||'';
+      document.getElementById('actMemo').value = a.memo||'';
+      _actPhotos = (a.photos||[]).map(p=>({...p}));
+      wrapDateInput('actDate'); selectDate('actDate', a.date||defaultDate);
+    }
+  } else {
+    ['actId','actTitle','actLocation','actContent','actMemo'].forEach(i=>document.getElementById(i).value='');
+    wrapDateInput('actDate'); selectDate('actDate', defaultDate);
+  }
+  renderActPhotoGrid();
+  openModal('actModal');
+}
+
+function closeActForm() { closeModal('actModal'); }
+
+function renderActPhotoGrid() {
+  const grid = document.getElementById('actPhotoGrid');
+  grid.innerHTML = `<button type="button" class="photo-add-btn" onclick="document.getElementById('actPhotoInput').click()"><span style="font-size:24px;">＋</span><span>사진 추가</span></button>`;
+  _actPhotos.forEach((p,i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-item';
+    div.innerHTML = `<img src="${p.dataURL}" alt="${p.name}"><button class="photo-del" onclick="removeActPhoto(${i})">×</button>`;
+    div.querySelector('img').onclick = () => openLightbox(p.dataURL, p.name);
+    grid.insertBefore(div, grid.firstChild);
+  });
+}
+
+function onActPhotosAdded(e) {
+  const files = Array.from(e.target.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      _actPhotos.push({ name: file.name, dataURL: ev.target.result });
+      loaded++;
+      if (loaded === files.length) renderActPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function removeActPhoto(i) {
+  _actPhotos.splice(i,1);
+  renderActPhotoGrid();
+}
+
+function saveActivity() {
+  const title = document.getElementById('actTitle').value.trim();
+  const date = document.getElementById('actDate').value;
+  if (!title || !date) { toast('제목과 날짜를 입력해주세요','warn'); return; }
+  const d = getOrgData();
+  const id = _editActId || uid();
+  const existing = d.activities.find(a=>a.id===id);
+  const obj = existing || {};
+  obj.id = id;
+  obj.title = title;
+  obj.date = date;
+  obj.location = document.getElementById('actLocation').value;
+  obj.content = document.getElementById('actContent').value;
+  obj.memo = document.getElementById('actMemo').value;
+  obj.photos = [..._actPhotos];
+  if (!existing) d.activities.push(obj);
+  saveAll();
+  closeActForm();
+  renderActivity();
+  toast('활동 기록이 저장되었습니다', 'success');
+}
+
+function deleteActivity(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  const d = getOrgData();
+  d.activities = d.activities.filter(a=>a.id!==id);
+  saveAll();
+  renderActivity();
+}
+
+function renderActivity() {
+  const d = getOrgData();
+  const year = parseInt(document.getElementById('actYear')?.value) || new Date().getFullYear();
+  const viewMode = document.getElementById('actViewMode')?.value || 'list';
+  const list = d.activities.filter(a=>parseInt(a.date?.split('-')[0])===year)
+    .sort((a,b)=>a.date?.localeCompare(b.date||'')||0);
+  if (list.length === 0) {
+    document.getElementById('activityContainer').innerHTML = `<div class="empty">${year}년 활동 기록이 없습니다.<br><br><button class="btn btn-primary" onclick="openActForm()">➕ 활동 추가</button></div>`;
+    return;
+  }
+  if (viewMode === 'photo') {
+    // 사진 목록 뷰: 날짜(활동명) 순 그룹
+    let html = '';
+    list.forEach(a => {
+      if ((a.photos||[]).length === 0) return;
+      html += `<div style="margin-bottom:20px;">
+        <div style="background:var(--blue-pale);padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <span style="font-weight:600;font-size:14px;color:var(--blue-dark);">${fmtDateFull(a.date)} — ${a.title}</span>
+            <span style="font-size:12px;color:var(--gray-3);margin-left:10px;">📸 ${a.photos.length}장</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="downloadAllPhotos('${a.id}')">⬇ 전체 다운</button>
+        </div>
+        <div class="photo-grid">
+          ${a.photos.map((p,i)=>`
+            <div class="photo-item">
+              <img src="${p.dataURL}" alt="${p.name}" onclick="openLightbox('${a.id}',${i})">
+              <button class="photo-del" onclick="event.stopPropagation();delActPhotoSaved('${a.id}',${i})">×</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    });
+    if (!html) html = '<div class="empty">등록된 사진이 없습니다.</div>';
+    document.getElementById('activityContainer').innerHTML = html;
+    return;
+  }
+  // 기본 목록 뷰
+  document.getElementById('activityContainer').innerHTML = list.map(a => `
+    <div class="activity-log-card">
+      <div class="alc-head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div>
+          <div class="alc-head-title">${fmtDateFull(a.date)} — ${a.title}</div>
+          <div class="alc-head-meta">${a.location?' 📍'+a.location+' · ':''} 사진 ${(a.photos||[]).length}장</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openActForm('${a.id}')">✏ 수정</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteActivity('${a.id}')">삭제</button>
+        </div>
+      </div>
+      <div class="alc-body">
+        ${a.content?`<div style="font-size:13px;color:var(--gray-4);white-space:pre-wrap;line-height:1.7;margin-bottom:12px;">${a.content}</div>`:''}
+        ${a.memo?`<div style="font-size:12px;color:var(--gray-3);margin-bottom:12px;">📝 ${a.memo}</div>`:''}
+        ${(a.photos||[]).length>0?`
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--blue-dark);">📸 사진 ${a.photos.length}장
+            <button class="btn btn-secondary btn-sm" onclick="downloadAllPhotos('${a.id}')" style="margin-left:8px;">⬇ 전체 다운로드</button>
+          </div>
+          <div class="photo-grid">
+            ${a.photos.map((p,i)=>`
+              <div class="photo-item">
+                <img src="${p.dataURL}" alt="${p.name}" onclick="openLightbox('${a.id}',${i})">
+                <button class="photo-del" onclick="event.stopPropagation();delActPhotoSaved('${a.id}',${i})">×</button>
+              </div>
+            `).join('')}
+          </div>
+        `:''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function delActPhotoSaved(actId, photoIdx) {
+  const d = getOrgData();
+  const a = d.activities.find(x=>x.id===actId);
+  if (!a) return;
+  a.photos.splice(photoIdx,1);
+  saveAll();
+  renderActivity();
+}
+
+// =====================================================
+// 라이트박스
+// =====================================================
+let _lbActId = null, _lbIdx = 0;
+
+function openLightbox(actIdOrDataURL, idxOrName) {
+  if (typeof idxOrName === 'number') {
+    _lbActId = actIdOrDataURL;
+    _lbIdx = idxOrName;
+    const d = getOrgData();
+    const a = d.activities.find(x=>x.id===_lbActId);
+    if (!a) return;
+    document.getElementById('lightboxImg').src = a.photos[_lbIdx].dataURL;
+  } else {
+    _lbActId = null;
+    document.getElementById('lightboxImg').src = actIdOrDataURL;
+  }
+  document.getElementById('lightbox').classList.add('show');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+
+function downloadLightboxImg() {
+  const src = document.getElementById('lightboxImg').src;
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = _lbActId ? (getOrgData().activities.find(x=>x.id===_lbActId)?.photos[_lbIdx]?.name||'photo.jpg') : 'photo.jpg';
+  a.click();
+}
+
+function downloadAllPhotos(actId) {
+  const d = getOrgData();
+  const a = d.activities.find(x=>x.id===actId);
+  if (!a) return;
+  a.photos.forEach((p,i) => {
+    setTimeout(() => {
+      const link = document.createElement('a');
+      link.href = p.dataURL;
+      link.download = p.name || `photo_${i+1}.jpg`;
+      link.click();
+    }, i * 300);
+  });
+  toast(`${a.photos.length}장 다운로드 시작`);
+}
+
+// =====================================================
+// 슬라이드쇼
+// =====================================================
+let _ssPhotos = [], _ssIdx = 0, _ssInterval = null, _ssPlaying = true;
+
+function startSlideshow() {
+  const d = getOrgData();
+  const year = parseInt(document.getElementById('actYear')?.value) || new Date().getFullYear();
+  _ssPhotos = [];
+  d.activities.filter(a=>parseInt(a.date?.split('-')[0])===year)
+    .sort((a,b)=>a.date?.localeCompare(b.date||'')||0)
+    .forEach(a => {
+      (a.photos||[]).forEach(p => {
+        _ssPhotos.push({ dataURL: p.dataURL, title: a.title, date: a.date });
+      });
+    });
+  if (_ssPhotos.length === 0) { toast('사진이 없습니다','warn'); return; }
+  _ssIdx = 0;
+  _ssPlaying = true;
+  document.getElementById('slideshow').classList.add('show');
+  document.getElementById('ssPlayBtn').textContent = '⏸ 일시정지';
+  ssShowFrame();
+  _ssInterval = setInterval(ssNext, 3000);
+}
+
+function ssShowFrame() {
+  const p = _ssPhotos[_ssIdx];
+  const canvas = document.getElementById('ssCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  const img = new Image();
+  img.onload = () => {
+    const scale = Math.min(canvas.width/img.width, canvas.height/img.height) * 0.9;
+    const w = img.width*scale, h = img.height*scale;
+    const x = (canvas.width-w)/2, y = (canvas.height-h)/2;
+    ctx.drawImage(img,x,y,w,h);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0,canvas.height-60,canvas.width,60);
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px Malgun Gothic, sans-serif';
+    ctx.fillText(`${_ssIdx+1}/${_ssPhotos.length} · ${p.title} · ${fmtDate(p.date)}`, 20, canvas.height-22);
+  };
+  img.src = p.dataURL;
+  document.getElementById('ssInfo').textContent = `${_ssIdx+1} / ${_ssPhotos.length}`;
+}
+
+function ssPrev() { _ssIdx = (_ssIdx-1+_ssPhotos.length)%_ssPhotos.length; ssShowFrame(); }
+function ssNext() { _ssIdx = (_ssIdx+1)%_ssPhotos.length; ssShowFrame(); }
+function ssTogglePlay() {
+  _ssPlaying = !_ssPlaying;
+  document.getElementById('ssPlayBtn').textContent = _ssPlaying ? '⏸ 일시정지' : '▶ 재생';
+  if (_ssPlaying) _ssInterval = setInterval(ssNext, 3000);
+  else { clearInterval(_ssInterval); _ssInterval = null; }
+}
+function stopSlideshow() {
+  clearInterval(_ssInterval); _ssInterval = null;
+  document.getElementById('slideshow').classList.remove('show');
+}
+
+// =====================================================
+// 회의록
+// =====================================================
+function openMinutesForm(id) {
+  document.getElementById('minId').value = id || '';
+  const defaultDate = todayISO();
+  if (id) {
+    const m = getOrgData().minutes.find(x=>x.id===id);
+    if (m) {
+      ['title','location','chair','writer','attendees','agenda','discussion','decision','action'].forEach(f=>{
+        const el = document.getElementById('min'+f.charAt(0).toUpperCase()+f.slice(1));
+        if (el) el.value = m[f]||'';
+      });
+      wrapDateInput('minDate'); selectDate('minDate', m.date||defaultDate);
+    }
+  } else {
+    ['minTitle','minLocation','minChair','minWriter','minAttendees','minAgenda','minDiscussion','minDecision','minAction'].forEach(i=>document.getElementById(i).value='');
+    wrapDateInput('minDate'); selectDate('minDate', defaultDate);
+  }
+  openModal('minutesModal');
+}
+function closeMinutesForm() { closeModal('minutesModal'); }
+
+function saveMinutes() {
+  const title = document.getElementById('minTitle').value.trim();
+  const date = document.getElementById('minDate').value;
+  if (!title||!date) { toast('제목과 날짜를 입력해주세요','warn'); return; }
+  const d = getOrgData();
+  const id = document.getElementById('minId').value || uid();
+  const existing = d.minutes.find(m=>m.id===id);
+  const obj = existing || {};
+  obj.id = id;
+  ['title','date','location','chair','writer','attendees','agenda','discussion','decision','action'].forEach(f=>{
+    const el = document.getElementById('min'+f.charAt(0).toUpperCase()+f.slice(1));
+    if (el) obj[f] = el.value;
+  });
+  if (!existing) d.minutes.push(obj);
+  saveAll();
+  closeMinutesForm();
+  renderMinutes();
+  toast('회의록이 저장되었습니다','success');
+}
+
+function deleteMinutes(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  const d = getOrgData();
+  d.minutes = d.minutes.filter(m=>m.id!==id);
+  saveAll();
+  renderMinutes();
+}
+
+// renderMinutes는 아래 청소년 회의록 섹션에서 정의됨
+
+// =====================================================
+// 인쇄 컨텍스트 제어 (서명부/인사카드/현황판/보고서 구분)
+// =====================================================
+function printAs(mode) {
+  // mode: 'signbook' | 'idcard' | 'roster' | 'actreport'
+  const cls = 'print-' + mode;
+  document.body.classList.add(cls);
+  window.print();
+  setTimeout(() => document.body.classList.remove(cls), 1000);
+}
+
+// =====================================================
+// JSON 저장 링크(경로) 지정 기능
+// =====================================================
+function openJsonLinkSettings() {
+  const saved = localStorage.getItem('youthOrg_jsonLink') || '';
+  document.getElementById('jsonLinkInput').value = saved;
+  document.getElementById('jsonLinkPreview').textContent = saved ? '현재 경로: ' + saved : '설정된 경로 없음';
+  openModal('jsonLinkModal');
+}
+
+function saveJsonLink() {
+  const val = document.getElementById('jsonLinkInput').value.trim();
+  localStorage.setItem('youthOrg_jsonLink', val);
+  document.getElementById('jsonLinkPreview').textContent = val ? '현재 경로: ' + val : '설정된 경로 없음';
+  closeModal('jsonLinkModal');
+  toast('저장 경로가 설정되었습니다', 'success');
+}
+
+function clearJsonLink() {
+  localStorage.removeItem('youthOrg_jsonLink');
+  document.getElementById('jsonLinkInput').value = '';
+  document.getElementById('jsonLinkPreview').textContent = '설정된 경로 없음';
+  toast('경로가 초기화되었습니다');
+}
+
+// =====================================================
+// JSON 파일 저장 — File System Access API (Chrome/Edge)
+// 처음: 위치 선택 다이얼로그 → 이후: 같은 파일에 덮어쓰기
+// =====================================================
+let _fsFileHandle = null; // 선택된 파일 핸들 (메모리, 새로고침 시 초기화)
+
+// 저장 버튼 상태 업데이트
+function updateSaveBtn(state, label) {
+  const btn = document.getElementById('btnSaveFile');
+  if (!btn) return;
+  btn.classList.remove('saved','unsaved','saving');
+  if (state) btn.classList.add(state);
+  btn.textContent = label || '💾 저장';
+}
+
+// 저장 위치 선택 (항상 새로 선택)
+async function doPickSaveLocation() {
+  if (!window.showSaveFilePicker) {
+    toast('이 브라우저는 파일 위치 선택을 지원하지 않습니다. Chrome/Edge를 사용해주세요.','warn');
+    doExportFallback();
+    return;
+  }
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: '청소년참여기구_데이터.json',
+      types: [{ description: 'JSON 데이터 파일', accept: { 'application/json': ['.json'] } }]
+    });
+    _fsFileHandle = handle;
+    // 파일 핸들 이름 저장 (표시용)
+    localStorage.setItem('youthOrg_savedFileName', handle.name);
+    await _writeToHandle(_fsFileHandle);
+    updateSaveBtn('saved', '💾 ' + handle.name);
+    toast(`✅ "${handle.name}" 에 저장되었습니다`, 'success');
+  } catch(e) {
+    if (e.name !== 'AbortError') toast('저장 위치 선택 실패: ' + e.message, 'error');
+  }
+}
+
+// 저장 (핸들 있으면 덮어쓰기, 없으면 위치 선택)
+async function doSaveToFile() {
+  if (!window.showSaveFilePicker) {
+    doExportFallback();
+    return;
+  }
+  if (_fsFileHandle) {
+    // 기존 파일에 덮어쓰기
+    updateSaveBtn('saving', '⏳ 저장 중...');
+    try {
+      await _writeToHandle(_fsFileHandle);
+      updateSaveBtn('saved', '✅ ' + _fsFileHandle.name);
+      toast(`✅ "${_fsFileHandle.name}" 덮어쓰기 완료`, 'success');
+      setTimeout(() => updateSaveBtn('', '💾 저장'), 3000);
+    } catch(e) {
+      // 권한 만료된 경우 다시 선택
+      if (e.name === 'NotAllowedError' || e.name === 'SecurityError') {
+        toast('파일 접근 권한이 만료되었습니다. 위치를 다시 선택해주세요.', 'warn');
+        _fsFileHandle = null;
+        updateSaveBtn('unsaved', '💾 저장');
+        await doPickSaveLocation();
+      } else {
+        updateSaveBtn('unsaved', '💾 저장');
+        toast('저장 실패: ' + e.message, 'error');
+      }
+    }
+  } else {
+    // 처음이거나 핸들 없음 → 위치 선택
+    await doPickSaveLocation();
+  }
+}
+
+// 실제 파일 쓰기
+async function _writeToHandle(handle) {
+  const json = JSON.stringify(appData, null, 2);
+  const writable = await handle.createWritable();
+  await writable.write(json);
+  await writable.close();
+}
+
+// 폴백: File System API 미지원 시 기존 다운로드 방식
+function doExportFallback() {
+  const json = JSON.stringify(appData, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '청소년참여기구_데이터_' + todayISO() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('💾 다운로드 완료 (이 브라우저는 덮어쓰기 미지원)');
+}
+
+// 기존 doExport 이름도 유지 (Drive 패널 등에서 호출)
+function doExport() { doSaveToFile(); }
+
+// saveAll 호출 시 저장 버튼을 "미저장" 표시로 변경
+// =====================================================
+// 날짜 피커 — 연/월 인라인 스크롤 + 팝업 위치 고정
+// =====================================================
+let _dpScrollMode = {};
+
+// 팝업 위치를 입력 버튼 기준으로 계산해서 고정
+function positionPopup(fieldId) {
+  const wrap = document.getElementById(`dp_${fieldId}_wrap`) ||
+               document.querySelector(`[id="dp_${fieldId}_wrap"]`);
+  if (!wrap) return;
+  const popup = document.getElementById(`dp_${fieldId}_popup`);
+  if (!popup) return;
+  const btn = wrap.querySelector('.date-picker-input');
+  if (!btn) return;
+  const rect = btn.getBoundingClientRect();
+  const popupW = 320;
+  const popupH = 340; // 최대 예상 높이
+  let left = rect.left;
+  let top = rect.bottom + 4;
+  // 화면 오른쪽 넘침 방지
+  if (left + popupW > window.innerWidth - 8) left = window.innerWidth - popupW - 8;
+  if (left < 4) left = 4;
+  // 화면 아래쪽 넘침 → 위로 표시
+  if (top + popupH > window.innerHeight - 8) top = rect.top - popupH - 4;
+  if (top < 4) top = 4;
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+}
+
+function renderDatePicker(fieldId) {
+  const popup = document.getElementById(`dp_${fieldId}_popup`);
+  if (!popup) return;
+  const st = _dpState[fieldId] || { year: new Date().getFullYear(), month: new Date().getMonth() };
+  const today = new Date();
+  const selected = document.getElementById(fieldId)?.value;
+  const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+  // 연도 목록: 현재 ±10년
+  const curY = st.year;
+  let yearItems = '';
+  for (let y = curY - 10; y <= curY + 10; y++) {
+    yearItems += `<button class="dp-ym-item${y===curY?' dp-ym-selected':''}" id="dpy_${fieldId}_${y}" onclick="dpPickYear('${fieldId}',${y});event.stopPropagation()">${y}년</button>`;
+  }
+
+  // 월 목록
+  let monthItems = monthNames.map((m,i) =>
+    `<button class="dp-ym-item${i===st.month?' dp-ym-selected':''}" id="dpm_${fieldId}_${i}" onclick="dpPickMonth('${fieldId}',${i});event.stopPropagation()">${m}</button>`
+  ).join('');
+
+  // 일 달력
+  const firstDay = new Date(st.year, st.month, 1).getDay();
+  const daysInMonth = new Date(st.year, st.month+1, 0).getDate();
+  let cells = '';
+  for (let i=0; i<firstDay; i++) cells += `<button class="dp-day other-month" disabled></button>`;
+  for (let d=1; d<=daysInMonth; d++) {
+    const ds = `${st.year}-${String(st.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const iT = today.getFullYear()===st.year && today.getMonth()===st.month && today.getDate()===d;
+    const iS = selected===ds;
+    const iSu = new Date(st.year,st.month,d).getDay()===0;
+    cells += `<button class="dp-day${iT?' today':''}${iS?' selected':''}${iSu?' sun':''}" onclick="selectDate('${fieldId}','${ds}');event.stopPropagation()">${d}</button>`;
+  }
+
+  popup.innerHTML = `
+    <div class="dp-ymbar">
+      <div class="dp-ym-col">
+        <div class="dp-ym-label">연도</div>
+        <div class="dp-ym-scroll" id="dpys_${fieldId}">${yearItems}</div>
+      </div>
+      <div class="dp-ym-col">
+        <div class="dp-ym-label">월</div>
+        <div class="dp-ym-scroll" id="dpms_${fieldId}">${monthItems}</div>
+      </div>
+    </div>
+    <div class="dp-cal">
+      <div class="dp-grid">
+        <div class="dp-day-header" style="color:var(--red)">일</div>
+        <div class="dp-day-header">월</div><div class="dp-day-header">화</div>
+        <div class="dp-day-header">수</div><div class="dp-day-header">목</div>
+        <div class="dp-day-header">금</div><div class="dp-day-header">토</div>
+        ${cells}
+      </div>
+    </div>
+    <button class="dp-today-btn" onclick="selectDate('${fieldId}','${todayISO()}');event.stopPropagation()">오늘 (${fmtDate(todayISO())})</button>
+  `;
+  // 선택된 연/월이 스크롤 중앙에 오도록
+  setTimeout(() => {
+    const yScroll = document.getElementById(`dpys_${fieldId}`);
+    const ySelected = document.getElementById(`dpy_${fieldId}_${st.year}`);
+    if (yScroll && ySelected) {
+      yScroll.scrollTop = ySelected.offsetTop - yScroll.clientHeight/2 + ySelected.clientHeight/2;
+    }
+    const mScroll = document.getElementById(`dpms_${fieldId}`);
+    const mSelected = document.getElementById(`dpm_${fieldId}_${st.month}`);
+    if (mScroll && mSelected) {
+      mScroll.scrollTop = mSelected.offsetTop - mScroll.clientHeight/2 + mSelected.clientHeight/2;
+    }
+  }, 10);
+}
+
+function dpPickYear(fieldId, year) {
+  if (!_dpState[fieldId]) _dpState[fieldId] = { year, month: new Date().getMonth() };
+  _dpState[fieldId].year = year;
+  renderDatePicker(fieldId);
+}
+
+function dpPickMonth(fieldId, month) {
+  if (!_dpState[fieldId]) _dpState[fieldId] = { year: new Date().getFullYear(), month };
+  _dpState[fieldId].month = month;
+  renderDatePicker(fieldId);
+}
+
+// 하위 호환용 별칭
+function dpSetYear(fid,y){dpPickYear(fid,y);}
+function dpSetMonth(fid,m){dpPickMonth(fid,m);}
+function dpNav(fieldId, dir) {
+  const st = _dpState[fieldId];
+  if (!st) return;
+  st.month += dir;
+  if (st.month < 0) { st.month = 11; st.year--; }
+  if (st.month > 11) { st.month = 0; st.year++; }
+  renderDatePicker(fieldId);
+}
+
+function toggleDatePicker(fieldId) {
+  const popup = document.getElementById(`dp_${fieldId}_popup`);
+  const isOpen = popup?.classList.contains('show');
+  // 다른 팝업 모두 닫기
+  document.querySelectorAll('.date-picker-popup.show').forEach(p => p.classList.remove('show'));
+  if (!isOpen && popup) {
+    if (!_dpState[fieldId]) initDatePicker(fieldId, todayISO());
+    renderDatePicker(fieldId);
+    popup.classList.add('show');
+    positionPopup(fieldId);
+  }
+  event.stopPropagation();
+}
+
+function selectDate(fieldId, dateStr) {
+  const el = document.getElementById(fieldId);
+  if (el) el.value = dateStr;
+  const disp = document.getElementById(`dp_${fieldId}_display`);
+  if (disp) disp.textContent = fmtDate(dateStr);
+  const st = _dpState[fieldId];
+  if (st) {
+    const parts = dateStr.split('-');
+    st.year = parseInt(parts[0]);
+    st.month = parseInt(parts[1])-1;
+  }
+  const popup = document.getElementById(`dp_${fieldId}_popup`);
+  if (popup) popup.classList.remove('show');
+  // attendDate 변경 시 출석 새로고침
+  if (fieldId === 'attendDate') onAttendDateChange();
+}
+
+// =====================================================
+// 회의록 텍스트 파일 파싱 개선 (항목별 자동 매핑)
+// =====================================================
+function importMinutesFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const text = ev.target.result;
+    // 키:값 패턴 파싱 — 다양한 구분자(: / ：) 지원
+    const parse = (text, keys) => {
+      for (const key of keys) {
+        // "키 : 값" 또는 "키: 값" 또는 "키：값" 패턴
+        const re = new RegExp(`(?:^|\\n)\\s*${key}\\s*[：:：]\\s*([^\\n]+)`, 'i');
+        const m = text.match(re);
+        if (m) return m[1].trim();
+      }
+      return '';
+    };
+
+    const title    = parse(text, ['회의제목','회의 제목','제목','title']);
+    const dateRaw  = parse(text, ['날짜','date']);
+    const location = parse(text, ['장소','location']);
+    const chair    = parse(text, ['사회자','사회']);
+    const writer   = parse(text, ['기록자','기록']);
+    const attendees= parse(text, ['참석자','참석인원','참석']);
+    const agenda   = parse(text, ['회의 안건','안건','agenda']);
+    const discussion=parse(text, ['논의 내용','논의내용','논의','discussion']);
+    const decision = parse(text, ['결정 사항','결정사항','결정']);
+    const action   = parse(text, ['담당자','후속조치','담당']);
+
+    // 날짜 파싱: "2026년 5월 2일" → "2026-05-02" 또는 YYYY-MM-DD 그대로
+    let date = todayISO();
+    const isoMatch = dateRaw.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+    const korMatch = dateRaw.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+    if (isoMatch) {
+      date = `${isoMatch[1]}-${isoMatch[2].padStart(2,'0')}-${isoMatch[3].padStart(2,'0')}`;
+    } else if (korMatch) {
+      date = `${korMatch[1]}-${korMatch[2].padStart(2,'0')}-${korMatch[3].padStart(2,'0')}`;
+    }
+
+    // 폼 열고 채우기
+    openMinutesForm();
+    setTimeout(() => {
+      if (title) document.getElementById('minTitle').value = title;
+      if (location) document.getElementById('minLocation').value = location;
+      if (chair) document.getElementById('minChair').value = chair;
+      if (writer) document.getElementById('minWriter').value = writer;
+      if (attendees) document.getElementById('minAttendees').value = attendees;
+      if (agenda) document.getElementById('minAgenda').value = agenda;
+      if (discussion) document.getElementById('minDiscussion').value = discussion;
+      if (decision) document.getElementById('minDecision').value = decision;
+      if (action) document.getElementById('minAction').value = action;
+      // 날짜 피커 업데이트
+      wrapDateInput('minDate');
+      selectDate('minDate', date);
+      const filled = [title,location,chair,writer,attendees,agenda,discussion,decision,action].filter(Boolean).length;
+      toast(`✅ ${filled}개 항목을 자동으로 채웠습니다. 확인 후 저장해주세요.`, 'success');
+    }, 150);
+  };
+  reader.readAsText(file, 'UTF-8');
+  e.target.value = '';
+}
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('youthOrg_dark', isDark ? '1' : '');
+  const btn = document.getElementById('darkToggleBtn');
+  const homeBtn = document.getElementById('homeDarkBtn');
+  if (btn) btn.textContent = isDark ? '☀' : '🌙';
+  if (homeBtn) homeBtn.textContent = isDark ? '☀ 라이트모드' : '🌙 다크모드';
+}
+function applyDarkPref() {
+  if (localStorage.getItem('youthOrg_dark') === '1') {
+    document.body.classList.add('dark');
+    const btn = document.getElementById('darkToggleBtn');
+    const homeBtn = document.getElementById('homeDarkBtn');
+    if (btn) btn.textContent = '☀';
+    if (homeBtn) homeBtn.textContent = '☀ 라이트모드';
+  }
+}
+
+// =====================================================
+// Google Drive 안내 패널
+// =====================================================
+function openGDrivePanel() { openModal('gdriveModal'); }
+
+// =====================================================
+// 위원 현황판 인쇄
+// =====================================================
+function openRosterPrint() {
+  const d = getOrgData();
+  const s = d.settings;
+  const active = d.members.filter(m => m.status === '활동중').sort((a,b) => {
+    // 역할 순 정렬: 위원장 > 부위원장 > 위원
+    const order = ['위원장','부위원장','위원',''];
+    const ai = order.findIndex(r => (a.role||'').includes(r.replace('','')));
+    const bi = order.findIndex(r => (b.role||'').includes(r.replace('','')));
+    return ai - bi || (a.name||'').localeCompare(b.name||'');
+  });
+  document.getElementById('rosterContent').innerHTML = `
+    <div class="roster-wrap">
+      <div class="roster-title">${s.orgName || ''} 위원 현황</div>
+      <div class="roster-sub">${s.instName || appData.globalSettings.orgName} · ${s.year || new Date().getFullYear()}년도 · 총 ${active.length}명</div>
+      <div class="roster-grid">
+        ${active.map(m => `
+          <div class="roster-card">
+            <div class="roster-card-photo">
+              ${m.photo ? `<img src="${m.photo}" alt="${m.name}">` : '사진없음'}
+            </div>
+            <div class="roster-card-name">${m.name}</div>
+            <div class="roster-card-role">${m.role || '위원'}</div>
+            <div class="roster-card-school">${schoolGradeStr(m)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="text-align:right;margin-top:16px;font-size:11px;color:#999;">
+        ${s.instName||''} ${s.advisor||''} · ${fmtDate(todayISO())} 출력
+      </div>
+    </div>`;
+  openModal('rosterModal');
+}
+
+// =====================================================
+// 활동 보고서 자동 문서화
+// =====================================================
+function openActReport() {
+  const d = getOrgData();
+  const s = d.settings;
+  const year = parseInt(document.getElementById('actYear')?.value) || new Date().getFullYear();
+  const list = d.activities.filter(a => parseInt(a.date?.split('-')[0]) === year)
+    .sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  if (list.length === 0) { toast(`${year}년 활동 기록이 없습니다`, 'warn'); return; }
+  const active = d.members.filter(m => m.status === '활동중');
+  const totalPhotos = list.reduce((s,a) => s+(a.photos||[]).length, 0);
+  document.getElementById('actReportContent').innerHTML = `
+    <div class="act-report">
+      <div class="act-report-title">${s.orgName || ''} 연간 활동 보고서</div>
+      <div class="act-report-sub">${s.instName || appData.globalSettings.orgName} · ${year}년도 · 담당: ${s.advisor||''}</div>
+
+      <div class="act-report-section">
+        <h3>Ⅰ. 개요</h3>
+        <table class="act-report-info-table">
+          <tr><th>기구명</th><td>${s.orgName||''}</td><th>연도</th><td>${year}년</td></tr>
+          <tr><th>기관명</th><td>${s.instName||appData.globalSettings.orgName}</td><th>담당자</th><td>${s.advisor||''}</td></tr>
+          <tr><th>활동 위원</th><td>${active.length}명</td><th>총 활동 횟수</th><td>${list.length}회</td></tr>
+          <tr><th>총 사진</th><td>${totalPhotos}장</td><th>회의록</th><td>${d.minutes.length}건</td></tr>
+        </table>
+      </div>
+
+      ${list.map((a, i) => `
+        <div class="act-report-section">
+          <h3>Ⅱ-${i+1}. ${a.title}</h3>
+          <table class="act-report-info-table">
+            <tr><th>일시</th><td>${fmtDate(a.date)}</td><th>장소</th><td>${a.location||'-'}</td></tr>
+            ${a.content ? `<tr><th>활동 내용</th><td colspan="3" style="white-space:pre-wrap;line-height:1.6;">${a.content}</td></tr>` : ''}
+            ${a.memo ? `<tr><th>특이사항</th><td colspan="3">${a.memo}</td></tr>` : ''}
+          </table>
+          ${(a.photos||[]).length > 0 ? `
+            <div style="font-size:11px;color:#666;margin:6px 0 4px;">📸 활동 사진 (${a.photos.length}장)</div>
+            <div class="act-report-photos">
+              ${a.photos.slice(0,8).map(p=>`<div class="act-report-photo-item"><img src="${p.dataURL}" alt="${p.name}"></div>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('')}
+
+      <div class="act-report-section">
+        <h3>Ⅲ. 위원 출석 현황</h3>
+        <table class="act-report-info-table">
+          <thead><tr><th>이름</th><th>학교/학년</th><th>출석</th><th>결석</th><th>출석률</th></tr></thead>
+          <tbody>${active.map(m => {
+            let p=0,a=0,tot=0;
+            Object.values(d.attendance).forEach(rec => {
+              const st=(rec.byMember||{})[m.id];
+              if(st){tot++;if(st==='present'||st==='late')p++;else a++;}
+            });
+            return `<tr><td>${m.name}</td><td>${schoolGradeStr(m)}</td><td>${p}</td><td>${a}</td><td>${tot>0?Math.round(p/tot*100)+'%':'-'}</td></tr>`;
+          }).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="text-align:right;margin-top:20px;font-size:11px;color:#999;">
+        작성일: ${fmtDate(todayISO())} · ${s.instName||''} ${s.advisor||''}
+      </div>
+    </div>`;
+  openModal('actReportModal');
+}
+function doExportXLSX() {
+  const d = getOrgData();
+  const s = d.settings;
+  const orgName = s.orgName || (currentOrg==='A'?'청소년참여위원회':'청소년운영위원회');
+  const wb = XLSX.utils.book_new();
+
+  // 1. 위원 명단
+  if (d.members.length > 0) {
+    const rows = d.members.map((m,i)=>({
+      '순번':i+1,'이름':m.name||'','학교/학년':schoolGradeStr(m),'성별':m.gender||'',
+      '생년월일':m.birth||'','연락처':m.phone||'','주소':m.address||'',
+      '보호자':m.guardName||'','관계':m.guardRel||'','보호자연락처':m.guardPhone||'','비상연락':m.emergency||'',
+      '위촉일':m.joinDate||'','역할':m.role||'','기수':m.gen||'','상태':m.status||'활동중',
+      '활동이력':m.history||'','담당자의견':m.note||''
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(k=>({wch:Math.max(10,k.length*2)}));
+    XLSX.utils.book_append_sheet(wb, ws, '위원명단');
+  }
+
+  // 2. 일정
+  const allSch = [...d.schedules, ...appData.jointSchedules.map(j=>({...j,title:'[합동] '+j.title}))];
+  if (allSch.length > 0) {
+    const rows = allSch.sort((a,b)=>a.date?.localeCompare(b.date||'')||0).map((s,i)=>({
+      '순번':i+1,'날짜':s.date||'','시간':s.time||'','제목':s.title||'','장소':s.location||'','내용':s.content||'','준비물':s.note||''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '일정');
+  }
+
+  // 3. 출석부
+  const active = d.members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const attDates = Object.keys(d.attendance).sort();
+  if (active.length > 0 && attDates.length > 0) {
+    const statusMap = { present:'○', late:'△', absent:'×', excused:'◇' };
+    const headers = attDates.map(date => {
+      const sch = d.attendance[date]?.scheduleId ? d.schedules.find(s=>s.id===d.attendance[date].scheduleId) : null;
+      return sch ? `${date} ${sch.title}` : date;
+    });
+    const rows = active.map((m,i)=>{
+      const row = { '순번':i+1,'이름':m.name,'학교/학년':schoolGradeStr(m),'성별':m.gender||'' };
+      let p=0,l=0,a=0,e=0;
+      attDates.forEach((date,j)=>{
+        const st=(d.attendance[date].byMember||{})[m.id];
+        row[headers[j]] = st ? statusMap[st] : '';
+        if(st==='present')p++; else if(st==='late')l++; else if(st==='absent')a++; else if(st==='excused')e++;
+      });
+      const tot=p+l+a+e;
+      row['출석']=p; row['지각']=l; row['결석']=a; row['사유']=e;
+      row['출석률']=tot>0?Math.round((p+l)/tot*100)+'%':'-';
+      return row;
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '출석부');
+  }
+
+  // 4. 활동 기록
+  if (d.activities.length > 0) {
+    const rows = d.activities.sort((a,b)=>a.date?.localeCompare(b.date||'')||0).map((a,i)=>({
+      '순번':i+1,'날짜':a.date||'','제목':a.title||'','장소':a.location||'','내용':a.content||'','메모':a.memo||'','사진수':(a.photos||[]).length
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '활동기록');
+  }
+
+  // 5. 회의록
+  if (d.minutes.length > 0) {
+    const rows = d.minutes.sort((a,b)=>a.date?.localeCompare(b.date||'')||0).map((m,i)=>({
+      '순번':i+1,'날짜':m.date||'','제목':m.title||'','장소':m.location||'','사회자':m.chair||'','기록자':m.writer||'',
+      '참석자':m.attendees||'','안건':m.agenda||'','논의내용':m.discussion||'','결정사항':m.decision||'','담당/후속':m.action||''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '회의록');
+  }
+
+  if (wb.SheetNames.length === 0) { toast('내보낼 데이터가 없습니다','warn'); return; }
+  XLSX.writeFile(wb, `${orgName}_전체백업_${todayISO()}.xlsx`);
+  toast('엑셀 백업 완료!', 'success');
+}
+
+// =====================================================
+// 커스텀 날짜 피커
+// =====================================================
+const _dpState = {}; // { fieldId: { year, month } }
+
+function initDatePicker(fieldId, initialValue) {
+  const today = new Date();
+  const parts = (initialValue||todayISO()).split('-');
+  _dpState[fieldId] = { year: parseInt(parts[0])||today.getFullYear(), month: (parseInt(parts[1])-1)||today.getMonth() };
+  if (initialValue) {
+    const el = document.getElementById(fieldId);
+    if (el) el.value = initialValue;
+    const disp = document.getElementById(`dp_${fieldId}_display`);
+    if (disp) disp.textContent = fmtDate(initialValue);
+  }
+  renderDatePicker(fieldId);
+  // 바깥 클릭 시 팝업 닫기 (1회만 등록)
+  if (!document.body._dpListenerAdded) {
+    document.body._dpListenerAdded = true;
+    document.addEventListener('click', e => {
+      document.querySelectorAll('.date-picker-popup.show').forEach(popup => {
+        const wrap = popup.closest('.date-picker-wrap');
+        if (!wrap || !wrap.contains(e.target)) popup.classList.remove('show');
+      });
+    });
+    window.addEventListener('resize', () => {
+      document.querySelectorAll('.date-picker-popup.show').forEach(p => {
+        const fieldId = p.id.replace('dp_','').replace('_popup','');
+        positionPopup(fieldId);
+      });
+    });
+  }
+}
+
+function wrapDateInput(fieldId) {
+  const el = document.getElementById(fieldId);
+  if (!el || el.dataset.wrapped) return;
+  el.dataset.wrapped = '1';
+  const today = todayISO();
+  if (!el.value) el.value = today;
+  el.type = 'hidden';
+  const wrap = document.createElement('div');
+  wrap.className = 'date-picker-wrap';
+  wrap.id = `dp_${fieldId}_wrap`;
+  wrap.innerHTML = `
+    <div class="date-picker-input" onclick="toggleDatePicker('${fieldId}')">
+      <span>📅</span><span id="dp_${fieldId}_display">${el.value ? fmtDate(el.value) : '날짜 선택'}</span>
+    </div>
+    <div class="date-picker-popup" id="dp_${fieldId}_popup"></div>
+  `;
+  el.parentNode.insertBefore(wrap, el);
+  wrap.appendChild(el);
+  initDatePicker(fieldId, el.value || today);
+}
+
+// =====================================================
+// 청소년 회의록
+// =====================================================
+function openYouthMinutesMode() {
+  // 폼 초기화
+  ['yMinTitle','yMinLocation','yMinChair','yMinWriter','yMinAttendees','yMinDiscussion','yMinDecision','yMinAction','yMinAgenda'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  // 날짜 피커 초기화
+  const dateEl = document.getElementById('yMinDate');
+  if (dateEl) { dateEl.value = todayISO(); }
+  const disp = document.getElementById('dp_yMinDate_display');
+  if (disp) disp.textContent = fmtDate(todayISO());
+  initDatePicker('yMinDate', todayISO());
+  openModal('youthMinutesModal');
+}
+
+function saveYouthMinutes() {
+  const title = document.getElementById('yMinTitle').value.trim();
+  const date = document.getElementById('yMinDate').value;
+  if (!title||!date) { toast('제목과 날짜를 입력해주세요','warn'); return; }
+  const d = getOrgData();
+  const id = uid();
+  const obj = {
+    id, title, date,
+    location: document.getElementById('yMinLocation').value,
+    chair: document.getElementById('yMinChair').value,
+    writer: document.getElementById('yMinWriter').value,
+    attendees: document.getElementById('yMinAttendees').value,
+    agenda: document.getElementById('yMinAgenda').value,
+    discussion: document.getElementById('yMinDiscussion').value,
+    decision: document.getElementById('yMinDecision').value,
+    action: document.getElementById('yMinAction').value,
+    _byYouth: true
+  };
+  d.minutes.push(obj);
+  saveAll();
+  closeModal('youthMinutesModal');
+  if (document.getElementById('panel-minutes') && !document.getElementById('panel-minutes').classList.contains('hidden')) {
+    renderMinutes();
+  }
+  toast('회의록이 제출되었습니다! 감사합니다 😊', 'success');
+}
+
+// 파일 업로드로 회의록 가져오기 (.txt / .md)
+// renderMinutes에 청소년 작성 뱃지 표시
+function renderMinutes() {
+  const d = getOrgData();
+  const list = [...d.minutes].sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
+  if (list.length===0) {
+    document.getElementById('minutesContainer').innerHTML='<div class="empty">작성된 회의록이 없습니다.</div>';
+    return;
+  }
+  document.getElementById('minutesContainer').innerHTML = list.map(m=>`
+    <div class="minutes-card">
+      <div class="mc-head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div>
+          <div class="mc-head-title">${m.title} ${m._byYouth?'<span class="tag tag-green" style="font-size:10px;">청소년 작성</span>':''}</div>
+          <div class="mc-head-meta">${fmtDateFull(m.date)}${m.location?' · '+m.location:''}${m.chair?' · 사회: '+m.chair:''}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openMinutesForm('${m.id}')">✏ 수정</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteMinutes('${m.id}')">삭제</button>
+        </div>
+      </div>
+      <div class="mc-body">
+        ${m.attendees?`<div class="mc-section"><h4>참석자</h4><p>${m.attendees}</p></div>`:''}
+        ${m.agenda?`<div class="mc-section"><h4>회의 안건</h4><p>${m.agenda}</p></div>`:''}
+        ${m.discussion?`<div class="mc-section"><h4>논의 내용</h4><p>${m.discussion}</p></div>`:''}
+        ${m.decision?`<div class="mc-section"><h4>결정 사항</h4><p>${m.decision}</p></div>`:''}
+        ${m.action?`<div class="mc-section"><h4>담당자 / 후속 조치</h4><p>${m.action}</p></div>`:''}
+        <div style="font-size:11px;color:var(--gray-3);margin-top:8px;">기록자: ${m.writer||'-'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+function openJointSchForm(id) {
+  document.getElementById('jSchId').value = id||'';
+  const defaultDate = todayISO();
+  if (id) {
+    const j = appData.jointSchedules.find(x=>x.id===id);
+    if (j) {
+      document.getElementById('jSchTitle').value=j.title||'';
+      document.getElementById('jSchTime').value=j.time||'';
+      document.getElementById('jSchLocation').value=j.location||'';
+      document.getElementById('jSchContent').value=j.content||'';
+      wrapDateInput('jSchDate'); selectDate('jSchDate', j.date||defaultDate);
+    }
+  } else {
+    ['jSchTitle','jSchTime','jSchLocation','jSchContent'].forEach(i=>document.getElementById(i).value='');
+    wrapDateInput('jSchDate'); selectDate('jSchDate', defaultDate);
+  }
+  openModal('jointSchFormModal');
+}
+
+function saveJointSchedule() {
+  const title = document.getElementById('jSchTitle').value.trim();
+  const date = document.getElementById('jSchDate').value;
+  if (!title||!date) { toast('제목과 날짜를 입력해주세요','warn'); return; }
+  const id = document.getElementById('jSchId').value || uid();
+  const existing = appData.jointSchedules.find(j=>j.id===id);
+  const obj = existing || {};
+  obj.id = id;
+  obj.title = title;
+  obj.date = date;
+  obj.time = document.getElementById('jSchTime').value;
+  obj.location = document.getElementById('jSchLocation').value;
+  obj.content = document.getElementById('jSchContent').value;
+  if (!existing) appData.jointSchedules.push(obj);
+  saveAll();
+  closeModal('jointSchFormModal');
+  renderJointList();
+  toast('합동 일정이 저장되었습니다','success');
+}
+
+function deleteJointSchedule(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  appData.jointSchedules = appData.jointSchedules.filter(j=>j.id!==id);
+  saveAll();
+  renderJointList();
+}
+
+function renderJointList() {
+  const list = [...appData.jointSchedules].sort((a,b)=>b.date?.localeCompare(a.date||'')||0);
+  if (list.length===0) {
+    document.getElementById('jointList').innerHTML='<div class="empty">등록된 합동 일정이 없습니다.</div>';
+    return;
+  }
+  document.getElementById('jointList').innerHTML = list.map(j=>`
+    <div class="sch-card joint">
+      <div class="sch-card-head">
+        <div class="sch-card-title">🔗 ${j.title}</div>
+        <div class="sch-card-date">${fmtDateFull(j.date)}${j.time?' '+j.time:''}</div>
+      </div>
+      <div class="sch-card-meta">${j.location?`<span>📍 ${j.location}</span>`:''}</div>
+      ${j.content?`<div class="sch-card-content">${j.content}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="openJointSchForm('${j.id}')">✏ 수정</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteJointSchedule('${j.id}')">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// =====================================================
+// 보고서 · 통계
+// =====================================================
+function renderReport() {
+  const d = getOrgData();
+  const members = d.members;
+  const active = members.filter(m=>m.status==='활동중');
+  const attDates = Object.keys(d.attendance).sort();
+  // 출석률 집계
+  const attStats = attDates.map(date=>{
+    const rec = d.attendance[date];
+    const total = active.length;
+    if (!total) return null;
+    const present = active.filter(m=>{
+      const s=(rec.byMember||{})[m.id];
+      return s==='present'||s==='late';
+    }).length;
+    return { date, rate: Math.round(present/total*100), present, total };
+  }).filter(Boolean).slice(-12);
+
+  const html = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:20px;">
+      <div class="chart-wrap">
+        <div class="chart-title">👥 위원 구성</div>
+        <div style="font-size:13px;line-height:2;">
+          전체 ${members.length}명 (활동중 ${active.length}명)<br>
+          남 ${active.filter(m=>m.gender==='남').length}명 / 여 ${active.filter(m=>m.gender==='여').length}명<br>
+          활동기록 ${d.activities.length}건 / 회의록 ${d.minutes.length}건<br>
+          사진 ${d.activities.reduce((s,a)=>s+(a.photos||[]).length,0)}장
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">📊 최근 출석률 추이 (최근 12회)</div>
+        <div class="bar-chart">
+          ${attStats.length===0?'<div class="empty" style="padding:20px;">출석 기록 없음</div>':
+            attStats.map(s=>`
+              <div class="bar-row">
+                <div class="bar-label" style="width:80px;font-size:11px;">${fmtDate(s.date)}</div>
+                <div class="bar-track">
+                  <div class="bar-fill ${s.rate>=80?'green':''}" style="width:${s.rate}%">
+                    <span>${s.rate}%</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')
+          }
+        </div>
+      </div>
+    </div>
+    ${renderMonthlyChart()}
+  `;
+  document.getElementById('reportContent').innerHTML = html;
+}
+
+// =====================================================
+// 엑셀 내보내기
+// =====================================================
+function exportMembersXLSX() {
+  const d = getOrgData();
+  if (d.members.length===0) { toast('위원 데이터가 없습니다','warn'); return; }
+  const rows = d.members.map((m,i)=>({
+    '순번':i+1,'이름':m.name||'','학교/학년':schoolGradeStr(m),'성별':m.gender||'',
+    '생년월일':m.birth||'','연락처':m.phone||'','주소':m.address||'',
+    '보호자':m.guardName||'','관계':m.guardRel||'','보호자연락처':m.guardPhone||'',
+    '위촉일':m.joinDate||'','역할':m.role||'','기수':m.gen||'','상태':m.status||'활동중',
+    '활동이력':m.history||'','담당자의견':m.note||''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '위원명단');
+  XLSX.writeFile(wb, `${d.settings.orgName}_위원명단_${todayISO()}.xlsx`);
+  toast('엑셀 다운로드 완료');
+}
+
+function exportAttendXLSX() {
+  const d = getOrgData();
+  const active = d.members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const dates = Object.keys(d.attendance).sort();
+  if (active.length===0||dates.length===0) { toast('데이터가 없습니다','warn'); return; }
+  const statusMap = { present:'○',late:'△',absent:'×',excused:'◇' };
+  const headers = dates.map(date=>{
+    const sch = d.attendance[date]?.scheduleId ? d.schedules.find(s=>s.id===d.attendance[date].scheduleId) : null;
+    return sch ? `${date} ${sch.title}` : date;
+  });
+  const rows = active.map((m,i)=>{
+    const row = { '순번':i+1,'이름':m.name,'학교/학년':schoolGradeStr(m),'성별':m.gender||'' };
+    let p=0,l=0,a=0,e=0;
+    dates.forEach((date,j)=>{
+      const s=(d.attendance[date].byMember||{})[m.id];
+      row[headers[j]]=s?statusMap[s]:'';
+      if(s==='present')p++;else if(s==='late')l++;else if(s==='absent')a++;else if(s==='excused')e++;
+    });
+    const tot=p+l+a+e;
+    row['출석']=p;row['지각']=l;row['결석']=a;row['사유']=e;
+    row['출석률']=tot>0?Math.round((p+l)/tot*100)+'%':'-';
+    return row;
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '출석부');
+  XLSX.writeFile(wb, `${d.settings.orgName}_출석부_${todayISO()}.xlsx`);
+  toast('출석부 엑셀 다운로드 완료');
+}
+
+function exportAnnualReport() {
+  const d = getOrgData();
+  const wb = XLSX.utils.book_new();
+  // 위원 명단
+  if (d.members.length>0) {
+    const rows = d.members.map((m,i)=>({'순번':i+1,'이름':m.name||'','학교/학년':schoolGradeStr(m),'역할':m.role||'','기수':m.gen||'','상태':m.status||''}));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '위원명단');
+  }
+  // 활동 기록
+  if (d.activities.length>0) {
+    const rows = d.activities.sort((a,b)=>a.date?.localeCompare(b.date||'')||0).map((a,i)=>({
+      '순번':i+1,'날짜':a.date||'','제목':a.title||'','장소':a.location||'','내용':a.content||'','메모':a.memo||'','사진수':(a.photos||[]).length
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '활동기록');
+  }
+  // 회의록
+  if (d.minutes.length>0) {
+    const rows = d.minutes.sort((a,b)=>a.date?.localeCompare(b.date||'')||0).map((m,i)=>({
+      '순번':i+1,'날짜':m.date||'','제목':m.title||'','참석자':m.attendees||'','안건':m.agenda||'','결정사항':m.decision||'','담당':m.action||''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '회의록');
+  }
+  // 일정
+  if (d.schedules.length>0) {
+    const rows = d.schedules.sort((a,b)=>a.date?.localeCompare(b.date||'')||0).map((s,i)=>({
+      '순번':i+1,'날짜':s.date||'','제목':s.title||'','장소':s.location||'','내용':s.content||''
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), '일정');
+  }
+  XLSX.writeFile(wb, `${d.settings.orgName}_연간보고서_${d.settings.year||todayISO().slice(0,4)}.xlsx`);
+  toast('연간 보고서 엑셀 다운로드 완료');
+}
+
+function exportAllXLSX() {
+  exportAnnualReport();
+}
+
+// =====================================================
+// 데이터 백업 / 불러오기
+// =====================================================
+function doExport() {
+  const json = JSON.stringify(appData, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `청소년참여기구_백업_${todayISO()}.json`;
+  a.click();
+  toast('백업 파일 다운로드 완료');
+}
+
+function doImport() {
+  document.getElementById('importFileInput').click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const loaded = JSON.parse(ev.target.result);
+      if (!confirm('불러오면 현재 데이터가 교체됩니다. 계속하시겠습니까?')) return;
+      if (!loaded.A) loaded.A = emptyOrgData();
+      if (!loaded.B) loaded.B = emptyOrgData();
+      if (!loaded.jointSchedules) loaded.jointSchedules = [];
+      if (!loaded.globalSettings) loaded.globalSettings = { orgName: '광양시청소년문화센터' };
+      appData = loaded;
+      saveAll();
+      if (currentOrg) enterOrg(currentOrg);
+      toast('데이터를 불러왔습니다','success');
+    } catch(err) { toast('파일을 읽을 수 없습니다','error'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function doExportHome() { doSaveToFile(); }
+function doImportHome() { document.getElementById('importFileInputHome').click(); }
+function importDataHome(e) { importData({target:{files:e.target.files}}); e.target.value=''; }
+
+// =====================================================
+// 초기화
+// =====================================================
+(function init() {
+  loadAll();
+  applyDarkPref();
+  showHome();
+  // 키보드 ESC 닫기
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show'));
+      if (document.getElementById('lightbox').classList.contains('show')) closeLightbox();
+      if (document.getElementById('slideshow').classList.contains('show')) stopSlideshow();
+    }
+  });
+  // 라이트박스 배경 클릭 닫기
+  document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) closeLightbox();
+  });
+})();
+</script>
+</body>
+</html>
