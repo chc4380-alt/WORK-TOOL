@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청소년사진영상동아리 기록 | WORK-TOOL</title>
+<meta name="theme-color" content="#1e6eb5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="동아리 기록">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f5f5f0; color: #2c2c2a; padding: 20px; }
+  .app { max-width: 1200px; margin: 0 auto; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 2px solid #1D9E75; flex-wrap: wrap; gap: 12px; }
+  .header-left h1 { margin: 0; font-size: 24px; font-weight: 500; color: #0F6E56; cursor: pointer; display: inline-block; }
+  .header-left h1:hover { text-decoration: underline dotted; }
+  .header-left .sub { font-size: 13px; color: #5F5E5A; margin-top: 4px; }
+  .header-right { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn { padding: 10px 18px; border: 1px solid #D3D1C7; background: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; color: #444441; transition: all 0.15s; font-family: inherit; }
+  .tab-btn:hover { background: #f1efe8; }
+  .tab-btn.active { background: #1D9E75; color: #fff; border-color: #1D9E75; }
+  .panel { background: #fff; border: 1px solid #D3D1C7; border-radius: 12px; padding: 24px; }
+  .panel.hidden { display: none; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .form-group label { display: block; font-size: 13px; color: #444441; margin-bottom: 6px; font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #D3D1C7; border-radius: 6px; font-size: 14px; font-family: inherit; background: #fff; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.15); }
+  .form-group textarea { resize: vertical; min-height: 70px; }
+  .section-title { font-size: 15px; font-weight: 500; color: #0F6E56; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #E1F5EE; grid-column: 1 / -1; }
+  .section-title:first-child { margin-top: 0; }
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; flex-wrap: wrap; }
+  .btn { padding: 9px 18px; border-radius: 6px; font-size: 14px; cursor: pointer; border: none; font-weight: 500; transition: all 0.15s; font-family: inherit; }
+  .btn-primary { background: #1D9E75; color: #fff; }
+  .btn-primary:hover { background: #0F6E56; }
+  .btn-secondary { background: #fff; color: #444441; border: 1px solid #D3D1C7; }
+  .btn-secondary:hover { background: #f1efe8; }
+  .btn-danger { background: #fff; color: #A32D2D; border: 1px solid #F09595; }
+  .btn-danger:hover { background: #FCEBEB; }
+  .btn-accent { background: #EF9F27; color: #fff; }
+  .btn-accent:hover { background: #BA7517; }
+  .btn-small { padding: 6px 12px; font-size: 12px; }
+  .search-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .search-bar input, .search-bar select { padding: 9px 12px; border: 1px solid #D3D1C7; border-radius: 6px; font-size: 14px; font-family: inherit; }
+  .search-bar input { flex: 1; min-width: 200px; }
+  .list-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .list-table th { background: #E1F5EE; color: #0F6E56; padding: 10px 8px; text-align: left; font-weight: 500; font-size: 13px; border-bottom: 2px solid #1D9E75; }
+  .list-table td { padding: 10px 8px; border-bottom: 1px solid #f1efe8; color: #2c2c2a; }
+  .list-table tr:hover { background: #fafaf5; }
+  .action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .action-btns button { padding: 5px 10px; font-size: 12px; border-radius: 4px; border: 1px solid #D3D1C7; background: #fff; cursor: pointer; font-family: inherit; }
+  .action-btns button:hover { background: #f1efe8; }
+  .action-btns .view-btn { color: #185FA5; border-color: #B5D4F4; }
+  .action-btns .edit-btn { color: #0F6E56; border-color: #9FE1CB; }
+  .action-btns .del-btn { color: #A32D2D; border-color: #F09595; }
+  .empty { text-align: center; padding: 50px 20px; color: #888780; font-size: 14px; }
+  .empty-big { font-size: 40px; color: #D3D1C7; margin-bottom: 12px; }
+  .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .dash-card { background: linear-gradient(135deg, #1D9E75 0%, #0F6E56 100%); color: #fff; padding: 18px 20px; border-radius: 10px; }
+  .dash-card.secondary { background: #E1F5EE; color: #085041; }
+  .dash-card.warning { background: #FAEEDA; color: #854F0B; }
+  .dash-card.info { background: #E6F1FB; color: #0C447C; }
+  .dash-card.pink { background: #FBEAF0; color: #993556; }
+  .dash-card.blue { background: #E6F1FB; color: #0C447C; }
+  .dash-label { font-size: 13px; opacity: 0.9; margin-bottom: 6px; }
+  .dash-value { font-size: 28px; font-weight: 500; }
+  .dash-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+  .widget-section { margin-top: 24px; }
+  .widget-section h3 { font-size: 16px; font-weight: 500; color: #0F6E56; margin: 0 0 12px; }
+  .birthday-list, .upcoming-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+  .bday-card { background: #FBEAF0; border: 1px solid #ED93B1; padding: 12px 14px; border-radius: 8px; }
+  .bday-card.today { background: #FAC775; border-color: #EF9F27; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
+  .bday-name { font-weight: 500; font-size: 14px; color: #993556; }
+  .bday-card.today .bday-name { color: #633806; }
+  .bday-info { font-size: 12px; color: #5F5E5A; margin-top: 3px; }
+  /* 일정 카드 */
+  .schedule-card { background: #fff; border: 1px solid #D3D1C7; border-left: 4px solid #1D9E75; padding: 14px 16px; border-radius: 8px; margin-bottom: 10px; }
+  .schedule-card.past { border-left-color: #B4B2A9; opacity: 0.85; }
+  .schedule-card.today { border-left-color: #EF9F27; background: #FFFBF2; }
+  .schedule-card.done { border-left-color: #378ADD; }
+  .schedule-head { display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .schedule-title { font-size: 15px; font-weight: 500; color: #2c2c2a; margin: 0; }
+  .schedule-date { font-size: 13px; color: #0F6E56; font-weight: 500; }
+  .schedule-meta { font-size: 12px; color: #5F5E5A; margin: 4px 0; display: flex; gap: 12px; flex-wrap: wrap; }
+  .schedule-content { font-size: 13px; color: #444441; margin-top: 8px; white-space: pre-wrap; line-height: 1.5; }
+  .schedule-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #E1F5EE; color: #0F6E56; }
+  .tag.warn { background: #FAEEDA; color: #854F0B; }
+  .tag.info { background: #E6F1FB; color: #0C447C; }
+  .tag.done { background: #EEEDFE; color: #3C3489; }
+  .schedule-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  /* 출석 체크 */
+  .attend-header { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; padding: 14px; background: #E1F5EE; border-radius: 8px; }
+  .attend-header label { font-size: 14px; color: #0F6E56; font-weight: 500; }
+  .attend-header input[type="date"], .attend-header select { padding: 7px 10px; border: 1px solid #9FE1CB; border-radius: 5px; font-family: inherit; font-size: 13px; }
+  .attend-info-box { background: #FFFBF2; border: 1px solid #FAC775; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 13px; color: #854F0B; }
+  .attend-info-box .ai-title { font-weight: 500; font-size: 14px; color: #633806; margin-bottom: 4px; }
+  .attend-info-box .ai-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; }
+  /* ===== 서명부 양식 (한글 파일 그대로) ===== */
+  .signbook { background: #fff; padding: 40px 50px; color: #000; font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
+  .signbook .sb-title { text-align: center; font-size: 28px; font-weight: 700; margin: 0 0 12px; letter-spacing: -0.5px; }
+  .signbook .sb-activity { text-align: center; font-size: 15px; margin: 0 0 22px; font-weight: 500; }
+  .signbook .sb-info { font-size: 14px; margin: 6px 0; font-weight: 500; }
+  .signbook .sb-info strong { display: inline-block; margin-right: 4px; }
+  .signbook .sb-info-section { margin-bottom: 20px; }
+  .signbook .sb-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; table-layout: fixed; }
+  .signbook .sb-table th, .signbook .sb-table td { border: 1px solid #000; padding: 7px 6px; text-align: center; vertical-align: middle; }
+  .signbook .sb-table th { background: #FAE8C3; font-weight: 700; color: #333; font-size: 13px; padding: 9px 6px; }
+  .signbook .sb-table td.sb-sig-cell { padding: 2px; background: #fff; height: 42px; min-height: 42px; position: relative; cursor: pointer; }
+  .signbook .sb-table td.sb-sig-cell:hover { background: #FFFBF2; }
+  .signbook .sb-table td.sb-sig-cell.has-sig { cursor: pointer; background: #fff; }
+  .signbook .sb-table td.sb-sig-cell .sig-placeholder { color: #bbb; font-size: 11px; font-style: italic; }
+  .signbook .sb-table td.sb-sig-cell.readonly { cursor: default; }
+  .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
+  .signbook .sb-table td.sb-sig-cell img { max-height: 38px; max-width: 100%; vertical-align: middle; }
+  .signbook .sb-footer { text-align: right; margin-top: 20px; font-size: 14px; font-weight: 600; }
+  .signbook .sb-table col.c-num { width: 40px; }
+  .signbook .sb-table col.c-name { width: 80px; }
+  .signbook .sb-table col.c-school { width: 100px; }
+  .signbook .sb-table col.c-gender { width: 45px; }
+  .signbook .sb-table col.c-bd { width: 75px; }
+  .signbook .sb-table col.c-phone { width: 115px; }
+  .signbook .sb-table col.c-sig { width: auto; }
+
+  /* Modal */
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
+  .modal.show { display: flex; }
+  .modal-wrap { background: #fff; border-radius: 12px; width: 100%; max-width: 1000px; padding: 30px; position: relative; }
+  .modal-wrap.settings { max-width: 650px; }
+  .modal-wrap.schedule-form { max-width: 600px; }
+  .modal-wrap.signpad { max-width: 520px; }
+  .modal-wrap.activity-select { max-width: 700px; }
+  .close-btn { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 26px; cursor: pointer; color: #888780; }
+  .modal h2 { margin: 0 0 16px; font-size: 20px; color: #0F6E56; }
+  /* 서명 패드 */
+  .sign-info { background: #E1F5EE; padding: 12px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 14px; color: #0F6E56; }
+  .sign-info strong { font-size: 16px; }
+  .sign-canvas-wrap { border: 2px dashed #1D9E75; border-radius: 8px; background: #fff; position: relative; touch-action: none; margin-bottom: 10px; }
+  .sign-canvas { display: block; width: 100%; height: 240px; cursor: crosshair; touch-action: none; }
+  .sign-canvas-wrap::before { content: '✍️ 이곳에 서명해주세요'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #D3D1C7; font-size: 18px; pointer-events: none; transition: opacity 0.2s; }
+  .sign-canvas-wrap.has-drawing::before { opacity: 0; }
+  /* 인사카드 */
+  .card-print { background: #fff; padding: 30px; border: 2px solid #2c2c2a; }
+  .card-title { text-align: center; font-size: 22px; font-weight: 500; margin: 0 0 6px; letter-spacing: 8px; }
+  .card-sub { text-align: center; font-size: 12px; color: #5F5E5A; margin-bottom: 20px; }
+  .card-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .card-table th, .card-table td { border: 1px solid #2c2c2a; padding: 8px 10px; vertical-align: middle; }
+  .card-table th { background: #f1efe8; font-weight: 500; width: 90px; text-align: center; color: #2c2c2a; }
+  .card-table td { background: #fff; }
+  .card-table .photo-cell { width: 110px; text-align: center; background: #fafaf5; padding: 4px; }
+  .photo-box { width: 100px; height: 130px; border: 1px dashed #888780; display: flex; align-items: center; justify-content: center; color: #888780; font-size: 11px; margin: 0 auto; }
+  .card-section-title { background: #E1F5EE !important; color: #0F6E56; text-align: center; font-weight: 500; }
+  .card-memo { min-height: 80px; white-space: pre-wrap; }
+  .print-btns { margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  /* 설정 */
+  .settings-group { margin-bottom: 16px; }
+  .settings-group label { display: block; font-size: 13px; color: #444441; margin-bottom: 6px; font-weight: 500; }
+  .settings-group input { width: 100%; padding: 9px 12px; border: 1px solid #D3D1C7; border-radius: 6px; font-size: 14px; font-family: inherit; }
+  .help-box { background: #E6F1FB; border-left: 3px solid #378ADD; padding: 12px 14px; border-radius: 6px; font-size: 13px; color: #0C447C; margin-bottom: 16px; line-height: 1.6; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #0F6E56; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; opacity: 0; transition: opacity 0.3s, transform 0.3s; transform: translateY(10px); max-width: 320px; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { background: #A32D2D; }
+  .toast.warn { background: #BA7517; }
+
+  /* 태블릿 서명 모드 (학생용 큰 화면) */
+  .tablet-mode { position: fixed; inset: 0; background: #f5f5f0; z-index: 150; padding: 20px; overflow-y: auto; display: none; }
+  .tablet-mode.show { display: block; }
+  .tablet-mode .tm-header { text-align: center; padding: 20px; background: #1D9E75; color: #fff; border-radius: 10px; margin-bottom: 20px; }
+  .tablet-mode .tm-header h2 { margin: 0 0 6px; font-size: 22px; }
+  .tablet-mode .tm-header .tm-sub { font-size: 14px; opacity: 0.9; }
+  .tablet-mode .tm-close { position: absolute; top: 30px; right: 30px; background: rgba(255,255,255,0.2); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .tablet-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; max-width: 1000px; margin: 0 auto; }
+  .tablet-card { background: #fff; border: 2px solid #D3D1C7; padding: 16px 18px; border-radius: 10px; cursor: pointer; transition: all 0.15s; text-align: left; }
+  .tablet-card:hover { border-color: #1D9E75; transform: translateY(-2px); }
+  .tablet-card.signed { background: #E1F5EE; border-color: #1D9E75; }
+  .tablet-card .tc-name { font-size: 18px; font-weight: 500; color: #2c2c2a; margin-bottom: 4px; }
+  .tablet-card .tc-meta { font-size: 13px; color: #5F5E5A; }
+  .tablet-card .tc-status { margin-top: 8px; font-size: 12px; font-weight: 500; }
+  .tablet-card.signed .tc-status { color: #0F6E56; }
+  .tablet-card:not(.signed) .tc-status { color: #BA7517; }
+  .tablet-summary { text-align: center; margin-bottom: 16px; font-size: 15px; color: #0F6E56; font-weight: 500; }
+
+  @media print {
+    body { background: #fff; padding: 0; margin: 0; }
+    body * { visibility: hidden; }
+    .signbook, .signbook *, .card-print, .card-print * { visibility: visible; }
+    .signbook { position: absolute; left: 0; top: 0; width: 100%; padding: 25mm 20mm; border: none; }
+    .card-print { position: absolute; left: 0; top: 0; width: 100%; border: 2px solid #000; }
+    .modal { position: static; background: none; padding: 0; display: block !important; }
+    .modal-wrap { box-shadow: none; padding: 0; max-width: 100%; }
+    .close-btn, .print-btns, .tablet-mode { display: none !important; }
+    .signbook .sb-table td.sb-sig-cell { cursor: default; }
+    .signbook .sb-table td.sb-sig-cell .sig-placeholder { display: none; }
+    @page { size: A4 portrait; margin: 15mm; }
+  }
+  @media (max-width: 700px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .list-table { font-size: 12px; }
+    .list-table th, .list-table td { padding: 6px 4px; }
+    .signbook { padding: 20px 15px; }
+    .signbook .sb-title { font-size: 22px; }
+    .signbook .sb-table { font-size: 11px; }
+    .signbook .sb-table th, .signbook .sb-table td { padding: 5px 3px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <h1 id="clubTitle" onclick="openSettings()" title="클릭하여 동아리 정보 수정">📷 청소년사진영상동아리 기록</h1>
+      <div class="sub" id="clubSub">광양시청소년문화센터 · 동아리 관리 시스템</div>
+    </div>
+    <div class="header-right">
+      <a href="../" class="btn btn-secondary btn-small" style="text-decoration:none">🏠 허브로</a>
+      <button class="btn btn-secondary btn-small" onclick="openSettings()">⚙️ 설정</button>
+      <button class="btn btn-secondary btn-small" onclick="exportData()">📥 JSON 백업</button>
+      <button class="btn btn-secondary btn-small" onclick="document.getElementById('importFile').click()">📤 복원</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">🏠 대시보드</button>
+    <button class="tab-btn" data-tab="list" onclick="switchTab('list')">📋 회원 목록</button>
+    <button class="tab-btn" data-tab="add" onclick="switchTab('add')">➕ 회원 등록</button>
+    <button class="tab-btn" data-tab="schedule" onclick="switchTab('schedule')">📅 일정 관리</button>
+    <button class="tab-btn" data-tab="attend" onclick="switchTab('attend')">✍️ 서명부·출석</button>
+    <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 통계·내보내기</button>
+  </div>
+
+  <!-- 대시보드 -->
+  <div class="panel" id="panel-dashboard">
+    <div id="dashboardContent"></div>
+  </div>
+
+  <!-- 회원 목록 -->
+  <div class="panel hidden" id="panel-list">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="이름, 학교, 역할로 검색..." oninput="renderList()">
+      <select id="filterGrade" onchange="renderList()">
+        <option value="">전체 학년</option>
+        <option>초4</option><option>초5</option><option>초6</option>
+        <option>중1</option><option>중2</option><option>중3</option>
+        <option>고1</option><option>고2</option><option>고3</option>
+      </select>
+      <select id="filterStatus" onchange="renderList()">
+        <option value="">전체 상태</option>
+        <option>활동중</option><option>휴회</option><option>탈퇴</option>
+      </select>
+    </div>
+    <div id="listContainer"></div>
+  </div>
+
+  <!-- 회원 등록 -->
+  <div class="panel hidden" id="panel-add">
+    <form id="memberForm" onsubmit="saveMember(event)">
+      <input type="hidden" id="memberId">
+      <div class="form-grid">
+        <div class="section-title">📌 기본 인적사항</div>
+        <div class="form-group"><label>이름 *</label><input type="text" id="name" required></div>
+        <div class="form-group"><label>성별</label><select id="gender"><option value="">선택</option><option>남</option><option>여</option></select></div>
+        <div class="form-group"><label>생년월일</label><input type="date" id="birthdate"></div>
+        <div class="form-group"><label>본인 연락처</label><input type="tel" id="phone" placeholder="010-0000-0000"></div>
+        <div class="form-group full"><label>주소</label><input type="text" id="address"></div>
+
+        <div class="section-title">🏫 학교 정보</div>
+        <div class="form-group"><label>학교명</label><input type="text" id="school" placeholder="예: 백운중, 광양고, 학교 밖"></div>
+        <div class="form-group"><label>학년</label><select id="grade"><option value="">선택</option><option>초4</option><option>초5</option><option>초6</option><option>중1</option><option>중2</option><option>중3</option><option>고1</option><option>고2</option><option>고3</option><option>학교 밖</option></select></div>
+
+        <div class="section-title">👨‍👩‍👧 보호자 정보</div>
+        <div class="form-group"><label>보호자 성명</label><input type="text" id="guardianName"></div>
+        <div class="form-group"><label>관계</label><input type="text" id="guardianRel" placeholder="부/모 등"></div>
+        <div class="form-group"><label>보호자 연락처</label><input type="tel" id="guardianPhone"></div>
+        <div class="form-group"><label>비상연락망</label><input type="tel" id="emergencyPhone"></div>
+
+        <div class="section-title">🎯 동아리 활동 정보</div>
+        <div class="form-group"><label>가입일</label><input type="date" id="joinDate"></div>
+        <div class="form-group"><label>동아리 내 역할</label><input type="text" id="role" placeholder="회장/부회장/총무/회원"></div>
+        <div class="form-group"><label>활동 상태</label><select id="status"><option>활동중</option><option>휴회</option><option>탈퇴</option></select></div>
+        <div class="form-group"></div>
+        <div class="form-group full"><label>활동 이력 / 특이사항</label><textarea id="history" placeholder="활동 내역, 수상경력, 알레르기 등"></textarea></div>
+
+        <div class="section-title">📝 지도사 의견 (상담·관찰 기록)</div>
+        <div class="form-group full"><label>의견박스</label><textarea id="advisorNote" rows="5" placeholder="상담 내용, 성향, 관찰된 특징, 지도 방향 등을 자유롭게 기록하세요."></textarea></div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="resetForm(); switchTab('list')">취소</button>
+        <button type="submit" class="btn btn-primary">💾 저장</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 일정 관리 -->
+  <div class="panel hidden" id="panel-schedule">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px">
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="openScheduleForm()">➕ 새 일정 등록</button>
+        <select id="scheduleFilter" onchange="renderSchedule()" style="padding:9px 12px; border:1px solid #D3D1C7; border-radius:6px; font-family:inherit; font-size:14px">
+          <option value="upcoming">다가오는 일정</option>
+          <option value="past">지난 일정</option>
+          <option value="all">전체 일정</option>
+          <option value="month">이번 달</option>
+        </select>
+      </div>
+      <div style="font-size:13px; color:#5F5E5A" id="scheduleSummary"></div>
+    </div>
+    <div id="scheduleContainer"></div>
+  </div>
+
+  <!-- 서명부·출석 -->
+  <div class="panel hidden" id="panel-attend">
+    <div class="attend-header">
+      <label>📅 활동일</label>
+      <input type="date" id="attendDate" onchange="onAttendDateChange()">
+      <label style="margin-left:10px">일정 선택</label>
+      <select id="attendSchedule" onchange="onAttendScheduleChange()">
+        <option value="">— 일정 없음 —</option>
+      </select>
+      <button class="btn btn-accent btn-small" onclick="openTabletMode()" title="학생들에게 태블릿/PC를 건네줘서 직접 서명하게 하는 모드">👥 학생 서명 모드</button>
+      <button class="btn btn-secondary btn-small" onclick="clearAllSignatures()">🗑️ 전체 서명 지우기</button>
+      <button class="btn btn-primary btn-small" onclick="window.print()">🖨️ 서명부 인쇄</button>
+    </div>
+    <div id="attendInfoBox"></div>
+    <div id="signbookContainer"></div>
+  </div>
+
+  <!-- 통계·내보내기 -->
+  <div class="panel hidden" id="panel-stats">
+    <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="exportMembersXLSX()">📊 회원명단 엑셀</button>
+      <button class="btn btn-primary" onclick="exportAttendXLSX()">📊 출석부 엑셀</button>
+      <button class="btn btn-primary" onclick="exportScheduleXLSX()">📊 일정·활동일지 엑셀</button>
+      <button class="btn btn-secondary" onclick="exportAllXLSX()">📊 전체 데이터 엑셀</button>
+    </div>
+    <div id="statsContent"></div>
+  </div>
+</div>
+
+<!-- 일정 등록/수정 모달 -->
+<div class="modal" id="scheduleModal">
+  <div class="modal-wrap schedule-form">
+    <button class="close-btn" onclick="closeScheduleForm()">×</button>
+    <h2 id="scheduleModalTitle">📅 새 일정 등록</h2>
+    <form id="scheduleForm" onsubmit="saveSchedule(event)">
+      <input type="hidden" id="schId">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 16px">
+        <div class="form-group full" style="grid-column:1/-1"><label>활동 제목 *</label><input type="text" id="schTitle" required placeholder="예: 제 1회 청소년어울림마당"></div>
+        <div class="form-group"><label>날짜 *</label><input type="date" id="schDate" required></div>
+        <div class="form-group"><label>시간</label><input type="text" id="schTime" placeholder="예: 11:00~18:00"></div>
+        <div class="form-group full" style="grid-column:1/-1"><label>장소</label><input type="text" id="schLocation" placeholder="예: 광양시청소년문화센터 놀이문화공간 '노라야재'"></div>
+        <div class="form-group full" style="grid-column:1/-1"><label>활동 내용</label><textarea id="schContent" placeholder="활동 목표, 진행 순서, 세부 내용 등을 기록하세요." rows="3"></textarea></div>
+        <div class="form-group full" style="grid-column:1/-1"><label>준비물 / 참고사항</label><textarea id="schNote" placeholder="예: 필기구, 간식, 의상 등" rows="2"></textarea></div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn btn-secondary" onclick="closeScheduleForm()">취소</button>
+        <button type="submit" class="btn btn-primary">💾 저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 설정 모달 -->
+<div class="modal" id="settingsModal">
+  <div class="modal-wrap settings">
+    <button class="close-btn" onclick="closeSettings()">×</button>
+    <h2>⚙️ 동아리 정보 설정</h2>
+    <div class="settings-group">
+      <label>서명부 제목 (예: 2026년 청소년동아리 기록 5기 서명부)</label>
+      <input type="text" id="setSignbookTitle" placeholder="예: 2026년 청소년동아리 기록 5기 서명부">
+    </div>
+    <div class="settings-group">
+      <label>동아리 이름 (앱 상단 표시용)</label>
+      <input type="text" id="setClubName" placeholder="예: 청소년동아리 기록 5기">
+    </div>
+    <div class="settings-group">
+      <label>기관명</label>
+      <input type="text" id="setOrgName" placeholder="예: 광양시청소년문화센터">
+    </div>
+    <div class="settings-group">
+      <label>지도사 성명</label>
+      <input type="text" id="setAdvisorName" placeholder="예: 홍길동 지도사">
+    </div>
+    <div class="help-box">
+      💡 <strong>설정 팁:</strong> "서명부 제목"은 출석부 출력 시 맨 위에 나오는 제목이에요. 예시의 "2026년 청소년동아리 기록 5기 서명부" 같이 넣어주세요.
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeSettings()">취소</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 인사카드 모달 -->
+<div class="modal" id="cardModal">
+  <div class="modal-wrap">
+    <button class="close-btn" onclick="closeModal('cardModal')">×</button>
+    <div id="cardContent"></div>
+    <div class="print-btns">
+      <button class="btn btn-secondary" onclick="closeModal('cardModal')">닫기</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ 인쇄하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 서명 패드 모달 -->
+<div class="modal" id="signPadModal">
+  <div class="modal-wrap signpad">
+    <button class="close-btn" onclick="closeSignPad()">×</button>
+    <h2>✍️ 서명</h2>
+    <div class="sign-info">
+      <strong id="signName">이름</strong> 님, 아래 공간에 서명해주세요.
+    </div>
+    <div class="sign-canvas-wrap" id="signCanvasWrap">
+      <canvas class="sign-canvas" id="signCanvas"></canvas>
+    </div>
+    <div style="display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap">
+      <div>
+        <button class="btn btn-secondary btn-small" onclick="clearSignCanvas()">🔄 다시 서명</button>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="closeSignPad()">취소</button>
+        <button class="btn btn-primary" onclick="saveSignature()">💾 서명 저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 태블릿 서명 모드 -->
+<div class="tablet-mode" id="tabletMode">
+  <button class="tm-close" onclick="closeTabletMode()">✕ 모드 종료</button>
+  <div class="tm-header">
+    <h2 id="tmHeaderTitle">✍️ 청소년사진영상동아리 기록 서명부</h2>
+    <div class="tm-sub" id="tmHeaderSub">자신의 이름을 터치하여 서명해주세요</div>
+  </div>
+  <div class="tablet-summary" id="tabletSummary"></div>
+  <div class="tablet-list" id="tabletList"></div>
+</div>
+
+<script>
+// ==================== 데이터 ====================
+const KEYS = { m:'club_members_v4', a:'club_attend_v4', s:'club_settings_v4', sc:'club_schedule_v4' };
+let members = [];
+let attendance = {};   // { "date": { byMember: {id: status}, scheduleId, signatures: {id: dataURL} } }
+let schedules = [];
+let settings = {
+  clubName: '청소년사진영상동아리 기록',
+  orgName: '광양시청소년문화센터',
+  advisorName: '',
+  signbookTitle: '2026년 청소년동아리 기록 서명부'
+};
+
+function loadLocal() {
+  try {
+    const m = localStorage.getItem(KEYS.m); if (m) members = JSON.parse(m);
+    const a = localStorage.getItem(KEYS.a); if (a) {
+      const parsed = JSON.parse(a);
+      Object.keys(parsed).forEach(d => {
+        if (parsed[d] && !parsed[d].byMember && typeof parsed[d] === 'object') {
+          const isOld = Object.values(parsed[d]).every(v => typeof v === 'string');
+          if (isOld) parsed[d] = { byMember: parsed[d] };
+        }
+        if (!parsed[d].signatures) parsed[d].signatures = {};
+      });
+      attendance = parsed;
+    }
+    const s = localStorage.getItem(KEYS.s); if (s) settings = { ...settings, ...JSON.parse(s) };
+    const sc = localStorage.getItem(KEYS.sc); if (sc) schedules = JSON.parse(sc);
+    // 이전 버전 데이터 마이그레이션 (v3 → v4)
+    tryMigrateFromV3();
+  } catch(e) { console.warn(e); }
+}
+function tryMigrateFromV3() {
+  if (members.length === 0) {
+    const old = localStorage.getItem('club_members_v3');
+    if (old) {
+      try {
+        members = JSON.parse(old);
+        const oldA = localStorage.getItem('club_attend_v3');
+        if (oldA) {
+          const parsed = JSON.parse(oldA);
+          Object.keys(parsed).forEach(d => { if (!parsed[d].signatures) parsed[d].signatures = {}; });
+          attendance = parsed;
+        }
+        const oldS = localStorage.getItem('club_settings_v3');
+        if (oldS) settings = { ...settings, ...JSON.parse(oldS) };
+        const oldSc = localStorage.getItem('club_schedule_v3');
+        if (oldSc) schedules = JSON.parse(oldSc);
+        saveLocal();
+        setTimeout(()=>toast('✅ 이전 버전(v3) 데이터를 자동으로 불러왔습니다'), 1000);
+      } catch(e) {}
+    }
+  }
+}
+function saveLocal() {
+  try {
+    localStorage.setItem(KEYS.m, JSON.stringify(members));
+    localStorage.setItem(KEYS.a, JSON.stringify(attendance));
+    localStorage.setItem(KEYS.s, JSON.stringify(settings));
+    localStorage.setItem(KEYS.sc, JSON.stringify(schedules));
+  } catch(e) {
+    toast('저장 용량 초과! JSON 백업 후 오래된 서명을 정리해주세요', 'error');
+  }
+}
+
+// ==================== 유틸 ====================
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayISO() { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function getAge(bd) { if(!bd)return ''; const b=new Date(bd), n=new Date(); let age=n.getFullYear()-b.getFullYear(); const m=n.getMonth()-b.getMonth(); if(m<0||(m===0&&n.getDate()<b.getDate()))age--; return age; }
+function getMonthDay(bd) { if(!bd)return null; const d=new Date(bd); return {month:d.getMonth()+1, day:d.getDate()}; }
+function bd6fmt(bd) {
+  // 생년월일을 6자리로 (예: 2008-10-07 → 081007)
+  if (!bd) return '';
+  const d = new Date(bd);
+  return String(d.getFullYear()).slice(2) + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+}
+function dateFmtFull(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  const w = ['일','월','화','수','목','금','토'][d.getDay()];
+  return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${w})`;
+}
+function dateFmt(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  const w = ['일','월','화','수','목','금','토'][d.getDay()];
+  return `${d.getMonth()+1}월 ${d.getDate()}일 (${w})`;
+}
+function schoolGradeStr(m) {
+  if (m.school && m.grade && m.grade !== '학교 밖') {
+    const gradeNum = m.grade.replace(/[^0-9]/g,'');
+    return m.school + '/' + gradeNum;
+  }
+  if (m.school) return m.school;
+  if (m.grade === '학교 밖') return '학교 밖';
+  return '-';
+}
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type==='error'?' error':type==='warn'?' warn':'');
+  setTimeout(() => t.className='toast', 3000);
+}
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ==================== 탭 ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById('panel-'+tab).classList.remove('hidden');
+  if (tab==='dashboard') renderDashboard();
+  if (tab==='list') renderList();
+  if (tab==='schedule') renderSchedule();
+  if (tab==='attend') {
+    if (!document.getElementById('attendDate').value) document.getElementById('attendDate').value = todayISO();
+    refreshAttendScheduleSelect();
+    onAttendDateChange();
+  }
+  if (tab==='stats') renderStats();
+}
+
+function updateHeader() {
+  document.getElementById('clubTitle').textContent = '📷 ' + settings.clubName;
+  document.getElementById('clubSub').textContent = settings.orgName + ' · 동아리 관리 시스템';
+  document.title = settings.clubName + ' 관리 시스템';
+}
+
+// ==================== 회원 폼 ====================
+function resetForm() { document.getElementById('memberForm').reset(); document.getElementById('memberId').value=''; }
+
+function saveMember(e) {
+  e.preventDefault();
+  const id = document.getElementById('memberId').value || ('m_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+  const data = {
+    id,
+    name: document.getElementById('name').value.trim(),
+    gender: document.getElementById('gender').value,
+    birthdate: document.getElementById('birthdate').value,
+    phone: document.getElementById('phone').value.trim(),
+    address: document.getElementById('address').value.trim(),
+    school: document.getElementById('school').value.trim(),
+    grade: document.getElementById('grade').value,
+    guardianName: document.getElementById('guardianName').value.trim(),
+    guardianRel: document.getElementById('guardianRel').value.trim(),
+    guardianPhone: document.getElementById('guardianPhone').value.trim(),
+    emergencyPhone: document.getElementById('emergencyPhone').value.trim(),
+    joinDate: document.getElementById('joinDate').value,
+    role: document.getElementById('role').value.trim(),
+    status: document.getElementById('status').value,
+    history: document.getElementById('history').value.trim(),
+    advisorNote: document.getElementById('advisorNote').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  const idx = members.findIndex(m=>m.id===id);
+  if (idx>=0) members[idx] = {...members[idx], ...data};
+  else { data.createdAt = new Date().toISOString(); members.push(data); }
+  saveLocal();
+  resetForm();
+  switchTab('list');
+  toast('✅ 저장되었습니다');
+}
+
+function editMember(id) {
+  const m = members.find(x=>x.id===id);
+  if (!m) return;
+  ['memberId','name','gender','birthdate','phone','address','school','grade','guardianName','guardianRel','guardianPhone','emergencyPhone','joinDate','role','status','history','advisorNote'].forEach(k => {
+    const key = k==='memberId'?'id':k;
+    const el = document.getElementById(k);
+    if (el) el.value = m[key] || (k==='status'?'활동중':'');
+  });
+  switchTab('add');
+}
+
+function deleteMember(id) {
+  const m = members.find(x=>x.id===id);
+  if (!m) return;
+  if (!confirm(`"${m.name}" 님의 모든 정보와 출석·서명 기록을 삭제할까요?`)) return;
+  members = members.filter(x=>x.id!==id);
+  Object.keys(attendance).forEach(d => {
+    if(attendance[d].byMember) delete attendance[d].byMember[id];
+    if(attendance[d].signatures) delete attendance[d].signatures[id];
+  });
+  saveLocal();
+  renderList();
+  toast('삭제되었습니다');
+}
+
+// ==================== 회원 목록 ====================
+function renderList() {
+  const q = (document.getElementById('searchInput')?.value||'').toLowerCase();
+  const fg = document.getElementById('filterGrade')?.value||'';
+  const fs = document.getElementById('filterStatus')?.value||'';
+  const f = members.filter(m => {
+    const t = (m.name+(m.school||'')+(m.role||'')).toLowerCase();
+    if (q && !t.includes(q)) return false;
+    if (fg && m.grade!==fg) return false;
+    if (fs && m.status!==fs) return false;
+    return true;
+  });
+  const c = document.getElementById('listContainer');
+  if (f.length===0) {
+    c.innerHTML = `<div class="empty"><div class="empty-big">📭</div>${members.length===0?'아직 등록된 회원이 없어요.<br>"회원 등록" 탭에서 추가해보세요!':'조건에 맞는 회원이 없습니다.'}</div>`;
+    return;
+  }
+  let h = `<table class="list-table"><thead><tr>
+    <th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>상태</th><th style="width:180px">관리</th>
+  </tr></thead><tbody>`;
+  f.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  f.forEach((m, i) => {
+    const sc = m.status==='활동중'?'#0F6E56':m.status==='휴회'?'#BA7517':'#A32D2D';
+    h += `<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td style="font-weight:500">${esc(m.name)}</td>
+      <td>${esc(schoolGradeStr(m))}</td>
+      <td style="text-align:center">${esc(m.gender||'-')}</td>
+      <td style="text-align:center">${esc(bd6fmt(m.birthdate)||'-')}</td>
+      <td>${esc(m.phone||'-')}</td>
+      <td style="color:${sc}">● ${esc(m.status||'활동중')}</td>
+      <td><div class="action-btns">
+        <button class="view-btn" onclick="viewCard('${m.id}')">카드</button>
+        <button class="edit-btn" onclick="editMember('${m.id}')">수정</button>
+        <button class="del-btn" onclick="deleteMember('${m.id}')">삭제</button>
+      </div></td>
+    </tr>`;
+  });
+  h += `</tbody></table><div style="margin-top:12px; font-size:12px; color:#888780; text-align:right">${f.length}명 표시 / 전체 ${members.length}명</div>`;
+  c.innerHTML = h;
+}
+
+// ==================== 대시보드 ====================
+function renderDashboard() {
+  const c = document.getElementById('dashboardContent');
+  const total = members.length;
+  const active = members.filter(m=>m.status==='활동중').length;
+  const maleTotal = members.filter(m=>m.gender==='남').length;
+  const femaleTotal = members.filter(m=>m.gender==='여').length;
+  const maleActive = members.filter(m=>m.gender==='남' && m.status==='활동중').length;
+  const femaleActive = members.filter(m=>m.gender==='여' && m.status==='활동중').length;
+  const now = new Date();
+  const thisMonth = now.getMonth()+1;
+  const today = todayISO();
+
+  const upcoming = schedules.filter(s => s.date >= today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0, 5);
+  const todaySch = schedules.filter(s => s.date === today);
+  const bdayThis = members.filter(m => { const md = getMonthDay(m.birthdate); return md && md.month === thisMonth; }).sort((a,b) => getMonthDay(a.birthdate).day - getMonthDay(b.birthdate).day);
+
+  const dates = Object.keys(attendance).sort().reverse();
+  const lastDate = dates[0];
+  let attendRate = '-';
+  if (lastDate && attendance[lastDate].byMember) {
+    const rec = attendance[lastDate].byMember;
+    const present = Object.values(rec).filter(v => v==='present'||v==='late').length;
+    const totalMarked = Object.values(rec).filter(v=>v).length;
+    if (totalMarked>0) attendRate = Math.round(present/totalMarked*100)+'%';
+  }
+
+  let html = `
+    <div class="dashboard-grid">
+      <div class="dash-card">
+        <div class="dash-label">전체 회원</div>
+        <div class="dash-value">${total}명</div>
+        <div class="dash-sub">활동중 ${active}명</div>
+      </div>
+      <div class="dash-card blue">
+        <div class="dash-label">👦 남자 회원</div>
+        <div class="dash-value">${maleTotal}명</div>
+        <div class="dash-sub">활동중 ${maleActive}명</div>
+      </div>
+      <div class="dash-card pink">
+        <div class="dash-label">👧 여자 회원</div>
+        <div class="dash-value">${femaleTotal}명</div>
+        <div class="dash-sub">활동중 ${femaleActive}명</div>
+      </div>
+      <div class="dash-card warning">
+        <div class="dash-label">등록된 일정</div>
+        <div class="dash-value">${schedules.length}건</div>
+        <div class="dash-sub">오늘 ${todaySch.length}건${todaySch.length>0?' 🔔':''}</div>
+      </div>
+      <div class="dash-card secondary">
+        <div class="dash-label">이번 달 생일</div>
+        <div class="dash-value">${bdayThis.length}명</div>
+        <div class="dash-sub">${thisMonth}월</div>
+      </div>
+      <div class="dash-card info">
+        <div class="dash-label">최근 출석률</div>
+        <div class="dash-value">${attendRate}</div>
+        <div class="dash-sub">${lastDate ? dateFmt(lastDate) : '기록 없음'}</div>
+      </div>
+    </div>`;
+
+  html += `<div class="widget-section"><h3>📅 다가오는 일정</h3>`;
+  if (upcoming.length === 0) {
+    html += '<div style="color:#888780; font-size:14px; padding:12px; background:#f1efe8; border-radius:8px">등록된 예정 일정이 없습니다.</div>';
+  } else {
+    upcoming.forEach(s => {
+      const isToday = s.date === today;
+      html += `<div class="schedule-card ${isToday?'today':''}">
+        <div class="schedule-head">
+          <div>
+            <div class="schedule-date">${isToday?'🔔 오늘 · ':''}${dateFmt(s.date)}${s.time?' · '+esc(s.time):''}</div>
+            <h4 class="schedule-title">${esc(s.title)}</h4>
+          </div>
+        </div>
+        ${s.location?`<div class="schedule-meta"><span>📍 ${esc(s.location)}</span></div>`:''}
+      </div>`;
+    });
+  }
+  html += '</div>';
+
+  html += `<div class="widget-section"><h3>🎂 이번 달(${thisMonth}월) 생일</h3>`;
+  if (bdayThis.length === 0) {
+    html += '<div style="color:#888780; font-size:14px; padding:12px; background:#f1efe8; border-radius:8px">이번 달 생일인 회원이 없습니다.</div>';
+  } else {
+    html += '<div class="birthday-list">';
+    const todayDay = now.getDate();
+    bdayThis.forEach(m => {
+      const md = getMonthDay(m.birthdate);
+      const age = getAge(m.birthdate);
+      const turns = md.day >= todayDay ? age+1 : age;
+      const isToday = md.month===thisMonth && md.day===todayDay;
+      html += `<div class="bday-card ${isToday?'today':''}">
+        <div class="bday-name">${isToday?'🎉 오늘! ':''}${esc(m.name)}</div>
+        <div class="bday-info">${md.month}월 ${md.day}일 · 만 ${turns}세 · ${esc(m.role||'회원')}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  c.innerHTML = html;
+}
+
+// ==================== 일정 관리 ====================
+function openScheduleForm(id) {
+  document.getElementById('scheduleForm').reset();
+  document.getElementById('schId').value = '';
+  if (id) {
+    const s = schedules.find(x=>x.id===id);
+    if (!s) return;
+    document.getElementById('scheduleModalTitle').textContent = '📅 일정 수정';
+    document.getElementById('schId').value = s.id;
+    document.getElementById('schTitle').value = s.title||'';
+    document.getElementById('schDate').value = s.date||'';
+    document.getElementById('schTime').value = s.time||'';
+    document.getElementById('schLocation').value = s.location||'';
+    document.getElementById('schContent').value = s.content||'';
+    document.getElementById('schNote').value = s.note||'';
+  } else {
+    document.getElementById('scheduleModalTitle').textContent = '📅 새 일정 등록';
+    document.getElementById('schDate').value = todayISO();
+  }
+  document.getElementById('scheduleModal').classList.add('show');
+}
+function closeScheduleForm() { document.getElementById('scheduleModal').classList.remove('show'); }
+
+function saveSchedule(e) {
+  e.preventDefault();
+  const id = document.getElementById('schId').value || ('s_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
+  const data = {
+    id,
+    title: document.getElementById('schTitle').value.trim(),
+    date: document.getElementById('schDate').value,
+    time: document.getElementById('schTime').value.trim(),
+    location: document.getElementById('schLocation').value.trim(),
+    content: document.getElementById('schContent').value.trim(),
+    note: document.getElementById('schNote').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  const idx = schedules.findIndex(s=>s.id===id);
+  if (idx>=0) schedules[idx] = {...schedules[idx], ...data};
+  else { data.createdAt = new Date().toISOString(); schedules.push(data); }
+  saveLocal();
+  closeScheduleForm();
+  renderSchedule();
+  toast('✅ 일정이 저장되었습니다');
+}
+
+function deleteSchedule(id) {
+  const s = schedules.find(x=>x.id===id);
+  if (!s) return;
+  const linked = Object.keys(attendance).filter(d => attendance[d].scheduleId === id);
+  let confirmMsg = `"${s.title}" 일정을 삭제할까요?`;
+  if (linked.length > 0) confirmMsg += `\n\n⚠️ 연결된 출석·서명 기록 ${linked.length}건은 그대로 남지만, 일정 정보 연결은 해제됩니다.`;
+  if (!confirm(confirmMsg)) return;
+  schedules = schedules.filter(x=>x.id!==id);
+  linked.forEach(d => { delete attendance[d].scheduleId; });
+  saveLocal();
+  renderSchedule();
+  toast('일정이 삭제되었습니다');
+}
+
+function renderSchedule() {
+  const c = document.getElementById('scheduleContainer');
+  const filter = document.getElementById('scheduleFilter').value;
+  const today = todayISO();
+  let filtered;
+  if (filter === 'upcoming') filtered = schedules.filter(s => s.date >= today).sort((a,b)=>a.date.localeCompare(b.date));
+  else if (filter === 'past') filtered = schedules.filter(s => s.date < today).sort((a,b)=>b.date.localeCompare(a.date));
+  else if (filter === 'month') { const yyyymm = today.slice(0,7); filtered = schedules.filter(s => s.date.startsWith(yyyymm)).sort((a,b)=>a.date.localeCompare(b.date)); }
+  else filtered = [...schedules].sort((a,b)=>b.date.localeCompare(a.date));
+
+  document.getElementById('scheduleSummary').textContent = `${filtered.length}건 표시 / 전체 ${schedules.length}건`;
+
+  if (filtered.length === 0) {
+    c.innerHTML = `<div class="empty"><div class="empty-big">📅</div>${schedules.length===0?'아직 등록된 일정이 없어요.<br>"➕ 새 일정 등록" 버튼을 눌러 첫 일정을 추가해보세요!':'조건에 맞는 일정이 없습니다.'}</div>`;
+    return;
+  }
+  let html = '';
+  filtered.forEach(s => {
+    const isToday = s.date === today;
+    const isPast = s.date < today;
+    const hasAttend = attendance[s.date] && attendance[s.date].scheduleId === s.id;
+    const cls = hasAttend ? 'done' : isToday ? 'today' : isPast ? 'past' : '';
+    const tags = [];
+    if (isToday) tags.push('<span class="tag warn">🔔 오늘</span>');
+    else if (isPast) tags.push('<span class="tag">지난 일정</span>');
+    else tags.push('<span class="tag info">예정</span>');
+    if (hasAttend) {
+      const sigCount = Object.keys(attendance[s.date].signatures || {}).length;
+      tags.push(`<span class="tag done">✍️ 서명 ${sigCount}건</span>`);
+    }
+    html += `<div class="schedule-card ${cls}">
+      <div class="schedule-head">
+        <div style="flex:1">
+          <div class="schedule-date">${dateFmt(s.date)}${s.time?' · '+esc(s.time):''}</div>
+          <h4 class="schedule-title">${esc(s.title)}</h4>
+          <div class="schedule-tags">${tags.join('')}</div>
+        </div>
+      </div>
+      ${s.location?`<div class="schedule-meta"><span>📍 ${esc(s.location)}</span></div>`:''}
+      ${s.content?`<div class="schedule-content">${esc(s.content)}</div>`:''}
+      ${s.note?`<div class="schedule-content" style="color:#5F5E5A; font-size:12px; margin-top:6px;"><strong>준비물:</strong> ${esc(s.note)}</div>`:''}
+      <div class="schedule-actions">
+        <button class="btn btn-accent btn-small" onclick="openAttendFromSchedule('${s.id}')">✍️ 서명부 열기</button>
+        <button class="btn btn-secondary btn-small" onclick="openScheduleForm('${s.id}')">✏️ 수정</button>
+        <button class="btn btn-danger btn-small" onclick="deleteSchedule('${s.id}')">🗑️ 삭제</button>
+      </div>
+    </div>`;
+  });
+  c.innerHTML = html;
+}
+
+function openAttendFromSchedule(scheduleId) {
+  const s = schedules.find(x=>x.id===scheduleId);
+  if (!s) return;
+  switchTab('attend');
+  setTimeout(() => {
+    document.getElementById('attendDate').value = s.date;
+    refreshAttendScheduleSelect();
+    document.getElementById('attendSchedule').value = s.id;
+    if (!attendance[s.date]) attendance[s.date] = { byMember: {}, signatures: {} };
+    attendance[s.date].scheduleId = s.id;
+    saveLocal();
+    onAttendDateChange();
+  }, 100);
+}
+
+// ==================== 서명부 (출석 체크) ====================
+function refreshAttendScheduleSelect() {
+  const date = document.getElementById('attendDate').value;
+  const sel = document.getElementById('attendSchedule');
+  const cur = sel.value;
+  const dateSchedules = schedules.filter(s => s.date === date);
+  const otherSchedules = schedules.filter(s => s.date !== date).sort((a,b)=>b.date.localeCompare(a.date));
+  let html = '<option value="">— 일정 없음 —</option>';
+  if (dateSchedules.length > 0) {
+    html += `<optgroup label="📅 ${dateFmt(date)} 일정">`;
+    dateSchedules.forEach(s => html += `<option value="${s.id}">${esc(s.title)}${s.time?' ('+esc(s.time)+')':''}</option>`);
+    html += '</optgroup>';
+  }
+  if (otherSchedules.length > 0) {
+    html += '<optgroup label="다른 날짜 일정">';
+    otherSchedules.slice(0,20).forEach(s => html += `<option value="${s.id}">${esc(s.date)} · ${esc(s.title)}</option>`);
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
+  const rec = attendance[date];
+  if (rec && rec.scheduleId) sel.value = rec.scheduleId;
+  else sel.value = cur;
+}
+
+function onAttendDateChange() {
+  refreshAttendScheduleSelect();
+  renderSignbook();
+}
+
+function onAttendScheduleChange() {
+  const date = document.getElementById('attendDate').value;
+  const schId = document.getElementById('attendSchedule').value;
+  if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
+  if (schId) {
+    const s = schedules.find(x=>x.id===schId);
+    if (s && s.date !== date) {
+      document.getElementById('attendDate').value = s.date;
+      if (!attendance[s.date]) attendance[s.date] = { byMember: {}, signatures: {} };
+      attendance[s.date].scheduleId = s.id;
+    } else {
+      attendance[date].scheduleId = schId;
+    }
+  } else {
+    delete attendance[date].scheduleId;
+  }
+  saveLocal();
+  renderSignbook();
+}
+
+function renderSignbook() {
+  const date = document.getElementById('attendDate').value || todayISO();
+  const c = document.getElementById('signbookContainer');
+  const infoBox = document.getElementById('attendInfoBox');
+  const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+
+  const rec = attendance[date] || { byMember: {}, signatures: {} };
+  if (!rec.signatures) rec.signatures = {};
+  const linkedSch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
+
+  // 상단 안내 박스
+  const sigCount = Object.keys(rec.signatures).filter(id => rec.signatures[id]).length;
+  const totalActive = activeMembers.length;
+  const maleSigned = activeMembers.filter(m => m.gender==='남' && rec.signatures[m.id]).length;
+  const femaleSigned = activeMembers.filter(m => m.gender==='여' && rec.signatures[m.id]).length;
+  const maleTotal = activeMembers.filter(m => m.gender==='남').length;
+  const femaleTotal = activeMembers.filter(m => m.gender==='여').length;
+
+  infoBox.innerHTML = `<div class="attend-info-box">
+    <div class="ai-title">${linkedSch ? '📌 ' + esc(linkedSch.title) : '💡 일정이 연결되지 않은 자유 서명부입니다'}</div>
+    <div class="ai-meta">
+      <span>📅 ${dateFmtFull(date)}</span>
+      ${linkedSch && linkedSch.time ? `<span>⏰ ${esc(linkedSch.time)}</span>` : ''}
+      ${linkedSch && linkedSch.location ? `<span>📍 ${esc(linkedSch.location)}</span>` : ''}
+    </div>
+    <div style="margin-top:6px; font-size:13px; font-weight:500">
+      ✍️ 서명 현황: <strong style="color:#0F6E56">${sigCount}/${totalActive}명</strong>
+      &nbsp;·&nbsp; 남 ${maleSigned}/${maleTotal}명
+      &nbsp;·&nbsp; 여 ${femaleSigned}/${femaleTotal}명
+    </div>
+  </div>`;
+
+  if (activeMembers.length === 0) {
+    c.innerHTML = '<div class="empty"><div class="empty-big">👥</div>활동중인 회원이 없습니다. 먼저 "회원 등록"에서 회원을 추가해주세요.</div>';
+    return;
+  }
+
+  // 한글 서명부 양식 그대로
+  const activityTitle = linkedSch ? linkedSch.title : '';
+  const activityPlace = linkedSch ? linkedSch.location : '';
+  const activityTime = linkedSch && linkedSch.time ? linkedSch.time : '';
+
+  let html = `<div class="signbook" id="signbookPrint">
+    <h1 class="sb-title">${esc(settings.signbookTitle)}</h1>
+    ${activityTitle ? `<div class="sb-activity">(활동명 : ${esc(activityTitle)})</div>` : ''}
+    <div class="sb-info-section">
+      <div class="sb-info"><strong>일&nbsp;&nbsp;시:</strong> ${dateFmtFull(date)}${activityTime?' '+esc(activityTime):''}</div>
+      ${activityPlace ? `<div class="sb-info"><strong>장&nbsp;&nbsp;소:</strong> ${esc(activityPlace)}</div>` : ''}
+    </div>
+    <table class="sb-table">
+      <colgroup>
+        <col class="c-num"><col class="c-name"><col class="c-school"><col class="c-gender">
+        <col class="c-bd"><col class="c-phone"><col class="c-sig">
+      </colgroup>
+      <thead><tr>
+        <th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>서명</th>
+      </tr></thead><tbody>`;
+  activeMembers.forEach((m, i) => {
+    const sig = rec.signatures[m.id];
+    const sigContent = sig ? `<img src="${sig}" alt="서명">` : `<span class="sig-placeholder">클릭하여 서명</span>`;
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${esc(m.name)}</td>
+      <td>${esc(schoolGradeStr(m))}</td>
+      <td>${esc(m.gender||'-')}</td>
+      <td>${esc(bd6fmt(m.birthdate)||'-')}</td>
+      <td>${esc(m.phone||'-')}</td>
+      <td class="sb-sig-cell ${sig?'has-sig':''}" onclick="openSignPad('${m.id}')" title="클릭하여 서명">${sigContent}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>
+    <div class="sb-footer">${esc(settings.orgName)}</div>
+  </div>`;
+  c.innerHTML = html;
+}
+
+// ==================== 서명 패드 ====================
+let signCanvas, signCtx, signDrawing = false, currentSignMemberId = null, signHasDrawing = false;
+
+function openSignPad(memberId) {
+  const m = members.find(x=>x.id===memberId);
+  if (!m) return;
+  currentSignMemberId = memberId;
+  document.getElementById('signName').textContent = m.name;
+  document.getElementById('signPadModal').classList.add('show');
+  setTimeout(initSignCanvas, 100);
+}
+
+function closeSignPad() {
+  document.getElementById('signPadModal').classList.remove('show');
+  currentSignMemberId = null;
+}
+
+function initSignCanvas() {
+  signCanvas = document.getElementById('signCanvas');
+  signCtx = signCanvas.getContext('2d');
+  // 기존 서명 있으면 로드
+  const date = document.getElementById('attendDate').value || todayISO();
+  const existing = attendance[date] && attendance[date].signatures && attendance[date].signatures[currentSignMemberId];
+  // 크기 설정 (고해상도)
+  const rect = signCanvas.parentElement.getBoundingClientRect();
+  signCanvas.width = rect.width * 2;
+  signCanvas.height = 240 * 2;
+  signCanvas.style.width = rect.width + 'px';
+  signCanvas.style.height = '240px';
+  signCtx.scale(2, 2);
+  signCtx.strokeStyle = '#000';
+  signCtx.lineWidth = 2.5;
+  signCtx.lineCap = 'round';
+  signCtx.lineJoin = 'round';
+  signCtx.fillStyle = '#fff';
+  signCtx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  signHasDrawing = false;
+  document.getElementById('signCanvasWrap').classList.remove('has-drawing');
+
+  if (existing) {
+    const img = new Image();
+    img.onload = function() {
+      signCtx.drawImage(img, 0, 0, rect.width, 240);
+      signHasDrawing = true;
+      document.getElementById('signCanvasWrap').classList.add('has-drawing');
+    };
+    img.src = existing;
+  }
+
+  // 이벤트 (기존 핸들러 제거 후 재설정)
+  signCanvas.onmousedown = startDraw;
+  signCanvas.onmousemove = draw;
+  signCanvas.onmouseup = stopDraw;
+  signCanvas.onmouseleave = stopDraw;
+  signCanvas.ontouchstart = (e) => { e.preventDefault(); startDraw(e.touches[0]); };
+  signCanvas.ontouchmove = (e) => { e.preventDefault(); draw(e.touches[0]); };
+  signCanvas.ontouchend = (e) => { e.preventDefault(); stopDraw(); };
+}
+
+function getPos(e) {
+  const rect = signCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function startDraw(e) {
+  signDrawing = true;
+  const p = getPos(e);
+  signCtx.beginPath();
+  signCtx.moveTo(p.x, p.y);
+  signHasDrawing = true;
+  document.getElementById('signCanvasWrap').classList.add('has-drawing');
+}
+
+function draw(e) {
+  if (!signDrawing) return;
+  const p = getPos(e);
+  signCtx.lineTo(p.x, p.y);
+  signCtx.stroke();
+}
+
+function stopDraw() { signDrawing = false; }
+
+function clearSignCanvas() {
+  if (!signCtx) return;
+  signCtx.fillStyle = '#fff';
+  signCtx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  signHasDrawing = false;
+  document.getElementById('signCanvasWrap').classList.remove('has-drawing');
+}
+
+function saveSignature() {
+  if (!signHasDrawing) {
+    toast('서명을 먼저 입력해주세요', 'warn');
+    return;
+  }
+  if (!currentSignMemberId) return;
+  const date = document.getElementById('attendDate').value || todayISO();
+  if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
+  if (!attendance[date].signatures) attendance[date].signatures = {};
+  if (!attendance[date].byMember) attendance[date].byMember = {};
+  // 서명 이미지를 압축된 JPEG로 저장 (용량 절감)
+  const dataUrl = signCanvas.toDataURL('image/jpeg', 0.7);
+  attendance[date].signatures[currentSignMemberId] = dataUrl;
+  // 서명하면 자동으로 '출석' 상태로 기록
+  if (!attendance[date].byMember[currentSignMemberId]) {
+    attendance[date].byMember[currentSignMemberId] = 'present';
+  }
+  saveLocal();
+  closeSignPad();
+  // 현재 모드에 따라 렌더링
+  if (document.getElementById('tabletMode').classList.contains('show')) {
+    renderTabletMode();
+  } else {
+    renderSignbook();
+  }
+  toast('✅ 서명이 저장되었습니다');
+}
+
+function clearAllSignatures() {
+  const date = document.getElementById('attendDate').value || todayISO();
+  if (!attendance[date] || !attendance[date].signatures || Object.keys(attendance[date].signatures).length === 0) {
+    toast('지울 서명이 없습니다', 'warn'); return;
+  }
+  if (!confirm(`${dateFmt(date)}의 모든 서명과 출석 기록을 지울까요?`)) return;
+  attendance[date].signatures = {};
+  attendance[date].byMember = {};
+  saveLocal();
+  renderSignbook();
+  toast('전체 서명이 삭제되었습니다');
+}
+
+// ==================== 태블릿 서명 모드 ====================
+function openTabletMode() {
+  const date = document.getElementById('attendDate').value || todayISO();
+  if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
+  document.getElementById('tabletMode').classList.add('show');
+  renderTabletMode();
+}
+
+function closeTabletMode() {
+  document.getElementById('tabletMode').classList.remove('show');
+  renderSignbook();
+}
+
+function renderTabletMode() {
+  const date = document.getElementById('attendDate').value || todayISO();
+  const rec = attendance[date] || { signatures:{} };
+  const sigs = rec.signatures || {};
+  const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const linkedSch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
+
+  document.getElementById('tmHeaderTitle').textContent = '✍️ ' + (linkedSch ? linkedSch.title : settings.clubName + ' 서명부');
+  document.getElementById('tmHeaderSub').textContent = dateFmtFull(date) + ' · 자신의 이름을 터치하여 서명해주세요';
+
+  const signed = activeMembers.filter(m => sigs[m.id]).length;
+  document.getElementById('tabletSummary').innerHTML = `서명 완료: <strong>${signed}</strong> / ${activeMembers.length}명`;
+
+  const list = document.getElementById('tabletList');
+  list.innerHTML = activeMembers.map(m => {
+    const hasSig = sigs[m.id];
+    return `<div class="tablet-card ${hasSig?'signed':''}" onclick="openSignPad('${m.id}')">
+      <div class="tc-name">${esc(m.name)}</div>
+      <div class="tc-meta">${esc(schoolGradeStr(m))} · ${esc(m.gender||'')}</div>
+      <div class="tc-status">${hasSig ? '✅ 서명 완료 (수정하려면 터치)' : '✍️ 서명하기'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ==================== 인사카드 ====================
+function viewCard(id) {
+  const m = members.find(x=>x.id===id);
+  if (!m) return;
+  const age = getAge(m.birthdate);
+  const dates = Object.keys(attendance).sort();
+  let p=0,l=0,a=0,e=0;
+  dates.forEach(d => {
+    const s = (attendance[d].byMember||{})[m.id];
+    if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
+  });
+  const tot = p+l+a+e;
+  const rate = tot>0 ? Math.round((p+l)/tot*100) : '-';
+  const attendText = tot>0 ? `출석 ${p} · 지각 ${l} · 결석 ${a} · 사유 ${e} (출석률 ${rate}%)` : '출석 기록 없음';
+
+  const html = `
+    <div class="card-print">
+      <div class="card-title">${esc(settings.clubName)} 인사카드</div>
+      <div class="card-sub">${esc(settings.orgName)}</div>
+      <table class="card-table">
+        <tr>
+          <th>성명</th><td style="width:30%">${esc(m.name)}</td>
+          <th>성별</th><td style="width:15%">${esc(m.gender||'-')}</td>
+          <td class="photo-cell" rowspan="4"><div class="photo-box">사진<br>(3×4)</div></td>
+        </tr>
+        <tr><th>생년월일</th><td>${esc(m.birthdate||'-')} ${age!==''?`(만 ${age}세)`:''}</td><th>학년</th><td>${esc(m.grade||'-')}</td></tr>
+        <tr><th>학교</th><td colspan="3">${esc(m.school||'-')}</td></tr>
+        <tr><th>연락처</th><td colspan="3">${esc(m.phone||'-')}</td></tr>
+        <tr><th>주소</th><td colspan="4">${esc(m.address||'-')}</td></tr>
+        <tr><td colspan="5" class="card-section-title">보호자 정보</td></tr>
+        <tr><th>성명</th><td>${esc(m.guardianName||'-')}</td><th>관계</th><td colspan="2">${esc(m.guardianRel||'-')}</td></tr>
+        <tr><th>보호자<br>연락처</th><td>${esc(m.guardianPhone||'-')}</td><th>비상연락망</th><td colspan="2">${esc(m.emergencyPhone||'-')}</td></tr>
+        <tr><td colspan="5" class="card-section-title">동아리 활동</td></tr>
+        <tr><th>가입일</th><td>${esc(m.joinDate||'-')}</td><th>역할</th><td colspan="2">${esc(m.role||'-')}</td></tr>
+        <tr><th>상태</th><td>${esc(m.status||'활동중')}</td><th>출석현황</th><td colspan="2" style="font-size:12px">${attendText}</td></tr>
+        <tr><th>활동이력<br>특이사항</th><td colspan="4" class="card-memo">${esc(m.history||'')}</td></tr>
+        <tr><td colspan="5" class="card-section-title">📝 지도사 의견</td></tr>
+        <tr><td colspan="5" class="card-memo" style="min-height:120px">${esc(m.advisorNote||'')}</td></tr>
+      </table>
+      <div style="margin-top:20px; display:flex; justify-content:space-between; font-size:12px; color:#5F5E5A;">
+        <span>작성일: ${new Date().toLocaleDateString('ko-KR')}</span>
+        <span>${esc(settings.orgName)}${settings.advisorName?' / 지도: '+esc(settings.advisorName):''}</span>
+      </div>
+    </div>`;
+  document.getElementById('cardContent').innerHTML = html;
+  document.getElementById('cardModal').classList.add('show');
+}
+
+// ==================== 통계 ====================
+function renderStats() {
+  const c = document.getElementById('statsContent');
+  if (members.length === 0) { c.innerHTML = '<div class="empty"><div class="empty-big">📊</div>등록된 회원이 있어야 통계를 볼 수 있어요.</div>'; return; }
+  const total = members.length;
+  const active = members.filter(m=>m.status==='활동중').length;
+  const maleTotal = members.filter(m=>m.gender==='남').length;
+  const femaleTotal = members.filter(m=>m.gender==='여').length;
+  const unknownG = members.filter(m=>!m.gender).length;
+  const maleActive = members.filter(m=>m.gender==='남' && m.status==='활동중').length;
+  const femaleActive = members.filter(m=>m.gender==='여' && m.status==='활동중').length;
+  const grades = {};
+  members.forEach(m => { if (m.grade) grades[m.grade] = (grades[m.grade]||0) + 1; });
+  const dates = Object.keys(attendance).sort();
+
+  let html = `<div class="dashboard-grid">
+    <div class="dash-card"><div class="dash-label">전체 회원</div><div class="dash-value">${total}명</div><div class="dash-sub">활동중 ${active}명</div></div>
+    <div class="dash-card blue"><div class="dash-label">👦 남자</div><div class="dash-value">${maleTotal}명</div><div class="dash-sub">활동중 ${maleActive}명 (${total?Math.round(maleTotal/total*100):0}%)</div></div>
+    <div class="dash-card pink"><div class="dash-label">👧 여자</div><div class="dash-value">${femaleTotal}명</div><div class="dash-sub">활동중 ${femaleActive}명 (${total?Math.round(femaleTotal/total*100):0}%)</div></div>
+    <div class="dash-card warning"><div class="dash-label">활동 기록</div><div class="dash-value">${dates.length}회</div><div class="dash-sub">일정 ${schedules.length}건</div></div>
+  </div>`;
+
+  if (unknownG > 0) {
+    html += `<div style="background:#FAEEDA; padding:8px 14px; border-radius:6px; font-size:13px; color:#854F0B; margin-bottom:16px">
+      ⚠️ 성별이 기재되지 않은 회원이 ${unknownG}명 있습니다. 정확한 통계를 위해 회원 정보를 업데이트해주세요.
+    </div>`;
+  }
+
+  html += '<div class="widget-section"><h3>🎓 학년별 분포 (성별 포함)</h3><table class="list-table"><thead><tr><th>학년</th><th>전체</th><th>남</th><th>여</th><th>비율</th></tr></thead><tbody>';
+  const gradeOrder = ['초4','초5','초6','중1','중2','중3','고1','고2','고3','학교 밖'];
+  gradeOrder.forEach(g => {
+    if (grades[g]) {
+      const gMale = members.filter(m=>m.grade===g && m.gender==='남').length;
+      const gFemale = members.filter(m=>m.grade===g && m.gender==='여').length;
+      const pct = Math.round(grades[g]/total*100);
+      html += `<tr>
+        <td>${g}</td><td>${grades[g]}명</td>
+        <td style="color:#185FA5">${gMale}명</td>
+        <td style="color:#993556">${gFemale}명</td>
+        <td><div style="display:flex; align-items:center; gap:8px"><div style="flex:1; max-width:200px; height:8px; background:#f1efe8; border-radius:4px; overflow:hidden"><div style="height:100%; width:${pct}%; background:#1D9E75"></div></div>${pct}%</td>
+      </tr>`;
+    }
+  });
+  html += '</tbody></table></div>';
+
+  if (dates.length > 0) {
+    const rates = members.filter(m=>m.status==='활동중').map(m => {
+      let p=0,l=0,a=0,e=0;
+      dates.forEach(d => {
+        const s = (attendance[d].byMember||{})[m.id];
+        if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
+      });
+      const tot = p+l+a+e;
+      return { name:m.name, gender:m.gender, rate:tot>0?Math.round((p+l)/tot*100):null, p,l,a,e,tot };
+    }).filter(x=>x.rate!==null).sort((a,b)=>b.rate-a.rate);
+    if (rates.length > 0) {
+      html += '<div class="widget-section"><h3>📈 개인별 출석률</h3><table class="list-table"><thead><tr><th>이름</th><th>성별</th><th>출석</th><th>지각</th><th>결석</th><th>사유</th><th>출석률</th></tr></thead><tbody>';
+      rates.forEach(r => {
+        const color = r.rate>=80?'#1D9E75':r.rate>=60?'#EF9F27':'#E24B4A';
+        html += `<tr><td style="font-weight:500">${esc(r.name)}</td><td>${esc(r.gender||'-')}</td><td>${r.p}</td><td>${r.l}</td><td>${r.a}</td><td>${r.e}</td>
+          <td><div style="display:flex; align-items:center; gap:8px"><div style="width:100px; height:8px; background:#f1efe8; border-radius:4px; overflow:hidden"><div style="height:100%; width:${r.rate}%; background:${color}"></div></div>${r.rate}%</div></td></tr>`;
+      });
+      html += '</tbody></table></div>';
+    }
+  }
+  c.innerHTML = html;
+}
+
+// ==================== 엑셀 ====================
+function exportMembersXLSX() {
+  if (members.length===0) { toast('내보낼 회원이 없습니다','warn'); return; }
+  const rows = members.map((m, i) => ({
+    '순번':i+1,'이름':m.name||'','학교/학년':schoolGradeStr(m),'성별':m.gender||'',
+    '생년월일(6자리)':bd6fmt(m.birthdate),'생년월일(전체)':m.birthdate||'',
+    '본인연락처':m.phone||'','주소':m.address||'',
+    '보호자성명':m.guardianName||'','관계':m.guardianRel||'','보호자연락처':m.guardianPhone||'','비상연락망':m.emergencyPhone||'',
+    '가입일':m.joinDate||'','역할':m.role||'','상태':m.status||'활동중',
+    '활동이력/특이사항':m.history||'','지도사의견':m.advisorNote||''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = Object.keys(rows[0]).map(k=>({wch:Math.max(12,k.length*2)}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '회원명단');
+  XLSX.writeFile(wb, `${settings.clubName}_회원명단_${todayISO()}.xlsx`);
+  toast('엑셀 파일이 다운로드되었습니다');
+}
+
+function exportAttendXLSX() {
+  const dates = Object.keys(attendance).sort();
+  if (dates.length===0) { toast('출석 기록이 없습니다','warn'); return; }
+  const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const statusMap = { present:'○', late:'△', absent:'×', excused:'◇' };
+  const dateHeaders = dates.map(d => {
+    const rec = attendance[d];
+    const sch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
+    return sch ? `${d}\n${sch.title}` : d;
+  });
+  const rows = activeMembers.map((m, i) => {
+    const row = { '순번':i+1, '이름':m.name, '학교/학년':schoolGradeStr(m), '성별':m.gender||'', '생년월일':bd6fmt(m.birthdate), '연락처':m.phone||'' };
+    let p=0,l=0,a=0,e=0;
+    dates.forEach((d, i) => {
+      const s = (attendance[d].byMember||{})[m.id];
+      row[dateHeaders[i]] = s ? statusMap[s] : '';
+      if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
+    });
+    const tot = p+l+a+e;
+    row['출석']=p; row['지각']=l; row['결석']=a; row['사유']=e;
+    row['출석률'] = tot>0 ? Math.round((p+l)/tot*100)+'%' : '-';
+    return row;
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:5},{wch:10},{wch:14},{wch:5},{wch:10},{wch:14}, ...dates.map(()=>({wch:14})), {wch:6},{wch:6},{wch:6},{wch:6},{wch:8}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '출석부');
+  const legend = [['범례'],['○ = 출석','△ = 지각','× = 결석','◇ = 사유결석(공결)']];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(legend), '범례');
+  XLSX.writeFile(wb, `${settings.clubName}_출석부_${todayISO()}.xlsx`);
+  toast('출석부가 다운로드되었습니다');
+}
+
+function exportScheduleXLSX() {
+  if (schedules.length===0) { toast('등록된 일정이 없습니다','warn'); return; }
+  const wb = XLSX.utils.book_new();
+  const sRows = [...schedules].sort((a,b)=>a.date.localeCompare(b.date)).map(s => ({
+    '날짜':s.date, '시간':s.time||'', '활동제목':s.title, '장소':s.location||'',
+    '활동내용':s.content||'', '준비물/참고':s.note||''
+  }));
+  const ws1 = XLSX.utils.json_to_sheet(sRows);
+  ws1['!cols'] = [{wch:12},{wch:14},{wch:24},{wch:24},{wch:40},{wch:24}];
+  XLSX.utils.book_append_sheet(wb, ws1, '일정표');
+
+  const dates = Object.keys(attendance).sort();
+  if (dates.length > 0) {
+    const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    const logRows = dates.map(d => {
+      const rec = attendance[d];
+      const sch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
+      const byM = rec.byMember || {};
+      const sigs = rec.signatures || {};
+      const presentN = activeMembers.filter(m=>byM[m.id]==='present').map(m=>m.name);
+      const lateN = activeMembers.filter(m=>byM[m.id]==='late').map(m=>m.name);
+      const absentN = activeMembers.filter(m=>byM[m.id]==='absent').map(m=>m.name);
+      const excusedN = activeMembers.filter(m=>byM[m.id]==='excused').map(m=>m.name);
+      const signedN = activeMembers.filter(m=>sigs[m.id]).map(m=>m.name);
+      const totalMarked = presentN.length+lateN.length+absentN.length+excusedN.length;
+      const attendCount = presentN.length+lateN.length;
+      return {
+        '날짜':d, '활동제목':sch?sch.title:'', '장소':sch?sch.location:'', '활동내용':sch?sch.content:'',
+        '출석자':presentN.join(', '), '지각자':lateN.join(', '), '결석자':absentN.join(', '), '사유결석':excusedN.join(', '),
+        '서명자':signedN.join(', '),
+        '참여인원':`${attendCount}/${activeMembers.length}`,
+        '출석률':totalMarked>0?Math.round(attendCount/totalMarked*100)+'%':'-'
+      };
+    });
+    const ws2 = XLSX.utils.json_to_sheet(logRows);
+    ws2['!cols'] = [{wch:12},{wch:24},{wch:24},{wch:30},{wch:30},{wch:20},{wch:20},{wch:20},{wch:30},{wch:10},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws2, '활동일지');
+  }
+  XLSX.writeFile(wb, `${settings.clubName}_일정활동일지_${todayISO()}.xlsx`);
+  toast('일정·활동일지가 다운로드되었습니다');
+}
+
+function exportAllXLSX() {
+  if (members.length===0 && schedules.length===0) { toast('내보낼 데이터가 없습니다','warn'); return; }
+  const wb = XLSX.utils.book_new();
+  if (members.length > 0) {
+    const mRows = members.map((m, i) => ({
+      '순번':i+1,'이름':m.name||'','학교/학년':schoolGradeStr(m),'성별':m.gender||'',
+      '생년월일(6자리)':bd6fmt(m.birthdate),'생년월일(전체)':m.birthdate||'',
+      '본인연락처':m.phone||'','주소':m.address||'',
+      '보호자성명':m.guardianName||'','관계':m.guardianRel||'','보호자연락처':m.guardianPhone||'','비상연락망':m.emergencyPhone||'',
+      '가입일':m.joinDate||'','역할':m.role||'','상태':m.status||'활동중',
+      '활동이력/특이사항':m.history||'','지도사의견':m.advisorNote||''
+    }));
+    const ws = XLSX.utils.json_to_sheet(mRows);
+    ws['!cols'] = Object.keys(mRows[0]).map(k=>({wch:Math.max(12,k.length*2)}));
+    XLSX.utils.book_append_sheet(wb, ws, '회원명단');
+  }
+  if (schedules.length > 0) {
+    const sRows = [...schedules].sort((a,b)=>a.date.localeCompare(b.date)).map(s => ({
+      '날짜':s.date, '시간':s.time||'', '활동제목':s.title, '장소':s.location||'', '활동내용':s.content||'', '준비물/참고':s.note||''
+    }));
+    const ws = XLSX.utils.json_to_sheet(sRows);
+    ws['!cols'] = [{wch:12},{wch:14},{wch:24},{wch:24},{wch:40},{wch:24}];
+    XLSX.utils.book_append_sheet(wb, ws, '일정표');
+  }
+  const dates = Object.keys(attendance).sort();
+  if (dates.length > 0) {
+    const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    const statusMap = { present:'○', late:'△', absent:'×', excused:'◇' };
+    const dateHeaders = dates.map(d => {
+      const rec = attendance[d];
+      const sch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
+      return sch ? `${d} ${sch.title}` : d;
+    });
+    const attRows = activeMembers.map((m, i) => {
+      const row = {'순번':i+1, '이름':m.name, '학교/학년':schoolGradeStr(m), '성별':m.gender||''};
+      let p=0,l=0,a=0,e=0;
+      dates.forEach((d,i) => {
+        const s = (attendance[d].byMember||{})[m.id];
+        row[dateHeaders[i]] = s?statusMap[s]:'';
+        if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
+      });
+      const tot = p+l+a+e;
+      row['출석']=p; row['지각']=l; row['결석']=a; row['사유']=e;
+      row['출석률'] = tot>0?Math.round((p+l)/tot*100)+'%':'-';
+      return row;
+    });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(attRows), '출석부');
+  }
+  XLSX.writeFile(wb, `${settings.clubName}_전체데이터_${todayISO()}.xlsx`);
+  toast('전체 데이터가 다운로드되었습니다');
+}
+
+// ==================== 백업/복원 ====================
+function exportData() {
+  const blob = new Blob([JSON.stringify({ members, attendance, schedules, settings, exportedAt: new Date().toISOString(), version: 'v4' }, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${settings.clubName}_백업_${todayISO()}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+async function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  if (!confirm('기존 데이터를 덮어쓰고 백업 파일을 불러올까요?')) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (Array.isArray(data)) members = data;
+    else {
+      if (data.members) members = data.members;
+      if (data.attendance) {
+        attendance = data.attendance;
+        Object.keys(attendance).forEach(d => {
+          if (!attendance[d].byMember && typeof attendance[d] === 'object') {
+            const isOld = Object.values(attendance[d]).every(v => typeof v === 'string');
+            if (isOld) attendance[d] = { byMember: attendance[d], signatures: {} };
+          }
+          if (!attendance[d].signatures) attendance[d].signatures = {};
+        });
+      }
+      if (data.schedules) schedules = data.schedules;
+      if (data.settings) settings = { ...settings, ...data.settings };
+    }
+    saveLocal();
+    updateHeader();
+    renderDashboard();
+    toast(`✅ 복원 완료: 회원 ${members.length}명, 일정 ${schedules.length}건`);
+  } catch(err) { toast('불러오기 실패: '+err.message, 'error'); }
+  e.target.value = '';
+}
+
+// ==================== 설정 ====================
+function openSettings() {
+  document.getElementById('setSignbookTitle').value = settings.signbookTitle || '';
+  document.getElementById('setClubName').value = settings.clubName||'';
+  document.getElementById('setOrgName').value = settings.orgName||'';
+  document.getElementById('setAdvisorName').value = settings.advisorName||'';
+  document.getElementById('settingsModal').classList.add('show');
+}
+function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+function saveSettings() {
+  settings.signbookTitle = document.getElementById('setSignbookTitle').value.trim() || '청소년동아리 서명부';
+  settings.clubName = document.getElementById('setClubName').value.trim() || '청소년사진영상동아리 기록';
+  settings.orgName = document.getElementById('setOrgName').value.trim() || '광양시청소년문화센터';
+  settings.advisorName = document.getElementById('setAdvisorName').value.trim();
+  saveLocal();
+  updateHeader();
+  closeSettings();
+  toast('✅ 설정이 저장되었습니다');
+}
+
+// ==================== 초기화 ====================
+(function init() {
+  loadLocal();
+  // 동아리명 항상 최신값으로 고정
+  settings.clubName = '청소년사진영상동아리 기록';
+  settings.orgName = settings.orgName || '광양시청소년문화센터';
+
+  // 서명부 이미지 기반 초기 회원 데이터 (m_init_ ID 기준으로 중복 방지)
+  const hasInitMembers = members.some(m => m.id && m.id.startsWith('m_init_'));
+  if (!hasInitMembers) {
+    const gradeMap = { '초':'초', '중':'중', '고':'고' };
+    function parseSchoolGrade(raw) {
+      if (!raw || raw.trim() === '-' || raw.trim() === '') return { school: '', grade: '학교 밖' };
+      if (raw.trim() === '학교 밖') return { school: '', grade: '학교 밖' };
+      const m = raw.match(/^(.+?)\/(\d)$/);
+      if (m) {
+        const schoolRaw = m[1].trim();
+        const num = m[2];
+        let grade = '학교 밖';
+        if (schoolRaw.includes('중')) grade = '중' + num;
+        else if (schoolRaw.includes('고') || schoolRaw.includes('공고') || schoolRaw.includes('대')) grade = '고' + num;
+        else if (schoolRaw.includes('초')) grade = '초' + num;
+        return { school: schoolRaw, grade };
+      }
+      return { school: raw.trim(), grade: '' };
+    }
+    function bd6ToFull(bd6) {
+      if (!bd6 || bd6.trim() === '') return '';
+      const s = bd6.trim();
+      if (s.length !== 6) return '';
+      const yy = parseInt(s.slice(0,2));
+      const mm = s.slice(2,4);
+      const dd = s.slice(4,6);
+      const yyyy = yy >= 0 && yy <= 25 ? '200' + (yy < 10 ? '0'+yy : yy) : '19' + s.slice(0,2);
+      return `${yy <= 25 ? '20' : '19'}${s.slice(0,2)}-${mm}-${dd}`;
+    }
+    const rawMembers = [
+      { name:'김미주', sg:'청암고/3', gender:'여', bd6:'081007', phone:'010-5594-0575' },
+      { name:'김주원', sg:'중마고/2', gender:'여', bd6:'090416', phone:'010-3046-7853' },
+      { name:'박민경', sg:'중동중/3', gender:'여', bd6:'111016', phone:'010-7709-7080' },
+      { name:'박지영', sg:'하이텍고/3', gender:'여', bd6:'080701', phone:'010-9439-8788' },
+      { name:'박정현', sg:'백운중/3', gender:'남', bd6:'110321', phone:'010-3006-6995' },
+      { name:'박준서', sg:'백운중/3', gender:'남', bd6:'110105', phone:'010-5894-2927' },
+      { name:'박찬영', sg:'-', gender:'남', bd6:'070317', phone:'010-6350-9073' },
+      { name:'박채이', sg:'청람중/1', gender:'여', bd6:'130208', phone:'010-5913-9028' },
+      { name:'서성미', sg:'백운중/3', gender:'여', bd6:'110614', phone:'010-6561-0064' },
+      { name:'서영인', sg:'백운중/3', gender:'여', bd6:'110103', phone:'010-8737-0603' },
+      { name:'서은채', sg:'백운중/1', gender:'여', bd6:'130930', phone:'010-8692-4543' },
+      { name:'설희호', sg:'백운중/3', gender:'남', bd6:'110728', phone:'010-7731-8748' },
+      { name:'신철우', sg:'순천공고/3', gender:'남', bd6:'080519', phone:'010-5621-9660' },
+      { name:'심규만', sg:'동광양중/2', gender:'남', bd6:'120923', phone:'010-6321-4923' },
+      { name:'심송연', sg:'중마고/2', gender:'여', bd6:'090616', phone:'010-6337-4319' },
+      { name:'오다연', sg:'중동중/1', gender:'여', bd6:'130419', phone:'010-4312-6085' },
+      { name:'유혜수', sg:'학교 밖', gender:'여', bd6:'080331', phone:'010-3701-4162' },
+      { name:'이건우', sg:'순천공고/3', gender:'남', bd6:'081101', phone:'010-8805-2714' },
+      { name:'이다슬', sg:'백운중/3', gender:'여', bd6:'110105', phone:'010-4131-6671' },
+      { name:'이민아', sg:'학교 밖', gender:'여', bd6:'090826', phone:'010-3574-3560' },
+      { name:'이세찬', sg:'순천제일대/1', gender:'남', bd6:'071214', phone:'010-3789-9828' },
+      { name:'이윤우', sg:'광양고/3', gender:'남', bd6:'080802', phone:'010-3166-3482' },
+      { name:'정한서', sg:'백운중/1', gender:'여', bd6:'130216', phone:'010-7200-8380' },
+      { name:'정희성', sg:'광양고/3', gender:'남', bd6:'081007', phone:'010-9259-9914' },
+      { name:'조현준', sg:'광양고/3', gender:'남', bd6:'080115', phone:'010-6379-3296' },
+      { name:'주형준', sg:'학교 밖', gender:'남', bd6:'070614', phone:'010-4077-6751' },
+      { name:'최보문', sg:'백운중/3', gender:'남', bd6:'110615', phone:'010-9390-7247' },
+    ];
+    rawMembers.forEach((r, i) => {
+      const { school, grade } = parseSchoolGrade(r.sg);
+      members.push({
+        id: 'm_init_' + (i+1),
+        name: r.name,
+        gender: r.gender,
+        birthdate: bd6ToFull(r.bd6),
+        phone: r.phone,
+        school,
+        grade,
+        address: '',
+        guardianName: '', guardianRel: '', guardianPhone: '', emergencyPhone: '',
+        joinDate: '', role: '회원', status: '활동중',
+        history: '', advisorNote: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    });
+    saveLocal();
+  }
+
+  updateHeader();
+  renderDashboard();
+  setTimeout(() => {
+    const now = new Date();
+    const today = todayISO();
+    const todayBdays = members.filter(m => {
+      const md = getMonthDay(m.birthdate);
+      return md && md.month===now.getMonth()+1 && md.day===now.getDate();
+    });
+    const todaySch = schedules.filter(s => s.date === today);
+    if (todayBdays.length > 0) toast(`🎉 오늘은 ${todayBdays.map(m=>m.name).join(', ')}님 생일이에요!`);
+    if (todaySch.length > 0) setTimeout(() => toast(`🔔 오늘 일정: ${todaySch.map(s=>s.title).join(', ')}`), 3500);
+  }, 500);
+})();
+</script>
+</body>
+</html>
