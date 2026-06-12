@@ -142,6 +142,8 @@
   .modal-wrap.schedule-form { max-width: 600px; }
   .modal-wrap.signpad { max-width: 520px; }
   .modal-wrap.activity-select { max-width: 700px; }
+  /* 서명 패드는 태블릿 모드(z-index:150) 위에 표시 */
+  #signPadModal { z-index: 300; }
   .close-btn { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 26px; cursor: pointer; color: #888780; }
   .modal h2 { margin: 0 0 16px; font-size: 20px; color: #0F6E56; }
   /* 서명 패드 */
@@ -248,12 +250,16 @@
       padding: 4px 3px !important;
       font-size: 10px !important;
       background: #FAE8C3 !important;
+      border: 1px solid #000 !important;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     #signbookPrint .sb-table td {
       padding: 0 3px !important;
       font-size: 10px !important;
+      border: 1px solid #000 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
       /* 행 높이 균등 분배 */
       height: 1% !important;
     }
