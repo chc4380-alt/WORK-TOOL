@@ -1463,14 +1463,19 @@ async function printSignbook() {
   const activityPlace = linkedSch ? linkedSch.location : '';
   const activityTime = linkedSch && linkedSch.time ? linkedSch.time : '';
 
-  // 서명 이미지를 고정 높이(50px)로 리사이즈 (canvas 사용)
+  // 행 높이 계산 (rowMM 먼저 선언)
+  const totalMM = 253;
+  const headerRowMM = 7;
+  const rowMM = Math.floor((totalMM - headerRowMM) / Math.max(activeMembers.length, 1));
+
+  // 서명 이미지 리사이즈
   const resizedSigs = {};
   await Promise.all(activeMembers.map(m => {
     return new Promise(resolve => {
       if (!sigs[m.id]) { resolve(); return; }
       const img = new Image();
       img.onload = () => {
-        const targetH = rowMM * 3.78 * 3; // mm→px(3.78) × 3배 해상도
+        const targetH = Math.round(rowMM * 3.78 * 3);
         const ratio = img.naturalWidth / img.naturalHeight;
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(targetH * ratio);
@@ -1487,16 +1492,9 @@ async function printSignbook() {
     });
   }));
 
-  // 행 높이 계산: 전체에서 헤더/제목 영역 빼고 균등 분배
-  // A4 = 297mm, 여백 8mm*2 = 281mm 사용 가능, 제목+정보 약 30mm → 테이블 251mm
-  // 헤더행 6mm, 데이터행 = (251-6) / 회원수
-  const totalMM = 253;
-  const headerRowMM = 7;
-  const rowMM = Math.floor((totalMM - headerRowMM) / activeMembers.length);
-
   const rows = activeMembers.map((m, i) => {
     const sigImg = resizedSigs[m.id]
-      ? `<img src="${resizedSigs[m.id]}" style="height:${rowMM-2}mm; max-width:100%; display:block; margin:auto;">`
+      ? `<img src="${resizedSigs[m.id]}" style="height:${rowMM - 1}mm; max-width:100%; display:block; margin:auto;">`
       : '';
     return `<tr>
       <td style="text-align:center">${i+1}</td>
@@ -1510,77 +1508,48 @@ async function printSignbook() {
   }).join('');
 
   const html = `<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
+<html lang="ko"><head><meta charset="UTF-8">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-    width: 210mm;
-    height: 297mm;
-    padding: 8mm 10mm;
-    font-size: 10pt;
-    color: #000;
-  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; width:210mm; height:297mm; padding:8mm 10mm; font-size:10pt; color:#000; }
   .sb-title { text-align:center; font-size:16pt; font-weight:700; margin-bottom:3mm; }
   .sb-activity { text-align:center; font-size:10pt; margin-bottom:3mm; }
   .sb-info { font-size:9pt; margin-bottom:1.5mm; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-  }
-  th, td {
-    border: 1px solid #000;
-    font-size: 9pt;
-    vertical-align: middle;
-    overflow: hidden;
-    height: ${rowMM}mm;
-  }
-  th {
-    background: #FAE8C3;
-    text-align: center;
-    font-weight: 700;
-    height: ${headerRowMM}mm;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  col.c-num   { width: 6%; }
-  col.c-name  { width: 10%; }
-  col.c-school{ width: 13%; }
-  col.c-gender{ width: 6%; }
-  col.c-bd    { width: 10%; }
-  col.c-phone { width: 15%; }
-  col.c-sig   { width: 40%; }
+  table { width:100%; border-collapse:collapse; table-layout:fixed; }
+  th, td { border:1px solid #000; font-size:9pt; vertical-align:middle; overflow:hidden; height:${rowMM}mm; }
+  th { background:#FAE8C3; text-align:center; font-weight:700; height:${headerRowMM}mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  col.c-num{width:6%} col.c-name{width:10%} col.c-school{width:13%} col.c-gender{width:6%} col.c-bd{width:10%} col.c-phone{width:15%} col.c-sig{width:40%}
   .sb-footer { text-align:right; font-size:9pt; margin-top:2mm; font-weight:600; }
-  @page { size: A4 portrait; margin: 0; }
-  @media print { body { padding: 8mm 10mm; } }
-</style>
-</head>
+  @page { size:A4 portrait; margin:0; }
+</style></head>
 <body>
   <div class="sb-title">${esc(settings.signbookTitle)}</div>
   ${activityTitle ? `<div class="sb-activity">(활동명 : ${esc(activityTitle)})</div>` : ''}
   <div class="sb-info"><strong>일&nbsp;&nbsp;시:</strong> ${dateFmtFull(date)}${activityTime ? ' ' + esc(activityTime) : ''}</div>
   ${activityPlace ? `<div class="sb-info"><strong>장&nbsp;&nbsp;소:</strong> ${esc(activityPlace)}</div>` : ''}
   <table>
-    <colgroup>
-      <col class="c-num"><col class="c-name"><col class="c-school"><col class="c-gender">
-      <col class="c-bd"><col class="c-phone"><col class="c-sig">
-    </colgroup>
-    <thead><tr>
-      <th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>서명</th>
-    </tr></thead>
+    <colgroup><col class="c-num"><col class="c-name"><col class="c-school"><col class="c-gender"><col class="c-bd"><col class="c-phone"><col class="c-sig"></colgroup>
+    <thead><tr><th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>서명</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="sb-footer">${esc(settings.orgName)}</div>
-  <script>window.onload = function(){ window.print(); window.onafterprint = function(){ window.close(); }; };<\/script>
-</body>
-</html>`;
+</body></html>`;
 
-  const w = window.open('', '_blank', 'width=900,height=700');
-  w.document.write(html);
-  w.document.close();
+  // iframe 방식 - 팝업 차단 무관
+  let iframe = document.getElementById('_printFrame');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = '_printFrame';
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:210mm;height:297mm;border:none;';
+    document.body.appendChild(iframe);
+  }
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }, 300);
+  };
+  iframe.srcdoc = html;
 }
 
 function clearAllSignatures() {
