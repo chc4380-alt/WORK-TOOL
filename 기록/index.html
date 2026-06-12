@@ -1336,15 +1336,17 @@ function initSignCanvas() {
   const existing = attendance[date] && attendance[date].signatures && attendance[date].signatures[currentSignMemberId];
   // 크기 설정 (고해상도)
   const rect = signCanvas.parentElement.getBoundingClientRect();
-  signCanvas.width = rect.width * 2;
-  signCanvas.height = 240 * 2;
+  signCanvas.width = rect.width * 4;
+  signCanvas.height = 240 * 4;
   signCanvas.style.width = rect.width + 'px';
   signCanvas.style.height = '240px';
-  signCtx.scale(2, 2);
-  signCtx.strokeStyle = '#000';
-  signCtx.lineWidth = 2.5;
+  signCtx.scale(4, 4);
+  signCtx.strokeStyle = '#111';
+  signCtx.lineWidth = 1.8;
   signCtx.lineCap = 'round';
   signCtx.lineJoin = 'round';
+  signCtx.shadowColor = 'rgba(0,0,0,0.25)';
+  signCtx.shadowBlur = 0.5;
   signCtx.fillStyle = '#fff';
   signCtx.fillRect(0, 0, signCanvas.width, signCanvas.height);
   signHasDrawing = false;
@@ -1412,7 +1414,7 @@ function saveSignature() {
   if (!attendance[date].signatures) attendance[date].signatures = {};
   if (!attendance[date].byMember) attendance[date].byMember = {};
   // 서명 이미지를 압축된 JPEG로 저장 (용량 절감)
-  const dataUrl = signCanvas.toDataURL('image/jpeg', 0.7);
+  const dataUrl = signCanvas.toDataURL('image/png');
   attendance[date].signatures[currentSignMemberId] = dataUrl;
   // 서명하면 자동으로 '출석' 상태로 기록
   if (!attendance[date].byMember[currentSignMemberId]) {
@@ -1468,12 +1470,15 @@ async function printSignbook() {
       if (!sigs[m.id]) { resolve(); return; }
       const img = new Image();
       img.onload = () => {
-        const targetH = 50;
+        const targetH = rowMM * 3.78 * 3; // mm→px(3.78) × 3배 해상도
         const ratio = img.naturalWidth / img.naturalHeight;
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(targetH * ratio);
         canvas.height = targetH;
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         resizedSigs[m.id] = canvas.toDataURL('image/png');
         resolve();
       };
