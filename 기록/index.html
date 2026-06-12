@@ -220,15 +220,30 @@
     #signbookPrint .sb-info-section { margin-bottom: 6px !important; }
     #signbookPrint .sb-info { font-size: 11px !important; margin: 2px 0 !important; }
 
-    /* 테이블이 남은 공간 모두 차지 */
+    /* 테이블 래퍼 */
+    #signbookPrint > div[style*="flex:1"] {
+      flex: 1 !important;
+      overflow: hidden !important;
+    }
+
+    /* 테이블 전체 */
     #signbookPrint .sb-table {
-      flex: 1;
       width: 100% !important;
+      height: 100% !important;
       font-size: 10px !important;
       border-collapse: collapse !important;
       table-layout: fixed !important;
-      /* 행 높이를 자동으로 균등 분배 */
     }
+
+    /* 열 너비 인쇄 전용 - 서명 칸 넓게 */
+    #signbookPrint .sb-table col.c-num   { width: 6% !important; }
+    #signbookPrint .sb-table col.c-name  { width: 10% !important; }
+    #signbookPrint .sb-table col.c-school{ width: 13% !important; }
+    #signbookPrint .sb-table col.c-gender{ width: 6% !important; }
+    #signbookPrint .sb-table col.c-bd    { width: 10% !important; }
+    #signbookPrint .sb-table col.c-phone { width: 15% !important; }
+    #signbookPrint .sb-table col.c-sig   { width: 40% !important; }
+
     #signbookPrint .sb-table th {
       padding: 4px 3px !important;
       font-size: 10px !important;
@@ -237,21 +252,28 @@
       print-color-adjust: exact;
     }
     #signbookPrint .sb-table td {
-      padding: 2px 3px !important;
+      padding: 0 3px !important;
       font-size: 10px !important;
+      /* 행 높이 균등 분배 */
+      height: 1% !important;
     }
-    /* 서명 셀 높이 고정 */
+    /* 서명 셀 */
     #signbookPrint .sb-table td.sb-sig-cell {
-      height: 22px !important;
       min-height: unset !important;
+      height: 1% !important;
+      padding: 1px 2px !important;
     }
     #signbookPrint .sb-table td.sb-sig-cell img {
-      max-height: 18px !important;
+      max-height: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      display: block;
+      margin: auto;
     }
     #signbookPrint .sb-table td.sb-sig-cell .sig-placeholder { display: none !important; }
 
     /* 푸터 */
-    #signbookPrint .sb-footer { font-size: 10px !important; margin-top: 4px !important; }
+    #signbookPrint .sb-footer { font-size: 10px !important; margin-top: 4px !important; flex-shrink: 0; }
 
     /* 인쇄 버튼·UI 숨김 */
     .close-btn, .print-btns, .tablet-mode,
