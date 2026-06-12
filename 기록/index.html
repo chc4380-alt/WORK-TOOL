@@ -1419,8 +1419,17 @@ function saveSignature() {
   if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
   if (!attendance[date].signatures) attendance[date].signatures = {};
   if (!attendance[date].byMember) attendance[date].byMember = {};
-  // 서명 이미지를 압축된 JPEG로 저장 (용량 절감)
-  const dataUrl = signCanvas.toDataURL('image/png');
+
+  // 4배 canvas → 원본 크기(1배) canvas로 축소 후 저장 (선 진하게 유지)
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = signCanvas.width / 4;
+  outCanvas.height = signCanvas.height / 4;
+  const outCtx = outCanvas.getContext('2d');
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = 'high';
+  outCtx.drawImage(signCanvas, 0, 0, outCanvas.width, outCanvas.height);
+  const dataUrl = outCanvas.toDataURL('image/png');
+
   attendance[date].signatures[currentSignMemberId] = dataUrl;
   // 서명하면 자동으로 '출석' 상태로 기록
   if (!attendance[date].byMember[currentSignMemberId]) {
