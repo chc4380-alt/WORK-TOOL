@@ -19,7 +19,11 @@
   .header-left h1 { margin: 0; font-size: 24px; font-weight: 500; color: #0F6E56; cursor: pointer; display: inline-block; }
   .header-left h1:hover { text-decoration: underline dotted; }
   .header-left .sub { font-size: 13px; color: #5F5E5A; margin-top: 4px; }
-  .header-right { display: flex; gap: 8px; flex-wrap: wrap; }
+  .header-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .sync-status { font-size: 12px; color: #888; transition: color 0.3s; }
+  .sync-status.ok { color: #1D9E75; }
+  .sync-status.error { color: #e07000; }
+  .sync-status.saving, .sync-status.loading { color: #1e6eb5; }
   .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
   .tab-btn { padding: 10px 18px; border: 1px solid #D3D1C7; background: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; color: #444441; transition: all 0.15s; font-family: inherit; }
   .tab-btn:hover { background: #f1efe8; }
@@ -219,6 +223,8 @@
       <div class="sub" id="clubSub">광양시청소년문화센터 · 동아리 관리 시스템</div>
     </div>
     <div class="header-right">
+      <span id="syncStatus" class="sync-status"></span>
+      <button class="btn btn-secondary btn-small" onclick="loadFromDB().then(()=>{updateHeader();renderDashboard();switchTab(document.querySelector('.tab-btn.active')?.dataset.tab||'dashboard');})" title="서버에서 최신 데이터 불러오기">🔄 새로고침</button>
       <a href="../" class="btn btn-secondary btn-small" style="text-decoration:none">🏠 허브로</a>
       <button class="btn btn-secondary btn-small" onclick="openSettings()">⚙️ 설정</button>
       <button class="btn btn-secondary btn-small" onclick="exportData()">📥 JSON 백업</button>
@@ -449,6 +455,156 @@
 <script>
 // ==================== 데이터 ====================
 const KEYS = { m:'club_members_v4', a:'club_attend_v4', s:'club_settings_v4', sc:'club_schedule_v4' };
+
+// ==================== Supabase 연동 ====================
+const SB_URL = 'https://brxyyxqhymfdvxqrbnee.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHl5eHFoeW1mZHZ4cXJibmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTkzNDUsImV4cCI6MjA5NjczNTM0NX0.0QDZ-BeHCF5RwysH6eAC1VDg5Nc3IigsYMqYdvH4qng';
+const CLUB_ID = 'girok';
+
+const sbHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'resolution=merge-duplicates'
+};
+
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: { ...sbHeaders, ...(options.headers || {}) }
+  });
+  if (!res.ok) { const err = await res.text(); throw new Error('Supabase 오류: ' + err); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function loadFromDB() {
+  try {
+    showSyncStatus('loading');
+    const [mRows, scRows, atRows, stRows] = await Promise.all([
+      sbFetch(`club_members?club_id=eq.${CLUB_ID}&order=created_at.asc`),
+      sbFetch(`club_schedules?club_id=eq.${CLUB_ID}&order=date.asc`),
+      sbFetch(`club_attendance?club_id=eq.${CLUB_ID}`),
+      sbFetch(`club_settings?club_id=eq.${CLUB_ID}`)
+    ]);
+    if (mRows.length > 0) {
+      members = mRows.map(r => ({
+        id: r.id, name: r.name, gender: r.gender, birthdate: r.birthdate,
+        phone: r.phone, school: r.school, grade: r.grade, address: r.address,
+        guardianName: r.guardian_name, guardianRel: r.guardian_rel,
+        guardianPhone: r.guardian_phone, emergencyPhone: r.emergency_phone,
+        joinDate: r.join_date, role: r.role, status: r.status,
+        history: r.history, advisorNote: r.advisor_note,
+        createdAt: r.created_at, updatedAt: r.updated_at
+      }));
+    }
+    if (scRows.length > 0) {
+      schedules = scRows.map(r => ({
+        id: r.id, date: r.date, time: r.time, title: r.title,
+        location: r.location, content: r.content, note: r.note
+      }));
+    }
+    if (atRows.length > 0) {
+      attendance = {};
+      atRows.forEach(r => {
+        attendance[r.date] = {
+          byMember: r.by_member || {},
+          scheduleId: r.schedule_id,
+          signatures: r.signatures || {}
+        };
+      });
+    }
+    if (stRows.length > 0) {
+      const st = stRows[0];
+      settings = { ...settings,
+        clubName: st.club_name || settings.clubName,
+        orgName: st.org_name || settings.orgName,
+        advisorName: st.advisor_name || '',
+        signbookTitle: st.signbook_title || settings.signbookTitle
+      };
+    }
+    saveLocal();
+    showSyncStatus('ok');
+  } catch(e) {
+    console.warn('DB 로드 실패, 로컬 사용:', e);
+    showSyncStatus('error');
+  }
+}
+
+async function saveToDB() {
+  try {
+    showSyncStatus('saving');
+    const tasks = [];
+    if (members.length > 0) tasks.push(sbFetch('club_members', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(members.map(m => ({
+        id: m.id, club_id: CLUB_ID,
+        name: m.name, gender: m.gender, birthdate: m.birthdate,
+        phone: m.phone, school: m.school, grade: m.grade, address: m.address,
+        guardian_name: m.guardianName, guardian_rel: m.guardianRel,
+        guardian_phone: m.guardianPhone, emergency_phone: m.emergencyPhone,
+        join_date: m.joinDate, role: m.role, status: m.status,
+        history: m.history, advisor_note: m.advisorNote,
+        updated_at: new Date().toISOString()
+      })))
+    }));
+    if (schedules.length > 0) tasks.push(sbFetch('club_schedules', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(schedules.map(s => ({
+        id: s.id, club_id: CLUB_ID,
+        date: s.date, time: s.time, title: s.title,
+        location: s.location, content: s.content, note: s.note
+      })))
+    }));
+    if (Object.keys(attendance).length > 0) tasks.push(sbFetch('club_attendance', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(Object.entries(attendance).map(([date, val]) => ({
+        id: CLUB_ID + '_' + date, club_id: CLUB_ID,
+        date, schedule_id: val.scheduleId || null,
+        by_member: val.byMember || {},
+        signatures: val.signatures || {},
+        updated_at: new Date().toISOString()
+      })))
+    }));
+    tasks.push(sbFetch('club_settings', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify([{
+        club_id: CLUB_ID,
+        club_name: settings.clubName,
+        org_name: settings.orgName,
+        advisor_name: settings.advisorName,
+        signbook_title: settings.signbookTitle,
+        updated_at: new Date().toISOString()
+      }])
+    }));
+    await Promise.all(tasks);
+    saveLocal();
+    showSyncStatus('ok');
+  } catch(e) {
+    console.warn('DB 저장 실패:', e);
+    showSyncStatus('error');
+  }
+}
+
+async function deleteFromDB(table, id) {
+  try { await sbFetch(`${table}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' }); }
+  catch(e) { console.warn('DB 삭제 실패:', e); }
+}
+
+let syncTimer = null;
+function showSyncStatus(state) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const map = { loading:'🔄 불러오는 중…', saving:'☁️ 저장 중…', ok:'✅ 동기화됨', error:'⚠️ 오프라인 (로컬 저장)' };
+  el.textContent = map[state] || '';
+  el.className = 'sync-status ' + state;
+  clearTimeout(syncTimer);
+  if (state === 'ok') syncTimer = setTimeout(() => { el.textContent = ''; }, 3000);
+}
 let members = [];
 let attendance = {};   // { "date": { byMember: {id: status}, scheduleId, signatures: {id: dataURL} } }
 let schedules = [];
@@ -495,7 +651,7 @@ function tryMigrateFromV3() {
         if (oldS) settings = { ...settings, ...JSON.parse(oldS) };
         const oldSc = localStorage.getItem('club_schedule_v3');
         if (oldSc) schedules = JSON.parse(oldSc);
-        saveLocal();
+        saveAll();
         setTimeout(()=>toast('✅ 이전 버전(v3) 데이터를 자동으로 불러왔습니다'), 1000);
       } catch(e) {}
     }
@@ -510,6 +666,14 @@ function saveLocal() {
   } catch(e) {
     toast('저장 용량 초과! JSON 백업 후 오래된 서명을 정리해주세요', 'error');
   }
+}
+
+// saveLocal 이후 DB에도 동기화 (디바운스 300ms)
+let saveDBTimer = null;
+function saveAll() {
+  saveLocal();
+  clearTimeout(saveDBTimer);
+  saveDBTimer = setTimeout(() => saveToDB(), 300);
 }
 
 // ==================== 유틸 ====================
@@ -603,7 +767,7 @@ function saveMember(e) {
   const idx = members.findIndex(m=>m.id===id);
   if (idx>=0) members[idx] = {...members[idx], ...data};
   else { data.createdAt = new Date().toISOString(); members.push(data); }
-  saveLocal();
+  saveAll();
   resetForm();
   switchTab('list');
   toast('✅ 저장되었습니다');
@@ -629,7 +793,8 @@ function deleteMember(id) {
     if(attendance[d].byMember) delete attendance[d].byMember[id];
     if(attendance[d].signatures) delete attendance[d].signatures[id];
   });
-  saveLocal();
+  deleteFromDB('club_members', id);
+  saveAll();
   renderList();
   toast('삭제되었습니다');
 }
@@ -818,7 +983,7 @@ function saveSchedule(e) {
   const idx = schedules.findIndex(s=>s.id===id);
   if (idx>=0) schedules[idx] = {...schedules[idx], ...data};
   else { data.createdAt = new Date().toISOString(); schedules.push(data); }
-  saveLocal();
+  saveAll();
   closeScheduleForm();
   renderSchedule();
   toast('✅ 일정이 저장되었습니다');
@@ -833,7 +998,8 @@ function deleteSchedule(id) {
   if (!confirm(confirmMsg)) return;
   schedules = schedules.filter(x=>x.id!==id);
   linked.forEach(d => { delete attendance[d].scheduleId; });
-  saveLocal();
+  deleteFromDB('club_schedules', id);
+  saveAll();
   renderSchedule();
   toast('일정이 삭제되었습니다');
 }
@@ -899,7 +1065,7 @@ function openAttendFromSchedule(scheduleId) {
     document.getElementById('attendSchedule').value = s.id;
     if (!attendance[s.date]) attendance[s.date] = { byMember: {}, signatures: {} };
     attendance[s.date].scheduleId = s.id;
-    saveLocal();
+    saveAll();
     onAttendDateChange();
   }, 100);
 }
@@ -949,7 +1115,7 @@ function onAttendScheduleChange() {
   } else {
     delete attendance[date].scheduleId;
   }
-  saveLocal();
+  saveAll();
   renderSignbook();
 }
 
@@ -1136,7 +1302,7 @@ function saveSignature() {
   if (!attendance[date].byMember[currentSignMemberId]) {
     attendance[date].byMember[currentSignMemberId] = 'present';
   }
-  saveLocal();
+  saveAll();
   closeSignPad();
   // 현재 모드에 따라 렌더링
   if (document.getElementById('tabletMode').classList.contains('show')) {
@@ -1155,7 +1321,7 @@ function clearAllSignatures() {
   if (!confirm(`${dateFmt(date)}의 모든 서명과 출석 기록을 지울까요?`)) return;
   attendance[date].signatures = {};
   attendance[date].byMember = {};
-  saveLocal();
+  saveAll();
   renderSignbook();
   toast('전체 서명이 삭제되었습니다');
 }
@@ -1511,15 +1677,15 @@ function saveSettings() {
   settings.clubName = document.getElementById('setClubName').value.trim() || '청소년사진영상동아리 기록';
   settings.orgName = document.getElementById('setOrgName').value.trim() || '광양시청소년문화센터';
   settings.advisorName = document.getElementById('setAdvisorName').value.trim();
-  saveLocal();
+  saveAll();
   updateHeader();
   closeSettings();
   toast('✅ 설정이 저장되었습니다');
 }
 
 // ==================== 초기화 ====================
-(function init() {
-  loadLocal();
+(async function init() {
+  loadLocal(); // 로컬 캐시 먼저 표시 (빠른 초기 렌더링)
   // 동아리명 항상 최신값으로 고정
   settings.clubName = '청소년사진영상동아리 기록';
   settings.orgName = settings.orgName || '광양시청소년문화센터';
@@ -1600,11 +1766,18 @@ function saveSettings() {
         updatedAt: new Date().toISOString()
       });
     });
-    saveLocal();
+    saveAll();
   }
 
   updateHeader();
   renderDashboard();
+
+  // DB에서 최신 데이터 로드 후 재렌더링
+  await loadFromDB();
+  settings.clubName = '청소년사진영상동아리 기록';
+  updateHeader();
+  renderDashboard();
+
   setTimeout(() => {
     const now = new Date();
     const today = todayISO();
