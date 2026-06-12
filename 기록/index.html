@@ -1340,15 +1340,17 @@ function initSignCanvas() {
   signCanvas.height = 240 * 4;
   signCanvas.style.width = rect.width + 'px';
   signCanvas.style.height = '240px';
-  signCtx.scale(4, 4);
-  signCtx.strokeStyle = '#0a0a0a';
-  signCtx.lineWidth = 2.2;        // scale(4) 기준 → 실제 출력 2.2px
-  signCtx.lineCap = 'round';
-  signCtx.lineJoin = 'round';
-  signCtx.shadowColor = 'rgba(0,0,0,0.6)';
-  signCtx.shadowBlur = 1.5;
+  // 캔버스 크기만 4배, 드로잉 설정은 scale 전에
   signCtx.fillStyle = '#fff';
   signCtx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  signCtx.scale(4, 4);
+  signCtx.strokeStyle = '#000000';
+  signCtx.lineWidth = 3;
+  signCtx.lineCap = 'round';
+  signCtx.lineJoin = 'round';
+  signCtx.shadowColor = 'transparent';
+  signCtx.shadowBlur = 0;
+  signCtx.globalAlpha = 1;
   signHasDrawing = false;
   document.getElementById('signCanvasWrap').classList.remove('has-drawing');
 
@@ -1389,6 +1391,8 @@ function startDraw(e) {
 function draw(e) {
   if (!signDrawing) return;
   const p = getPos(e);
+  signCtx.strokeStyle = '#000000';
+  signCtx.lineWidth = 3;
   signCtx.lineTo(p.x, p.y);
   signCtx.stroke();
   signCtx.beginPath();
