@@ -119,6 +119,8 @@
   .signbook .sb-table td.sb-sig-cell { padding: 2px; background: #fff; height: 42px; min-height: 42px; position: relative; cursor: pointer; }
   .signbook .sb-table td.sb-sig-cell:hover { background: #FFFBF2; }
   .signbook .sb-table td.sb-sig-cell.has-sig { cursor: pointer; background: #fff; }
+  .signbook .sb-table td.sb-sig-cell.has-saved-sig { background: #f0f7ff; }
+  .signbook .sb-table td.sb-sig-cell.has-saved-sig .sig-placeholder { color: #1e6eb5; font-weight: 500; font-style: normal; }
   .signbook .sb-table td.sb-sig-cell .sig-placeholder { color: #bbb; font-size: 11px; font-style: italic; }
   .signbook .sb-table td.sb-sig-cell.readonly { cursor: default; }
   .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
@@ -183,6 +185,8 @@
   .tablet-card { background: #fff; border: 2px solid #D3D1C7; padding: 16px 18px; border-radius: 10px; cursor: pointer; transition: all 0.15s; text-align: left; }
   .tablet-card:hover { border-color: #1D9E75; transform: translateY(-2px); }
   .tablet-card.signed { background: #E1F5EE; border-color: #1D9E75; }
+  .tablet-card.has-saved { border-color: #1e6eb5; background: #f0f7ff; }
+  .tablet-card.has-saved .tc-status { color: #1e6eb5; font-weight: 500; }
   .tablet-card .tc-name { font-size: 18px; font-weight: 500; color: #2c2c2a; margin-bottom: 4px; }
   .tablet-card .tc-meta { font-size: 13px; color: #5F5E5A; }
   .tablet-card .tc-status { margin-top: 8px; font-size: 12px; font-weight: 500; }
@@ -191,17 +195,73 @@
   .tablet-summary { text-align: center; margin-bottom: 16px; font-size: 15px; color: #0F6E56; font-weight: 500; }
 
   @media print {
-    body { background: #fff; padding: 0; margin: 0; }
+    /* 전체 숨김 후 서명부만 표시 */
+    html, body { margin: 0; padding: 0; background: #fff; }
     body * { visibility: hidden; }
-    .signbook, .signbook *, .card-print, .card-print * { visibility: visible; }
-    .signbook { position: absolute; left: 0; top: 0; width: 100%; padding: 25mm 20mm; border: none; }
-    .card-print { position: absolute; left: 0; top: 0; width: 100%; border: 2px solid #000; }
-    .modal { position: static; background: none; padding: 0; display: block !important; }
-    .modal-wrap { box-shadow: none; padding: 0; max-width: 100%; }
-    .close-btn, .print-btns, .tablet-mode { display: none !important; }
-    .signbook .sb-table td.sb-sig-cell { cursor: default; }
-    .signbook .sb-table td.sb-sig-cell .sig-placeholder { display: none; }
-    @page { size: A4 portrait; margin: 15mm; }
+    #signbookPrint, #signbookPrint * { visibility: visible; }
+
+    /* 서명부를 페이지 전체에 꽉 채워 배치 */
+    #signbookPrint {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      padding: 8mm 10mm;
+      box-sizing: border-box;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    }
+
+    /* 제목/정보 영역 압축 */
+    #signbookPrint .sb-title { font-size: 18px !important; margin: 0 0 4px !important; }
+    #signbookPrint .sb-activity { font-size: 12px !important; margin: 0 0 6px !important; }
+    #signbookPrint .sb-info-section { margin-bottom: 6px !important; }
+    #signbookPrint .sb-info { font-size: 11px !important; margin: 2px 0 !important; }
+
+    /* 테이블이 남은 공간 모두 차지 */
+    #signbookPrint .sb-table {
+      flex: 1;
+      width: 100% !important;
+      font-size: 10px !important;
+      border-collapse: collapse !important;
+      table-layout: fixed !important;
+      /* 행 높이를 자동으로 균등 분배 */
+    }
+    #signbookPrint .sb-table th {
+      padding: 4px 3px !important;
+      font-size: 10px !important;
+      background: #FAE8C3 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    #signbookPrint .sb-table td {
+      padding: 2px 3px !important;
+      font-size: 10px !important;
+    }
+    /* 서명 셀 높이 고정 */
+    #signbookPrint .sb-table td.sb-sig-cell {
+      height: 22px !important;
+      min-height: unset !important;
+    }
+    #signbookPrint .sb-table td.sb-sig-cell img {
+      max-height: 18px !important;
+    }
+    #signbookPrint .sb-table td.sb-sig-cell .sig-placeholder { display: none !important; }
+
+    /* 푸터 */
+    #signbookPrint .sb-footer { font-size: 10px !important; margin-top: 4px !important; }
+
+    /* 인쇄 버튼·UI 숨김 */
+    .close-btn, .print-btns, .tablet-mode,
+    .header, .tabs, .panel:not(#panel-attend),
+    #attendInfoBox, .attend-controls { display: none !important; }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
   }
   @media (max-width: 700px) {
     .form-grid { grid-template-columns: 1fr; }
@@ -424,6 +484,9 @@
     <div class="sign-info">
       <strong id="signName">이름</strong> 님, 아래 공간에 서명해주세요.
     </div>
+    <div id="savedSignNotice" style="display:none; font-size:13px; color:#1D9E75; margin-bottom:8px; padding:8px 12px; background:#f0fdf8; border-radius:6px;">
+      ✅ 저장된 서명이 있습니다. 새로 그리면 덮어씌워집니다.
+    </div>
     <div class="sign-canvas-wrap" id="signCanvasWrap">
       <canvas class="sign-canvas" id="signCanvas"></canvas>
     </div>
@@ -435,6 +498,13 @@
         <button class="btn btn-secondary" onclick="closeSignPad()">취소</button>
         <button class="btn btn-primary" onclick="saveSignature()">💾 서명 저장</button>
       </div>
+    </div>
+    <div style="margin-top:12px; padding-top:12px; border-top:1px solid #eee; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#444; cursor:pointer;">
+        <input type="checkbox" id="saveAsDefault" style="width:16px;height:16px;cursor:pointer;">
+        이 서명을 기본으로 저장 (다음부터 이름 클릭 한 번으로 서명)
+      </label>
+      <button id="clearDefaultBtn" class="btn btn-secondary btn-small" onclick="clearDefaultSignature()" style="display:none; font-size:12px;">🗑️ 기본 서명 삭제</button>
     </div>
   </div>
 </div>
@@ -495,6 +565,7 @@ async function loadFromDB() {
         guardianPhone: r.guardian_phone, emergencyPhone: r.emergency_phone,
         joinDate: r.join_date, role: r.role, status: r.status,
         history: r.history, advisorNote: r.advisor_note,
+        savedSignature: r.saved_signature || null,
         createdAt: r.created_at, updatedAt: r.updated_at
       }));
     }
@@ -546,6 +617,7 @@ async function saveToDB() {
         guardian_phone: m.guardianPhone, emergency_phone: m.emergencyPhone,
         join_date: m.joinDate, role: m.role, status: m.status,
         history: m.history, advisor_note: m.advisorNote,
+        saved_signature: m.savedSignature || null,
         updated_at: new Date().toISOString()
       })))
     }));
@@ -1161,24 +1233,26 @@ function renderSignbook() {
   const activityPlace = linkedSch ? linkedSch.location : '';
   const activityTime = linkedSch && linkedSch.time ? linkedSch.time : '';
 
-  let html = `<div class="signbook" id="signbookPrint">
+  let html = `<div class="signbook" id="signbookPrint" style="display:flex; flex-direction:column; height:100%;">
     <h1 class="sb-title">${esc(settings.signbookTitle)}</h1>
     ${activityTitle ? `<div class="sb-activity">(활동명 : ${esc(activityTitle)})</div>` : ''}
     <div class="sb-info-section">
       <div class="sb-info"><strong>일&nbsp;&nbsp;시:</strong> ${dateFmtFull(date)}${activityTime?' '+esc(activityTime):''}</div>
       ${activityPlace ? `<div class="sb-info"><strong>장&nbsp;&nbsp;소:</strong> ${esc(activityPlace)}</div>` : ''}
     </div>
-    <table class="sb-table">
+    <div style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
+    <table class="sb-table" style="height:100%;">
       <colgroup>
         <col class="c-num"><col class="c-name"><col class="c-school"><col class="c-gender">
         <col class="c-bd"><col class="c-phone"><col class="c-sig">
       </colgroup>
       <thead><tr>
         <th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>서명</th>
-      </tr></thead><tbody>`;
+      </tr></thead><tbody style="height:100%;">`;
   activeMembers.forEach((m, i) => {
     const sig = rec.signatures[m.id];
-    const sigContent = sig ? `<img src="${sig}" alt="서명">` : `<span class="sig-placeholder">클릭하여 서명</span>`;
+    const hasSaved = !!m.savedSignature;
+    const sigContent = sig ? `<img src="${sig}" alt="서명">` : `<span class="sig-placeholder">${hasSaved ? '👆 탭하여 서명' : '클릭하여 서명'}</span>`;
     html += `<tr>
       <td>${i+1}</td>
       <td>${esc(m.name)}</td>
@@ -1186,10 +1260,11 @@ function renderSignbook() {
       <td>${esc(m.gender||'-')}</td>
       <td>${esc(bd6fmt(m.birthdate)||'-')}</td>
       <td>${esc(m.phone||'-')}</td>
-      <td class="sb-sig-cell ${sig?'has-sig':''}" onclick="openSignPad('${m.id}')" title="클릭하여 서명">${sigContent}</td>
+      <td class="sb-sig-cell ${sig?'has-sig':''} ${hasSaved&&!sig?'has-saved-sig':''}" onclick="applyOrOpenSign('${m.id}')" title="${hasSaved&&!sig?'저장된 서명 자동 적용 (길게 누르면 재등록)':'클릭하여 서명'}">${sigContent}</td>
     </tr>`;
   });
   html += `</tbody></table>
+    </div>
     <div class="sb-footer">${esc(settings.orgName)}</div>
   </div>`;
   c.innerHTML = html;
@@ -1198,11 +1273,43 @@ function renderSignbook() {
 // ==================== 서명 패드 ====================
 let signCanvas, signCtx, signDrawing = false, currentSignMemberId = null, signHasDrawing = false;
 
+// 저장된 서명 있으면 즉시 적용, 없으면 패드 열기
+function applyOrOpenSign(memberId) {
+  const m = members.find(x => x.id === memberId);
+  if (!m) return;
+  const date = document.getElementById('attendDate').value || todayISO();
+  const alreadySigned = attendance[date] && attendance[date].signatures && attendance[date].signatures[memberId];
+
+  // 이미 서명된 경우 → 패드 열기 (수정 목적)
+  if (alreadySigned) { openSignPad(memberId); return; }
+
+  // 저장된 기본 서명이 있으면 즉시 적용
+  if (m.savedSignature) {
+    if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
+    if (!attendance[date].signatures) attendance[date].signatures = {};
+    if (!attendance[date].byMember) attendance[date].byMember = {};
+    attendance[date].signatures[memberId] = m.savedSignature;
+    if (!attendance[date].byMember[memberId]) attendance[date].byMember[memberId] = 'present';
+    saveAll();
+    renderSignbook();
+    toast(`✅ ${m.name} 서명 완료`);
+    return;
+  }
+
+  // 저장된 서명 없으면 패드 열기
+  openSignPad(memberId);
+}
+
 function openSignPad(memberId) {
   const m = members.find(x=>x.id===memberId);
   if (!m) return;
   currentSignMemberId = memberId;
   document.getElementById('signName').textContent = m.name;
+  // 기본 서명 저장 여부 표시
+  const hasSaved = !!m.savedSignature;
+  document.getElementById('savedSignNotice').style.display = hasSaved ? 'block' : 'none';
+  document.getElementById('saveAsDefault').checked = hasSaved;
+  document.getElementById('clearDefaultBtn').style.display = hasSaved ? 'inline-block' : 'none';
   document.getElementById('signPadModal').classList.add('show');
   setTimeout(initSignCanvas, 100);
 }
@@ -1302,6 +1409,15 @@ function saveSignature() {
   if (!attendance[date].byMember[currentSignMemberId]) {
     attendance[date].byMember[currentSignMemberId] = 'present';
   }
+  // 기본 서명으로 저장 체크 시 회원 정보에 저장
+  const saveAsDefault = document.getElementById('saveAsDefault').checked;
+  const m = members.find(x => x.id === currentSignMemberId);
+  if (m) {
+    if (saveAsDefault) {
+      m.savedSignature = dataUrl;
+    }
+    m.updatedAt = new Date().toISOString();
+  }
   saveAll();
   closeSignPad();
   // 현재 모드에 따라 렌더링
@@ -1310,7 +1426,19 @@ function saveSignature() {
   } else {
     renderSignbook();
   }
-  toast('✅ 서명이 저장되었습니다');
+  toast(saveAsDefault ? '✅ 서명 저장 + 기본 서명으로 등록됨' : '✅ 서명이 저장되었습니다');
+}
+
+function clearDefaultSignature() {
+  const m = members.find(x => x.id === currentSignMemberId);
+  if (!m) return;
+  delete m.savedSignature;
+  m.updatedAt = new Date().toISOString();
+  saveAll();
+  document.getElementById('savedSignNotice').style.display = 'none';
+  document.getElementById('saveAsDefault').checked = false;
+  document.getElementById('clearDefaultBtn').style.display = 'none';
+  toast('기본 서명이 삭제되었습니다');
 }
 
 function clearAllSignatures() {
@@ -1355,10 +1483,14 @@ function renderTabletMode() {
   const list = document.getElementById('tabletList');
   list.innerHTML = activeMembers.map(m => {
     const hasSig = sigs[m.id];
-    return `<div class="tablet-card ${hasSig?'signed':''}" onclick="openSignPad('${m.id}')">
+    const hasSaved = !!m.savedSignature;
+    const statusText = hasSig
+      ? '✅ 서명 완료 (수정하려면 터치)'
+      : hasSaved ? '👆 터치하면 바로 서명!' : '✍️ 서명하기';
+    return `<div class="tablet-card ${hasSig?'signed':''} ${hasSaved&&!hasSig?'has-saved':''}\" onclick="applyOrOpenSign('${m.id}')">
       <div class="tc-name">${esc(m.name)}</div>
       <div class="tc-meta">${esc(schoolGradeStr(m))} · ${esc(m.gender||'')}</div>
-      <div class="tc-status">${hasSig ? '✅ 서명 완료 (수정하려면 터치)' : '✍️ 서명하기'}</div>
+      <div class="tc-status">${statusText}</div>
     </div>`;
   }).join('');
 }
