@@ -1430,6 +1430,13 @@ function saveSignature() {
   outCtx.drawImage(signCanvas, 0, 0, outCanvas.width, outCanvas.height);
   const dataUrl = outCanvas.toDataURL('image/png');
 
+  // 디버그: 저장된 서명 확인용 (개발용 임시)
+  const dbgW = window.open('', '_blank');
+  if (dbgW) {
+    dbgW.document.write(`<img src="${dataUrl}" style="border:1px solid red; display:block; margin:20px;">
+    <p>canvas 원본: ${signCanvas.width}×${signCanvas.height} → 저장: ${outCanvas.width}×${outCanvas.height}</p>`);
+  }
+
   attendance[date].signatures[currentSignMemberId] = dataUrl;
   // 서명하면 자동으로 '출석' 상태로 기록
   if (!attendance[date].byMember[currentSignMemberId]) {
