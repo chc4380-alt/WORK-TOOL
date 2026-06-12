@@ -116,7 +116,7 @@
   .signbook .sb-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; table-layout: fixed; }
   .signbook .sb-table th, .signbook .sb-table td { border: 1px solid #000; padding: 7px 6px; text-align: center; vertical-align: middle; }
   .signbook .sb-table th { background: #FAE8C3; font-weight: 700; color: #333; font-size: 13px; padding: 9px 6px; }
-  .signbook .sb-table td.sb-sig-cell { padding: 2px; background: #fff; height: 42px; min-height: 42px; position: relative; cursor: pointer; }
+  .signbook .sb-table td.sb-sig-cell { padding: 2px; background: #fff; height: 70px; min-height: 70px; position: relative; cursor: pointer; }
   .signbook .sb-table td.sb-sig-cell:hover { background: #FFFBF2; }
   .signbook .sb-table td.sb-sig-cell.has-sig { cursor: pointer; background: #fff; }
   .signbook .sb-table td.sb-sig-cell.has-saved-sig { background: #f0f7ff; }
@@ -124,7 +124,7 @@
   .signbook .sb-table td.sb-sig-cell .sig-placeholder { color: #bbb; font-size: 11px; font-style: italic; }
   .signbook .sb-table td.sb-sig-cell.readonly { cursor: default; }
   .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
-  .signbook .sb-table td.sb-sig-cell img { max-height: 38px; max-width: 100%; vertical-align: middle; }
+  .signbook .sb-table td.sb-sig-cell img { max-height: 64px; max-width: 100%; vertical-align: middle; }
   .signbook .sb-footer { text-align: right; margin-top: 20px; font-size: 14px; font-weight: 600; }
   .signbook .sb-table col.c-num { width: 40px; }
   .signbook .sb-table col.c-name { width: 80px; }
@@ -1430,13 +1430,6 @@ function saveSignature() {
   outCtx.drawImage(signCanvas, 0, 0, outCanvas.width, outCanvas.height);
   const dataUrl = outCanvas.toDataURL('image/png');
 
-  // 디버그: 저장된 서명 확인용 (개발용 임시)
-  const dbgW = window.open('', '_blank');
-  if (dbgW) {
-    dbgW.document.write(`<img src="${dataUrl}" style="border:1px solid red; display:block; margin:20px;">
-    <p>canvas 원본: ${signCanvas.width}×${signCanvas.height} → 저장: ${outCanvas.width}×${outCanvas.height}</p>`);
-  }
-
   attendance[date].signatures[currentSignMemberId] = dataUrl;
   // 서명하면 자동으로 '출석' 상태로 기록
   if (!attendance[date].byMember[currentSignMemberId]) {
@@ -1486,7 +1479,7 @@ async function printSignbook() {
   const activityTime = linkedSch && linkedSch.time ? linkedSch.time : '';
 
   // 행 높이 계산 (rowMM 먼저 선언)
-  const totalMM = 253;
+  const totalMM = 258;
   const headerRowMM = 7;
   const rowMM = Math.floor((totalMM - headerRowMM) / Math.max(activeMembers.length, 1));
 
