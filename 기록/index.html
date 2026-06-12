@@ -197,12 +197,10 @@
   .tablet-summary { text-align: center; margin-bottom: 16px; font-size: 15px; color: #0F6E56; font-weight: 500; }
 
   @media print {
-    /* 전체 숨김 후 서명부만 표시 */
     html, body { margin: 0; padding: 0; background: #fff; }
     body * { visibility: hidden; }
     #signbookPrint, #signbookPrint * { visibility: visible; }
 
-    /* 서명부를 페이지 전체에 꽉 채워 배치 */
     #signbookPrint {
       position: fixed;
       top: 0; left: 0;
@@ -216,29 +214,21 @@
       font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
     }
 
-    /* 제목/정보 영역 압축 */
     #signbookPrint .sb-title { font-size: 18px !important; margin: 0 0 4px !important; }
     #signbookPrint .sb-activity { font-size: 12px !important; margin: 0 0 6px !important; }
     #signbookPrint .sb-info-section { margin-bottom: 6px !important; }
     #signbookPrint .sb-info { font-size: 11px !important; margin: 2px 0 !important; }
 
-    /* 테이블 래퍼 */
-    #signbookPrint > div[style*="flex:1"] {
-      flex: 1 !important;
-      overflow: hidden !important;
-    }
+    #signbookPrint > div[style*="flex:1"] { flex: 1 !important; overflow: hidden !important; }
 
     #signbookPrint .sb-table {
       width: 100% !important;
       height: 100% !important;
       font-size: 10px !important;
-      border-collapse: separate !important;
-      border-spacing: 0 !important;
+      border-collapse: collapse !important;
       table-layout: fixed !important;
-      outline: 1px solid #000 !important;
     }
 
-    /* 열 너비 인쇄 전용 - 서명 칸 넓게 */
     #signbookPrint .sb-table col.c-num   { width: 6% !important; }
     #signbookPrint .sb-table col.c-name  { width: 10% !important; }
     #signbookPrint .sb-table col.c-school{ width: 13% !important; }
@@ -247,51 +237,40 @@
     #signbookPrint .sb-table col.c-phone { width: 15% !important; }
     #signbookPrint .sb-table col.c-sig   { width: 40% !important; }
 
-    #signbookPrint .sb-table th {
-      padding: 4px 3px !important;
-      font-size: 10px !important;
-      background: #FAE8C3 !important;
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      /* box-shadow로 테두리 - 인쇄 배경 꺼져도 항상 출력 */
-      box-shadow: inset 0 0 0 0.5px #000 !important;
-    }
+    #signbookPrint .sb-table th,
     #signbookPrint .sb-table td {
+      border: 0.5pt solid #000 !important;
       padding: 0 3px !important;
       font-size: 10px !important;
-      box-shadow: inset 0 0 0 0.5px #000 !important;
       height: 1% !important;
+      overflow: hidden !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
     }
-    /* 서명 셀 */
+    #signbookPrint .sb-table th {
+      padding: 4px 3px !important;
+      background: #FAE8C3 !important;
+    }
     #signbookPrint .sb-table td.sb-sig-cell {
-      min-height: unset !important;
-      height: 1% !important;
-      max-height: 1% !important;
       padding: 1px 2px !important;
       overflow: hidden !important;
     }
     #signbookPrint .sb-table td.sb-sig-cell img {
-      width: 100% !important;
-      height: 100% !important;
-      max-width: 100% !important;
-      max-height: 100% !important;
-      object-fit: contain !important;
       display: block !important;
+      width: auto !important;
+      height: 28px !important;
+      max-width: 100% !important;
+      object-fit: contain !important;
+      margin: auto !important;
     }
     #signbookPrint .sb-table td.sb-sig-cell .sig-placeholder { display: none !important; }
-
-    /* 푸터 */
     #signbookPrint .sb-footer { font-size: 10px !important; margin-top: 4px !important; flex-shrink: 0; }
 
-    /* 인쇄 버튼·UI 숨김 */
     .close-btn, .print-btns, .tablet-mode,
     .header, .tabs, .panel:not(#panel-attend),
     #attendInfoBox, .attend-controls { display: none !important; }
 
-    @page {
-      size: A4 portrait;
-      margin: 0;
-    }
+    @page { size: A4 portrait; margin: 0; }
   }
   @media (max-width: 700px) {
     .form-grid { grid-template-columns: 1fr; }
@@ -422,7 +401,7 @@
       </select>
       <button class="btn btn-accent btn-small" onclick="openTabletMode()" title="학생들에게 태블릿/PC를 건네줘서 직접 서명하게 하는 모드">👥 학생 서명 모드</button>
       <button class="btn btn-secondary btn-small" onclick="clearAllSignatures()">🗑️ 전체 서명 지우기</button>
-      <button class="btn btn-primary btn-small" onclick="window.print()">🖨️ 서명부 인쇄</button>
+      <button class="btn btn-primary btn-small" onclick="printSignbook()">🖨️ 서명부 인쇄</button>
     </div>
     <div id="attendInfoBox"></div>
     <div id="signbookContainer"></div>
@@ -1469,6 +1448,38 @@ function clearDefaultSignature() {
   document.getElementById('saveAsDefault').checked = false;
   document.getElementById('clearDefaultBtn').style.display = 'none';
   toast('기본 서명이 삭제되었습니다');
+}
+
+// 인쇄 전 서명 이미지를 28px 높이로 리사이즈하여 행 높이 유지
+async function printSignbook() {
+  const imgs = document.querySelectorAll('#signbookPrint .sb-sig-cell img');
+  const originals = [];
+
+  // 각 서명 이미지를 28px 높이로 리사이즈
+  const resizePromises = Array.from(imgs).map((img, i) => {
+    return new Promise(resolve => {
+      originals[i] = img.src;
+      const canvas = document.createElement('canvas');
+      const targetH = 28;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      canvas.width = Math.round(targetH * ratio);
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      const image = new Image();
+      image.onload = () => {
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        img.src = canvas.toDataURL('image/jpeg', 0.85);
+        resolve();
+      };
+      image.src = originals[i];
+    });
+  });
+
+  await Promise.all(resizePromises);
+  window.print();
+
+  // 인쇄 후 원본 복원
+  imgs.forEach((img, i) => { img.src = originals[i]; });
 }
 
 function clearAllSignatures() {
