@@ -498,7 +498,22 @@
       <button class="btn btn-secondary btn-small" onclick="selectAllParticipants(false)">⬜ 전체 해제</button>
       <span id="participantCount" style="font-size:13px; color:#1D9E75; font-weight:600; align-self:center; margin-left:auto;"></span>
     </div>
-    <div id="participantList" style="max-height:400px; overflow-y:auto; border:1px solid #e8e6df; border-radius:8px; padding:8px;"></div>
+    <div id="participantList" style="max-height:340px; overflow-y:auto; border:1px solid #e8e6df; border-radius:8px; padding:8px;"></div>
+
+    <!-- 임시 참여자 추가 -->
+    <div style="margin-top:12px; padding:12px; background:#f9f8f4; border-radius:8px; border:1px solid #e8e6df;">
+      <div style="font-size:13px; font-weight:600; color:#444; margin-bottom:8px;">➕ 임시 참여자 추가 (비회원)</div>
+      <div style="display:flex; gap:6px; margin-bottom:6px;">
+        <input type="text" id="guestName" placeholder="이름" style="flex:1; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <select id="guestGender" style="padding:6px 8px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+          <option value="여">여</option>
+          <option value="남">남</option>
+        </select>
+        <input type="text" id="guestSchool" placeholder="학교/소속" style="flex:1.5; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <button class="btn btn-secondary btn-small" onclick="addGuestParticipant()">추가</button>
+      </div>
+      <div id="guestList" style="font-size:12px; color:#666;"></div>
+    </div>
     <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
       <button class="btn btn-secondary" onclick="closeParticipantSelect()">취소</button>
       <button class="btn btn-primary" onclick="confirmParticipants()">✅ 확인</button>
@@ -1326,13 +1341,19 @@ function renderSignbook() {
     ? allActive
     : allActive.filter(m => currentParticipants.has(m.id));
 
+  // 임시 참여자 (비회원) 추가
+  const guests = getGuestsForKey(key).map(g => ({
+    ...g, savedSignature: null, isGuest: true
+  }));
+  const allParticipants = [...activeMembers, ...guests];
+
   const rec = attendance[key] || { byMember: {}, signatures: {} };
   if (!rec.signatures) rec.signatures = {};
   const linkedSch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
 
   // 상단 안내 박스
   const sigCount = Object.keys(rec.signatures).filter(id => rec.signatures[id]).length;
-  const totalActive = activeMembers.length;
+  const totalActive = allParticipants.length;
   const maleSigned = activeMembers.filter(m => m.gender==='남' && rec.signatures[m.id]).length;
   const femaleSigned = activeMembers.filter(m => m.gender==='여' && rec.signatures[m.id]).length;
   const maleTotal = activeMembers.filter(m => m.gender==='남').length;
@@ -1352,7 +1373,7 @@ function renderSignbook() {
     </div>
   </div>`;
 
-  if (activeMembers.length === 0) {
+  if (allParticipants.length === 0) {
     c.innerHTML = '<div class="empty"><div class="empty-big">👥</div>활동중인 회원이 없습니다. 먼저 "회원 등록"에서 회원을 추가해주세요.</div>';
     return;
   }
@@ -1378,7 +1399,7 @@ function renderSignbook() {
       <thead><tr>
         <th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>서명</th>
       </tr></thead><tbody style="height:100%;">`;
-  activeMembers.forEach((m, i) => {
+  allParticipants.forEach((m, i) => {
     const sig = rec.signatures[m.id];
     const hasSaved = !!m.savedSignature;
     const isManageMode = document.getElementById('signbookContainer').classList.contains('sign-manage-mode');
@@ -1399,13 +1420,13 @@ function renderSignbook() {
     const cellClick = isManageMode ? '' : `onclick="applyOrOpenSign('${m.id}')"`;
     const cellTitle = isManageMode ? '' : `title="${hasSaved && !sig ? '저장된 서명 자동 적용' : '클릭하여 서명'}"`;
 
-    html += `<tr>
+    html += `<tr${m.isGuest ? ' style="background:#fffef0;"' : ''}>
       <td>${i+1}</td>
-      <td>${esc(m.name)}</td>
-      <td>${esc(schoolGradeStr(m))}</td>
+      <td>${esc(m.name)}${m.isGuest ? ' <span style="font-size:10px;color:#e67e00;background:#fff3cd;padding:1px 4px;border-radius:3px;">외부</span>' : ''}</td>
+      <td>${m.isGuest ? esc(m.school||'-') : esc(schoolGradeStr(m))}</td>
       <td>${esc(m.gender||'-')}</td>
-      <td>${esc(bd6fmt(m.birthdate)||'-')}</td>
-      <td>${esc(m.phone||'-')}</td>
+      <td>${m.isGuest ? '-' : esc(bd6fmt(m.birthdate)||'-')}</td>
+      <td>${m.isGuest ? '-' : esc(m.phone||'-')}</td>
       <td class="${cellClass}" ${cellClick} ${cellTitle}>${sigContent}</td>
     </tr>`;
   });
@@ -1625,6 +1646,57 @@ function saveParticipants() {
   } catch(e) {}
 }
 
+// 날짜별 임시 참여자: { 'key': [{id, name, gender, school}] }
+let guestParticipants = {};
+
+function getGuestsForKey(key) {
+  return guestParticipants[key] || [];
+}
+
+function addGuestParticipant() {
+  const name = document.getElementById('guestName').value.trim();
+  if (!name) { toast('이름을 입력해주세요', 'warn'); return; }
+  const gender = document.getElementById('guestGender').value;
+  const school = document.getElementById('guestSchool').value.trim();
+  const key = getAttendKey();
+  if (!guestParticipants[key]) guestParticipants[key] = [];
+  // 중복 체크
+  if (guestParticipants[key].some(g => g.name === name)) {
+    toast('이미 추가된 이름입니다', 'warn'); return;
+  }
+  const guestId = 'guest_' + Date.now();
+  guestParticipants[key].push({ id: guestId, name, gender, school });
+  document.getElementById('guestName').value = '';
+  document.getElementById('guestSchool').value = '';
+  renderGuestList();
+  toast(`${name} 님이 임시 참여자로 추가됐습니다`);
+}
+
+function removeGuestParticipant(guestId) {
+  const key = getAttendKey();
+  if (guestParticipants[key]) {
+    guestParticipants[key] = guestParticipants[key].filter(g => g.id !== guestId);
+  }
+  renderGuestList();
+}
+
+function renderGuestList() {
+  const key = getAttendKey();
+  const guests = getGuestsForKey(key);
+  const el = document.getElementById('guestList');
+  if (!el) return;
+  if (guests.length === 0) {
+    el.innerHTML = '<span style="color:#bbb">추가된 임시 참여자 없음</span>';
+  } else {
+    el.innerHTML = guests.map(g =>
+      `<span style="display:inline-flex; align-items:center; gap:4px; background:#fff; border:1px solid #ddd; border-radius:4px; padding:2px 8px; margin:2px;">
+        ${esc(g.name)}${g.school ? ' · ' + esc(g.school) : ''}
+        <button onclick="removeGuestParticipant('${g.id}')" style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:13px; padding:0; line-height:1;">×</button>
+      </span>`
+    ).join('');
+  }
+}
+
 function openParticipantSelect() {
   const date = document.getElementById('attendDate').value || todayISO();
   const current = getParticipantsForDate(date);
@@ -1641,6 +1713,7 @@ function openParticipantSelect() {
   }).join('');
 
   updateParticipantCount();
+  renderGuestList();
   document.getElementById('participantModal').classList.add('show');
 }
 
@@ -2081,10 +2154,15 @@ function renderStats() {
       const participatedDates = [];
       dates.forEach(d => {
         const s = (statsByDate[d]?.byMember||{})[m.id];
-        if (s==='present') { p++; participatedDates.push({date:d, status:'present'}); }
-        else if (s==='late') { l++; participatedDates.push({date:d, status:'late'}); }
-        else if (s==='absent') { a++; participatedDates.push({date:d, status:'absent'}); }
-        else if (s==='excused') { e++; participatedDates.push({date:d, status:'excused'}); }
+        // 실제 attendance 키 찾기 (날짜_일정ID 또는 날짜)
+        const attKey = Object.keys(attendance).find(k => {
+          const kDate = k.includes('_s_') ? k.split('_s_')[0] : k;
+          return kDate === d;
+        }) || d;
+        if (s==='present') { p++; participatedDates.push({date:d, key:attKey, status:'present'}); }
+        else if (s==='late') { l++; participatedDates.push({date:d, key:attKey, status:'late'}); }
+        else if (s==='absent') { a++; participatedDates.push({date:d, key:attKey, status:'absent'}); }
+        else if (s==='excused') { e++; participatedDates.push({date:d, key:attKey, status:'excused'}); }
       });
       const tot = p+l+a+e;
       return { id:m.id, name:m.name, gender:m.gender, rate:tot>0?Math.round((p+l)/tot*100):null, p,l,a,e,tot, participatedDates };
@@ -2101,7 +2179,8 @@ function renderStats() {
 
         // 참여 활동 목록 행 (숨김 상태)
         const activityRows = r.participatedDates.map(pd => {
-          const sch = attendance[pd.date]?.scheduleId ? schedules.find(s=>s.id===attendance[pd.date].scheduleId) : null;
+          const rec = attendance[pd.key] || attendance[pd.date];
+          const sch = rec?.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
           const title = sch ? sch.title : '(일정 없음)';
           const loc = sch ? sch.location : '';
           return `<div style="display:flex; align-items:center; gap:10px; padding:4px 0; border-bottom:1px solid #f0ede4; font-size:12px;">
