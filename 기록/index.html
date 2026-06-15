@@ -1447,17 +1447,19 @@ let signCanvas, signCtx, signDrawing = false, currentSignMemberId = null, signHa
 
 // 저장된 서명 있으면 즉시 적용, 없으면 패드 열기
 function applyOrOpenSign(memberId) {
-  const m = members.find(x => x.id === memberId);
+  const key = getAttendKey();
+  // 회원 또는 임시 참여자에서 찾기
+  const m = members.find(x => x.id === memberId)
+    || (guestParticipants[key] || []).find(x => x.id === memberId);
   if (!m) return;
   const date = document.getElementById('attendDate').value || todayISO();
-  const key = getAttendKey();
   const alreadySigned = attendance[key] && attendance[key].signatures && attendance[key].signatures[memberId];
 
   // 이미 서명된 경우 → 패드 열기 (수정 목적)
   if (alreadySigned) { openSignPad(memberId); return; }
 
-  // 저장된 기본 서명이 있으면 즉시 적용
-  if (m.savedSignature) {
+  // 저장된 기본 서명이 있으면 즉시 적용 (회원만)
+  if (!m.isGuest && m.savedSignature) {
     if (!attendance[key]) attendance[key] = { byMember: {}, signatures: {} };
     if (!attendance[key].signatures) attendance[key].signatures = {};
     if (!attendance[key].byMember) attendance[key].byMember = {};
@@ -1474,14 +1476,18 @@ function applyOrOpenSign(memberId) {
 }
 
 function openSignPad(memberId) {
-  const m = members.find(x=>x.id===memberId);
+  const key = getAttendKey();
+  const m = members.find(x => x.id === memberId)
+    || (guestParticipants[key] || []).find(x => x.id === memberId);
   if (!m) return;
   currentSignMemberId = memberId;
   document.getElementById('signName').textContent = m.name;
-  // 기본 서명 저장 여부 표시
-  const hasSaved = !!m.savedSignature;
+  // 기본 서명 저장 옵션 - 회원만 표시
+  const isGuest = !!m.isGuest;
+  const hasSaved = !isGuest && !!m.savedSignature;
   document.getElementById('savedSignNotice').style.display = hasSaved ? 'block' : 'none';
   document.getElementById('saveAsDefault').checked = hasSaved;
+  document.getElementById('saveAsDefault').parentElement.style.display = isGuest ? 'none' : '';
   document.getElementById('clearDefaultBtn').style.display = hasSaved ? 'inline-block' : 'none';
   document.getElementById('signPadModal').classList.add('show');
   setTimeout(initSignCanvas, 100);
