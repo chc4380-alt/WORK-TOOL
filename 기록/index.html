@@ -914,6 +914,7 @@ function renderList() {
       <td><div class="action-btns">
         <button class="view-btn" onclick="viewCard('${m.id}')">카드</button>
         <button class="edit-btn" onclick="editMember('${m.id}')">수정</button>
+        ${m.savedSignature ? `<button class="btn btn-secondary btn-small" style="font-size:11px; color:#c0392b; border-color:#c0392b;" onclick="deleteSavedSignature('${m.id}')">✏️서명삭제</button>` : ''}
         <button class="del-btn" onclick="deleteMember('${m.id}')">삭제</button>
       </div></td>
     </tr>`;
@@ -1455,6 +1456,17 @@ function saveSignature() {
   toast(saveAsDefault ? '✅ 서명 저장 + 기본 서명으로 등록됨' : '✅ 서명이 저장되었습니다');
 }
 
+function deleteSavedSignature(memberId) {
+  const m = members.find(x => x.id === memberId);
+  if (!m || !m.savedSignature) return;
+  if (!confirm(`"${m.name}" 님의 대표서명을 삭제할까요?\n다음 서명 시 패드가 다시 열립니다.`)) return;
+  delete m.savedSignature;
+  m.updatedAt = new Date().toISOString();
+  saveAll();
+  renderList();
+  toast(`${m.name} 님의 대표서명이 삭제되었습니다`);
+}
+
 function clearDefaultSignature() {
   const m = members.find(x => x.id === currentSignMemberId);
   if (!m) return;
@@ -1670,6 +1682,15 @@ function viewCard(id) {
 }
 
 // ==================== 통계 ====================
+function toggleStatDetail(uid) {
+  const detail = document.getElementById(uid + '_detail');
+  const arrow = document.getElementById(uid + '_arrow');
+  if (!detail) return;
+  const isOpen = detail.style.display !== 'none';
+  detail.style.display = isOpen ? 'none' : 'table-row';
+  if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
+}
+
 function renderStats() {
   const c = document.getElementById('statsContent');
   if (members.length === 0) { c.innerHTML = '<div class="empty"><div class="empty-big">📊</div>등록된 회원이 있어야 통계를 볼 수 있어요.</div>'; return; }
@@ -1717,19 +1738,58 @@ function renderStats() {
   if (dates.length > 0) {
     const rates = members.filter(m=>m.status==='활동중').map(m => {
       let p=0,l=0,a=0,e=0;
+      const participatedDates = [];
       dates.forEach(d => {
         const s = (attendance[d].byMember||{})[m.id];
-        if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
+        if (s==='present') { p++; participatedDates.push({date:d, status:'present'}); }
+        else if (s==='late') { l++; participatedDates.push({date:d, status:'late'}); }
+        else if (s==='absent') { a++; participatedDates.push({date:d, status:'absent'}); }
+        else if (s==='excused') { e++; participatedDates.push({date:d, status:'excused'}); }
       });
       const tot = p+l+a+e;
-      return { name:m.name, gender:m.gender, rate:tot>0?Math.round((p+l)/tot*100):null, p,l,a,e,tot };
+      return { id:m.id, name:m.name, gender:m.gender, rate:tot>0?Math.round((p+l)/tot*100):null, p,l,a,e,tot, participatedDates };
     }).filter(x=>x.rate!==null).sort((a,b)=>b.rate-a.rate);
+
     if (rates.length > 0) {
-      html += '<div class="widget-section"><h3>📈 개인별 출석률</h3><table class="list-table"><thead><tr><th>이름</th><th>성별</th><th>출석</th><th>지각</th><th>결석</th><th>사유</th><th>출석률</th></tr></thead><tbody>';
+      const statusLabel = { present:'출석', late:'지각', absent:'결석', excused:'사유' };
+      const statusColor = { present:'#1D9E75', late:'#EF9F27', absent:'#E24B4A', excused:'#888' };
+
+      html += '<div class="widget-section"><h3>📈 개인별 출석률</h3><p style="font-size:12px;color:#888;margin-bottom:8px">이름을 클릭하면 참여 활동 목록을 볼 수 있습니다.</p><table class="list-table"><thead><tr><th>이름</th><th>성별</th><th>출석</th><th>지각</th><th>결석</th><th>사유</th><th>출석률</th></tr></thead><tbody>';
       rates.forEach(r => {
         const color = r.rate>=80?'#1D9E75':r.rate>=60?'#EF9F27':'#E24B4A';
-        html += `<tr><td style="font-weight:500">${esc(r.name)}</td><td>${esc(r.gender||'-')}</td><td>${r.p}</td><td>${r.l}</td><td>${r.a}</td><td>${r.e}</td>
-          <td><div style="display:flex; align-items:center; gap:8px"><div style="width:100px; height:8px; background:#f1efe8; border-radius:4px; overflow:hidden"><div style="height:100%; width:${r.rate}%; background:${color}"></div></div>${r.rate}%</div></td></tr>`;
+        const uid = 'stat_' + r.id;
+
+        // 참여 활동 목록 행 (숨김 상태)
+        const activityRows = r.participatedDates.map(pd => {
+          const sch = attendance[pd.date]?.scheduleId ? schedules.find(s=>s.id===attendance[pd.date].scheduleId) : null;
+          const title = sch ? sch.title : '(일정 없음)';
+          const loc = sch ? sch.location : '';
+          return `<div style="display:flex; align-items:center; gap:10px; padding:4px 0; border-bottom:1px solid #f0ede4; font-size:12px;">
+            <span style="color:#888; min-width:90px;">${pd.date}</span>
+            <span style="font-weight:500; flex:1;">${esc(title)}</span>
+            ${loc ? `<span style="color:#aaa; font-size:11px;">${esc(loc)}</span>` : ''}
+            <span style="color:${statusColor[pd.status]}; font-weight:600; min-width:30px; text-align:right;">${statusLabel[pd.status]}</span>
+          </div>`;
+        }).join('');
+
+        html += `<tr>
+          <td style="font-weight:500; cursor:pointer; color:#1e6eb5;" onclick="toggleStatDetail('${uid}')" title="클릭하여 활동 목록 보기">
+            ${esc(r.name)} <span id="${uid}_arrow" style="font-size:11px; color:#aaa;">▶</span>
+          </td>
+          <td>${esc(r.gender||'-')}</td>
+          <td>${r.p}</td><td>${r.l}</td><td>${r.a}</td><td>${r.e}</td>
+          <td><div style="display:flex; align-items:center; gap:8px">
+            <div style="width:100px; height:8px; background:#f1efe8; border-radius:4px; overflow:hidden">
+              <div style="height:100%; width:${r.rate}%; background:${color}"></div>
+            </div>${r.rate}%
+          </div></td>
+        </tr>
+        <tr id="${uid}_detail" style="display:none;">
+          <td colspan="7" style="padding:8px 16px; background:#f9f8f4;">
+            <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">📋 ${r.name} 님 참여 활동 (${r.tot}회)</div>
+            ${activityRows || '<div style="color:#aaa;font-size:12px;">활동 기록 없음</div>'}
+          </td>
+        </tr>`;
       });
       html += '</tbody></table></div>';
     }
