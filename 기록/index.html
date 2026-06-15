@@ -1955,10 +1955,10 @@ function viewCard(id) {
   const m = members.find(x=>x.id===id);
   if (!m) return;
   const age = getAge(m.birthdate);
-  const dates = Object.keys(attendance).sort();
+  const statsByDate = getStatsByDate(); const dates = Object.keys(statsByDate).sort();
   let p=0,l=0,a=0,e=0;
   dates.forEach(d => {
-    const s = (attendance[d].byMember||{})[m.id];
+    const s = (statsByDate[d]?.byMember||{})[m.id];
     if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
   });
   const tot = p+l+a+e;
@@ -2008,6 +2008,29 @@ function toggleStatDetail(uid) {
   if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
 }
 
+
+// 통계용: attendance에서 날짜별 byMember 맵 반환 (날짜+일정ID 키 우선, 중복 방지)
+function getStatsByDate() {
+  const dateMap = {}; // { 'YYYY-MM-DD': { byMember: {} } }
+  Object.entries(attendance).forEach(([key, val]) => {
+    const isCombo = key.includes('_s_');
+    const date = isCombo ? key.split('_s_')[0] : key;
+    if (!dateMap[date]) {
+      dateMap[date] = { byMember: Object.assign({}, val.byMember || {}) };
+    } else {
+      // 일정 키(combo)가 날짜 키보다 우선
+      if (isCombo) {
+        Object.assign(dateMap[date].byMember, val.byMember || {});
+      } else {
+        // 날짜 키는 이미 없는 회원만 보완
+        Object.entries(val.byMember || {}).forEach(([mid, status]) => {
+          if (!dateMap[date].byMember[mid]) dateMap[date].byMember[mid] = status;
+        });
+      }
+    }
+  });
+  return dateMap;
+}
 function renderStats() {
   const c = document.getElementById('statsContent');
   if (members.length === 0) { c.innerHTML = '<div class="empty"><div class="empty-big">📊</div>등록된 회원이 있어야 통계를 볼 수 있어요.</div>'; return; }
@@ -2020,7 +2043,7 @@ function renderStats() {
   const femaleActive = members.filter(m=>m.gender==='여' && m.status==='활동중').length;
   const grades = {};
   members.forEach(m => { if (m.grade) grades[m.grade] = (grades[m.grade]||0) + 1; });
-  const dates = Object.keys(attendance).sort();
+  const statsByDate = getStatsByDate(); const dates = Object.keys(statsByDate).sort();
 
   let html = `<div class="dashboard-grid">
     <div class="dash-card"><div class="dash-label">전체 회원</div><div class="dash-value">${total}명</div><div class="dash-sub">활동중 ${active}명</div></div>
@@ -2057,7 +2080,7 @@ function renderStats() {
       let p=0,l=0,a=0,e=0;
       const participatedDates = [];
       dates.forEach(d => {
-        const s = (attendance[d].byMember||{})[m.id];
+        const s = (statsByDate[d]?.byMember||{})[m.id];
         if (s==='present') { p++; participatedDates.push({date:d, status:'present'}); }
         else if (s==='late') { l++; participatedDates.push({date:d, status:'late'}); }
         else if (s==='absent') { a++; participatedDates.push({date:d, status:'absent'}); }
@@ -2134,7 +2157,7 @@ function exportMembersXLSX() {
 }
 
 function exportAttendXLSX() {
-  const dates = Object.keys(attendance).sort();
+  const statsByDate = getStatsByDate(); const dates = Object.keys(statsByDate).sort();
   if (dates.length===0) { toast('출석 기록이 없습니다','warn'); return; }
   const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const statusMap = { present:'○', late:'△', absent:'×', excused:'◇' };
@@ -2147,7 +2170,7 @@ function exportAttendXLSX() {
     const row = { '순번':i+1, '이름':m.name, '학교/학년':schoolGradeStr(m), '성별':m.gender||'', '생년월일':bd6fmt(m.birthdate), '연락처':m.phone||'' };
     let p=0,l=0,a=0,e=0;
     dates.forEach((d, i) => {
-      const s = (attendance[d].byMember||{})[m.id];
+      const s = (statsByDate[d]?.byMember||{})[m.id];
       row[dateHeaders[i]] = s ? statusMap[s] : '';
       if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
     });
@@ -2177,7 +2200,7 @@ function exportScheduleXLSX() {
   ws1['!cols'] = [{wch:12},{wch:14},{wch:24},{wch:24},{wch:40},{wch:24}];
   XLSX.utils.book_append_sheet(wb, ws1, '일정표');
 
-  const dates = Object.keys(attendance).sort();
+  const statsByDate = getStatsByDate(); const dates = Object.keys(statsByDate).sort();
   if (dates.length > 0) {
     const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     const logRows = dates.map(d => {
@@ -2232,7 +2255,7 @@ function exportAllXLSX() {
     ws['!cols'] = [{wch:12},{wch:14},{wch:24},{wch:24},{wch:40},{wch:24}];
     XLSX.utils.book_append_sheet(wb, ws, '일정표');
   }
-  const dates = Object.keys(attendance).sort();
+  const statsByDate = getStatsByDate(); const dates = Object.keys(statsByDate).sort();
   if (dates.length > 0) {
     const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     const statusMap = { present:'○', late:'△', absent:'×', excused:'◇' };
@@ -2245,7 +2268,7 @@ function exportAllXLSX() {
       const row = {'순번':i+1, '이름':m.name, '학교/학년':schoolGradeStr(m), '성별':m.gender||''};
       let p=0,l=0,a=0,e=0;
       dates.forEach((d,i) => {
-        const s = (attendance[d].byMember||{})[m.id];
+        const s = (statsByDate[d]?.byMember||{})[m.id];
         row[dateHeaders[i]] = s?statusMap[s]:'';
         if (s==='present') p++; else if (s==='late') l++; else if (s==='absent') a++; else if (s==='excused') e++;
       });
