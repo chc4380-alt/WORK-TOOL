@@ -565,6 +565,12 @@
     <div class="help-box">
       💡 <strong>설정 팁:</strong> "서명부 제목"은 출석부 출력 시 맨 위에 나오는 제목이에요. 예시의 "2026년 청소년동아리 기록 5기 서명부" 같이 넣어주세요.
     </div>
+    <div class="help-box" style="background:#f0f7ff; border-color:#1e6eb5;">
+      🔧 <strong>데이터 마이그레이션:</strong> 이전에 날짜+일정 연결로 저장된 서명부를 일정별 독립 서명부로 변환합니다. 최초 1회만 실행하면 됩니다.
+      <div style="margin-top:8px;">
+        <button class="btn btn-secondary btn-small" onclick="migrateAttendanceKeys()" style="color:#1e6eb5; border-color:#1e6eb5;">🔄 서명부 데이터 마이그레이션</button>
+      </div>
+    </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeSettings()">취소</button>
       <button class="btn btn-primary" onclick="saveSettings()">💾 저장</button>
@@ -686,9 +692,11 @@ async function loadFromDB() {
     if (atRows.length > 0) {
       attendance = {};
       atRows.forEach(r => {
-        attendance[r.date] = {
+        // 일정ID가 있으면 일정ID를 키로, 없으면 날짜를 키로
+        const attKey = r.schedule_id || r.date;
+        attendance[attKey] = {
           byMember: r.by_member || {},
-          scheduleId: r.schedule_id,
+          scheduleId: r.schedule_id || null,
           signatures: r.signatures || {}
         };
       });
@@ -741,13 +749,18 @@ async function saveToDB() {
     if (Object.keys(attendance).length > 0) tasks.push(sbFetch('club_attendance', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify(Object.entries(attendance).map(([date, val]) => ({
-        id: CLUB_ID + '_' + date, club_id: CLUB_ID,
-        date, schedule_id: val.scheduleId || null,
-        by_member: val.byMember || {},
-        signatures: val.signatures || {},
-        updated_at: new Date().toISOString()
-      })))
+      body: JSON.stringify(Object.entries(attendance).map(([attKey, val]) => {
+        // attKey가 일정ID(s_xxx) 형태면 scheduleId로부터 날짜 추출, 아니면 날짜 그대로
+        const sch = val.scheduleId ? schedules.find(s => s.id === val.scheduleId) : null;
+        const dateVal = sch ? sch.date : attKey;
+        return {
+          id: CLUB_ID + '_' + attKey, club_id: CLUB_ID,
+          date: dateVal, schedule_id: val.scheduleId || null,
+          by_member: val.byMember || {},
+          signatures: val.signatures || {},
+          updated_at: new Date().toISOString()
+        };
+      }))
     }));
     tasks.push(sbFetch('club_settings', {
       method: 'POST',
@@ -1270,9 +1283,19 @@ function refreshAttendScheduleSelect() {
     html += '</optgroup>';
   }
   sel.innerHTML = html;
-  const rec = attendance[date];
-  if (rec && rec.scheduleId) sel.value = rec.scheduleId;
+  // 현재 날짜에 일정 연결된 게 있으면 복원
+  const existKey = getAttendKey();
+  const existRec = attendance[existKey];
+  if (existRec && existRec.scheduleId) sel.value = existRec.scheduleId;
   else sel.value = cur;
+}
+
+// 현재 선택된 일정ID or 날짜를 attendance 키로 반환
+// 일정 선택 시 → 일정ID, 없으면 → 날짜
+function getAttendKey() {
+  const schId = document.getElementById('attendSchedule')?.value;
+  const date = document.getElementById('attendDate')?.value || todayISO();
+  return schId || date;
 }
 
 function onAttendDateChange() {
@@ -1284,34 +1307,32 @@ function onAttendDateChange() {
 function onAttendScheduleChange() {
   const date = document.getElementById('attendDate').value;
   const schId = document.getElementById('attendSchedule').value;
-  if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
   if (schId) {
     const s = schedules.find(x=>x.id===schId);
+    // 다른 날짜 일정 선택 시 날짜도 이동
     if (s && s.date !== date) {
       document.getElementById('attendDate').value = s.date;
-      if (!attendance[s.date]) attendance[s.date] = { byMember: {}, signatures: {} };
-      attendance[s.date].scheduleId = s.id;
-    } else {
-      attendance[date].scheduleId = schId;
     }
-  } else {
-    delete attendance[date].scheduleId;
+    // 일정 ID 키로 attendance 초기화
+    if (!attendance[schId]) attendance[schId] = { byMember: {}, signatures: {}, scheduleId: schId };
   }
   saveAll();
   renderSignbook();
+  updateParticipantBtn();
 }
 
 function renderSignbook() {
   const date = document.getElementById('attendDate').value || todayISO();
+  const key = getAttendKey(); // 일정 있으면 일정ID, 없으면 날짜
   const c = document.getElementById('signbookContainer');
   const infoBox = document.getElementById('attendInfoBox');
   const allActive = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const currentParticipants = getParticipantsForDate(date);
+  const currentParticipants = getParticipantsForDate(key);
   const activeMembers = currentParticipants === null
     ? allActive
     : allActive.filter(m => currentParticipants.has(m.id));
 
-  const rec = attendance[date] || { byMember: {}, signatures: {} };
+  const rec = attendance[key] || { byMember: {}, signatures: {} };
   if (!rec.signatures) rec.signatures = {};
   const linkedSch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
 
@@ -1409,18 +1430,19 @@ function applyOrOpenSign(memberId) {
   const m = members.find(x => x.id === memberId);
   if (!m) return;
   const date = document.getElementById('attendDate').value || todayISO();
-  const alreadySigned = attendance[date] && attendance[date].signatures && attendance[date].signatures[memberId];
+  const key = getAttendKey();
+  const alreadySigned = attendance[key] && attendance[key].signatures && attendance[key].signatures[memberId];
 
   // 이미 서명된 경우 → 패드 열기 (수정 목적)
   if (alreadySigned) { openSignPad(memberId); return; }
 
   // 저장된 기본 서명이 있으면 즉시 적용
   if (m.savedSignature) {
-    if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
-    if (!attendance[date].signatures) attendance[date].signatures = {};
-    if (!attendance[date].byMember) attendance[date].byMember = {};
-    attendance[date].signatures[memberId] = m.savedSignature;
-    if (!attendance[date].byMember[memberId]) attendance[date].byMember[memberId] = 'present';
+    if (!attendance[key]) attendance[key] = { byMember: {}, signatures: {} };
+    if (!attendance[key].signatures) attendance[key].signatures = {};
+    if (!attendance[key].byMember) attendance[key].byMember = {};
+    attendance[key].signatures[memberId] = m.savedSignature;
+    if (!attendance[key].byMember[memberId]) attendance[key].byMember[memberId] = 'present';
     saveAll();
     renderSignbook();
     toast(`✅ ${m.name} 서명 완료`);
@@ -1455,7 +1477,8 @@ function initSignCanvas() {
   signCtx = signCanvas.getContext('2d');
   // 기존 서명 있으면 로드
   const date = document.getElementById('attendDate').value || todayISO();
-  const existing = attendance[date] && attendance[date].signatures && attendance[date].signatures[currentSignMemberId];
+  const key = getAttendKey();
+  const existing = attendance[key] && attendance[key].signatures && attendance[key].signatures[currentSignMemberId];
   // 크기 설정 (고해상도)
   const rect = signCanvas.parentElement.getBoundingClientRect();
   signCanvas.width = rect.width * 4;
@@ -1538,9 +1561,10 @@ function saveSignature() {
   }
   if (!currentSignMemberId) return;
   const date = document.getElementById('attendDate').value || todayISO();
-  if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
-  if (!attendance[date].signatures) attendance[date].signatures = {};
-  if (!attendance[date].byMember) attendance[date].byMember = {};
+  const key = getAttendKey();
+  if (!attendance[key]) attendance[key] = { byMember: {}, signatures: {} };
+  if (!attendance[key].signatures) attendance[key].signatures = {};
+  if (!attendance[key].byMember) attendance[key].byMember = {};
 
   // 4배 canvas → 원본 크기(1배) canvas로 축소 후 저장 (선 진하게 유지)
   const outCanvas = document.createElement('canvas');
@@ -1552,10 +1576,10 @@ function saveSignature() {
   outCtx.drawImage(signCanvas, 0, 0, outCanvas.width, outCanvas.height);
   const dataUrl = outCanvas.toDataURL('image/png');
 
-  attendance[date].signatures[currentSignMemberId] = dataUrl;
+  attendance[key].signatures[currentSignMemberId] = dataUrl;
   // 서명하면 자동으로 '출석' 상태로 기록
-  if (!attendance[date].byMember[currentSignMemberId]) {
-    attendance[date].byMember[currentSignMemberId] = 'present';
+  if (!attendance[key].byMember[currentSignMemberId]) {
+    attendance[key].byMember[currentSignMemberId] = 'present';
   }
   // 기본 서명으로 저장 체크 시 회원 정보에 저장
   const saveAsDefault = document.getElementById('saveAsDefault').checked;
@@ -1709,11 +1733,12 @@ function toggleSignManageMode() {
 function deleteSignature(memberId, e) {
   e.stopPropagation();
   const date = document.getElementById('attendDate').value || todayISO();
+  const key = getAttendKey();
   const m = members.find(x => x.id === memberId);
   if (!m) return;
   if (!confirm(`"${m.name}" 님의 오늘(${date}) 서명을 삭제할까요?`)) return;
-  if (attendance[date] && attendance[date].signatures) {
-    delete attendance[date].signatures[memberId];
+  if (attendance[key] && attendance[key].signatures) {
+    delete attendance[key].signatures[memberId];
   }
   saveAll();
   renderSignbook();
@@ -1777,7 +1802,7 @@ async function clearDefaultSignature() {
 // 인쇄 전 서명 이미지를 28px 높이로 리사이즈하여 행 높이 유지
 async function printSignbook() {
   const date = document.getElementById('attendDate').value || todayISO();
-  const rec = attendance[date] || { byMember: {}, signatures: {} };
+  const rec = attendance[key] || { byMember: {}, signatures: {} };
   const sigs = rec.signatures || {};
   const linkedSch = rec.scheduleId ? schedules.find(s => s.id === rec.scheduleId) : null;
   const activeMembers = members.filter(m => m.status === '활동중').sort((a,b) => (a.name||'').localeCompare(b.name||''));
@@ -1876,12 +1901,13 @@ async function printSignbook() {
 
 function clearAllSignatures() {
   const date = document.getElementById('attendDate').value || todayISO();
-  if (!attendance[date] || !attendance[date].signatures || Object.keys(attendance[date].signatures).length === 0) {
+  const key = getAttendKey();
+  if (!attendance[key] || !attendance[key].signatures || Object.keys(attendance[key].signatures).length === 0) {
     toast('지울 서명이 없습니다', 'warn'); return;
   }
   if (!confirm(`${dateFmt(date)}의 모든 서명과 출석 기록을 지울까요?`)) return;
-  attendance[date].signatures = {};
-  attendance[date].byMember = {};
+  attendance[key].signatures = {};
+  attendance[key].byMember = {};
   saveAll();
   renderSignbook();
   toast('전체 서명이 삭제되었습니다');
@@ -1889,8 +1915,8 @@ function clearAllSignatures() {
 
 // ==================== 태블릿 서명 모드 ====================
 function openTabletMode() {
-  const date = document.getElementById('attendDate').value || todayISO();
-  if (!attendance[date]) attendance[date] = { byMember: {}, signatures: {} };
+  const key = getAttendKey();
+  if (!attendance[key]) attendance[key] = { byMember: {}, signatures: {} };
   document.getElementById('tabletMode').classList.add('show');
   renderTabletMode();
 }
@@ -1902,7 +1928,8 @@ function closeTabletMode() {
 
 function renderTabletMode() {
   const date = document.getElementById('attendDate').value || todayISO();
-  const rec = attendance[date] || { signatures:{} };
+  const key = getAttendKey();
+  const rec = attendance[key] || { signatures:{} };
   const sigs = rec.signatures || {};
   const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const linkedSch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
@@ -2296,7 +2323,45 @@ function saveSettings() {
   toast('✅ 설정이 저장되었습니다');
 }
 
-// ==================== 초기화 ====================
+// ==================== 데이터 마이그레이션 ====================
+async function migrateAttendanceKeys() {
+  // 날짜 키로 저장된 것 중 scheduleId 있는 항목 → 일정ID 키로 이동
+  const toMigrate = Object.entries(attendance).filter(([key, val]) => {
+    // 날짜 형식(YYYY-MM-DD)이고 scheduleId가 있는 경우
+    return /^\d{4}-\d{2}-\d{2}$/.test(key) && val.scheduleId;
+  });
+
+  if (toMigrate.length === 0) {
+    toast('마이그레이션할 데이터가 없습니다 (이미 완료됐거나 해당 없음)');
+    return;
+  }
+
+  const names = toMigrate.map(([key, val]) => {
+    const sch = schedules.find(s => s.id === val.scheduleId);
+    return `${key} · ${sch ? sch.title : val.scheduleId}`;
+  });
+
+  if (!confirm(`다음 ${toMigrate.length}건을 일정ID 키로 마이그레이션할까요?\n\n${names.join('\n')}\n\n기존 날짜 키 데이터는 삭제됩니다.`)) return;
+
+  showSyncStatus('saving');
+
+  for (const [dateKey, val] of toMigrate) {
+    const schId = val.scheduleId;
+    // 새 키(일정ID)로 저장
+    attendance[schId] = { ...val };
+    // 기존 날짜 키 삭제
+    delete attendance[dateKey];
+    // Supabase에서 기존 날짜 키 행 삭제
+    try {
+      await sbFetch(`club_attendance?id=eq.${encodeURIComponent(CLUB_ID + '_' + dateKey)}`, { method: 'DELETE' });
+    } catch(e) { console.warn('기존 행 삭제 실패:', e); }
+  }
+
+  await saveToDB();
+  saveLocal();
+  renderSignbook();
+  toast(`✅ ${toMigrate.length}건 마이그레이션 완료`);
+}
 (async function init() {
   loadLocal(); // 로컬 캐시 먼저 표시 (빠른 초기 렌더링)
   // 동아리명 항상 최신값으로 고정
