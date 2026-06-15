@@ -503,18 +503,16 @@
     <!-- 임시 참여자 추가 -->
     <div style="margin-top:12px; padding:12px; background:#f9f8f4; border-radius:8px; border:1px solid #e8e6df;">
       <div style="font-size:13px; font-weight:600; color:#444; margin-bottom:8px;">➕ 임시 참여자 추가 (비회원)</div>
-      <div style="display:grid; grid-template-columns:1fr 60px 1fr 1fr 1fr; gap:6px; margin-bottom:6px;">
-        <input type="text" id="guestName" placeholder="이름 *" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
-        <select id="guestGender" style="padding:6px 8px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+      <div style="display:flex; gap:6px; margin-bottom:6px; flex-wrap:wrap;">
+        <input type="text" id="guestName" placeholder="이름 *" style="flex:1; min-width:80px; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <select id="guestGender" style="width:60px; padding:6px 8px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
           <option value="여">여</option>
           <option value="남">남</option>
         </select>
-        <input type="text" id="guestSchool" placeholder="학교/소속" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
-        <input type="text" id="guestBirthdate" placeholder="생년월일 (예: 110321)" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
-        <input type="text" id="guestPhone" placeholder="연락처" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
-      </div>
-      <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
-        <button class="btn btn-secondary btn-small" onclick="addGuestParticipant()">➕ 추가</button>
+        <input type="text" id="guestSchool" placeholder="학교/소속" style="flex:1.2; min-width:80px; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <input type="text" id="guestBirthdate" placeholder="생년월일 (예: 110321)" style="flex:1.2; min-width:100px; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <input type="text" id="guestPhone" placeholder="연락처" style="flex:1.2; min-width:100px; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <button class="btn btn-secondary btn-small" onclick="addGuestParticipant()" style="white-space:nowrap;">➕ 추가</button>
       </div>
       <div id="guestList" style="font-size:12px; color:#666;"></div>
     </div>
@@ -704,14 +702,17 @@ async function loadFromDB() {
     }
     if (atRows.length > 0) {
       attendance = {};
+      guestParticipants = {};
       atRows.forEach(r => {
-        // 날짜+일정ID 조합 키 (일정 없으면 날짜만)
         const attKey = r.schedule_id ? r.date + '_' + r.schedule_id : r.date;
         attendance[attKey] = {
           byMember: r.by_member || {},
           scheduleId: r.schedule_id || null,
           signatures: r.signatures || {}
         };
+        if (r.guests && r.guests.length > 0) {
+          guestParticipants[attKey] = r.guests;
+        }
       });
     }
     if (stRows.length > 0) {
@@ -763,7 +764,6 @@ async function saveToDB() {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify(Object.entries(attendance).map(([attKey, val]) => {
-        // attKey: '2026-06-18' or '2026-06-18_s_xxx'
         const parts = attKey.split('_s_');
         const dateVal = parts[0];
         return {
@@ -771,6 +771,7 @@ async function saveToDB() {
           date: dateVal, schedule_id: val.scheduleId || null,
           by_member: val.byMember || {},
           signatures: val.signatures || {},
+          guests: guestParticipants[attKey] || [],
           updated_at: new Date().toISOString()
         };
       }))
@@ -1650,8 +1651,11 @@ function saveParticipants() {
   } catch(e) {}
 }
 
-// 날짜별 임시 참여자: { 'key': [{id, name, gender, school}] }
+// 날짜별 임시 참여자: { 'key': [{id, name, gender, school, birthdate, phone}] }
 let guestParticipants = {};
+
+
+
 
 function getGuestsForKey(key) {
   return guestParticipants[key] || [];
@@ -1681,6 +1685,9 @@ function addGuestParticipant() {
   document.getElementById('guestSchool').value = '';
   document.getElementById('guestBirthdate').value = '';
   document.getElementById('guestPhone').value = '';
+  // attendance에 해당 key 없으면 초기화 (guests만 있는 경우)
+  if (!attendance[key]) attendance[key] = { byMember: {}, signatures: {}, scheduleId: document.getElementById('attendSchedule')?.value || null };
+  saveAll();
   renderGuestList();
   renderSignbook();
   toast(`${name} 님이 임시 참여자로 추가됐습니다`);
@@ -1691,7 +1698,9 @@ function removeGuestParticipant(guestId) {
   if (guestParticipants[key]) {
     guestParticipants[key] = guestParticipants[key].filter(g => g.id !== guestId);
   }
+  saveAll();
   renderGuestList();
+  renderSignbook();
 }
 
 function renderGuestList() {
