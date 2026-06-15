@@ -181,6 +181,17 @@
   }
   .sign-manage-mode-banner.show { display: block; }
   #signModeBtn.active { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+
+  /* 참여자 선택 */
+  .participant-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 10px; border-radius: 6px; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .participant-item:hover { background: #f5f4ef; }
+  .participant-item input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #1D9E75; }
+  .participant-item .p-name { font-weight: 600; font-size: 14px; min-width: 60px; }
+  .participant-item .p-info { font-size: 12px; color: #888; }
   .signbook .sb-footer { text-align: right; margin-top: 20px; font-size: 14px; font-weight: 600; }
   .signbook .sb-table col.c-num { width: 40px; }
   .signbook .sb-table col.c-name { width: 80px; }
@@ -456,6 +467,7 @@
         <option value="">— 일정 없음 —</option>
       </select>
       <button class="btn btn-accent btn-small" onclick="openTabletMode()" title="학생들에게 태블릿/PC를 건네줘서 직접 서명하게 하는 모드">👥 학생 서명 모드</button>
+      <button class="btn btn-secondary btn-small" onclick="openParticipantSelect()">👤 참여자 선택</button>
       <button class="btn btn-secondary btn-small" id="signModeBtn" onclick="toggleSignManageMode()" title="서명 및 대표서명 삭제">🔧 서명 관리</button>
       <button class="btn btn-secondary btn-small" onclick="clearAllSignatures()">🗑️ 전체 서명 지우기</button>
       <button class="btn btn-primary btn-small" onclick="printSignbook()">🖨️ 서명부 인쇄</button>
@@ -466,6 +478,25 @@
     </div>
     <div id="signbookContainer"></div>
   </div>
+
+<!-- 참여자 선택 모달 -->
+<div class="modal" id="participantModal">
+  <div class="modal-wrap" style="max-width:520px;">
+    <button class="close-btn" onclick="closeParticipantSelect()">✕</button>
+    <h2 style="margin:0 0 6px; font-size:18px;">👤 참여자 선택</h2>
+    <p style="font-size:13px; color:#888; margin:0 0 14px;">이번 활동에 참여하는 회원만 선택하세요.</p>
+    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-small" onclick="selectAllParticipants(true)">✅ 전체 선택</button>
+      <button class="btn btn-secondary btn-small" onclick="selectAllParticipants(false)">⬜ 전체 해제</button>
+      <span id="participantCount" style="font-size:13px; color:#1D9E75; font-weight:600; align-self:center; margin-left:auto;"></span>
+    </div>
+    <div id="participantList" style="max-height:400px; overflow-y:auto; border:1px solid #e8e6df; border-radius:8px; padding:8px;"></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeParticipantSelect()">취소</button>
+      <button class="btn btn-primary" onclick="confirmParticipants()">✅ 확인</button>
+    </div>
+  </div>
+</div>
 
   <!-- 통계·내보내기 -->
   <div class="panel hidden" id="panel-stats">
@@ -869,6 +900,9 @@ function switchTab(tab) {
     if (!document.getElementById('attendDate').value) document.getElementById('attendDate').value = todayISO();
     refreshAttendScheduleSelect();
     onAttendDateChange();
+    // 탭 진입 시 참여자 선택 초기화 후 모달 오픈
+    selectedParticipants = null;
+    setTimeout(() => openParticipantSelect(), 100);
   }
   if (tab==='stats') renderStats();
 }
@@ -1264,7 +1298,10 @@ function renderSignbook() {
   const date = document.getElementById('attendDate').value || todayISO();
   const c = document.getElementById('signbookContainer');
   const infoBox = document.getElementById('attendInfoBox');
-  const activeMembers = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const allActive = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const activeMembers = selectedParticipants === null
+    ? allActive
+    : allActive.filter(m => selectedParticipants.has(m.id));
 
   const rec = attendance[date] || { byMember: {}, signatures: {} };
   if (!rec.signatures) rec.signatures = {};
@@ -1533,6 +1570,65 @@ function saveSignature() {
 }
 
 let signManageMode = false;
+let selectedParticipants = null; // null = 전체, Set = 선택된 memberId
+
+function openParticipantSelect() {
+  const activeMembers = members.filter(m => m.status === '활동중').sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  const list = document.getElementById('participantList');
+
+  list.innerHTML = activeMembers.map(m => {
+    const checked = selectedParticipants === null || selectedParticipants.has(m.id);
+    return `<label class="participant-item">
+      <input type="checkbox" id="pc_${m.id}" ${checked ? 'checked' : ''} onchange="updateParticipantCount()">
+      <span class="p-name">${esc(m.name)}</span>
+      <span class="p-info">${esc(schoolGradeStr(m))} · ${esc(m.gender||'')}</span>
+    </label>`;
+  }).join('');
+
+  updateParticipantCount();
+  document.getElementById('participantModal').classList.add('show');
+}
+
+function closeParticipantSelect() {
+  document.getElementById('participantModal').classList.remove('show');
+}
+
+function selectAllParticipants(val) {
+  const activeMembers = members.filter(m => m.status === '활동중');
+  activeMembers.forEach(m => {
+    const cb = document.getElementById('pc_' + m.id);
+    if (cb) cb.checked = val;
+  });
+  updateParticipantCount();
+}
+
+function updateParticipantCount() {
+  const checked = document.querySelectorAll('#participantList input[type="checkbox"]:checked').length;
+  const total = document.querySelectorAll('#participantList input[type="checkbox"]').length;
+  document.getElementById('participantCount').textContent = `${checked}/${total}명 선택`;
+}
+
+function confirmParticipants() {
+  const activeMembers = members.filter(m => m.status === '활동중');
+  const allChecked = activeMembers.every(m => {
+    const cb = document.getElementById('pc_' + m.id);
+    return cb && cb.checked;
+  });
+
+  if (allChecked) {
+    selectedParticipants = null; // 전체
+  } else {
+    selectedParticipants = new Set();
+    activeMembers.forEach(m => {
+      const cb = document.getElementById('pc_' + m.id);
+      if (cb && cb.checked) selectedParticipants.add(m.id);
+    });
+  }
+  closeParticipantSelect();
+  renderSignbook();
+  const count = selectedParticipants === null ? activeMembers.length : selectedParticipants.size;
+  toast(`참여자 ${count}명으로 서명부를 업데이트했습니다`);
+}
 function toggleSignManageMode() {
   signManageMode = !signManageMode;
   const container = document.getElementById('signbookContainer');
