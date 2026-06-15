@@ -1278,6 +1278,7 @@ function refreshAttendScheduleSelect() {
 function onAttendDateChange() {
   refreshAttendScheduleSelect();
   renderSignbook();
+  updateParticipantBtn();
 }
 
 function onAttendScheduleChange() {
@@ -1305,9 +1306,10 @@ function renderSignbook() {
   const c = document.getElementById('signbookContainer');
   const infoBox = document.getElementById('attendInfoBox');
   const allActive = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const activeMembers = selectedParticipants === null
+  const currentParticipants = getParticipantsForDate(date);
+  const activeMembers = currentParticipants === null
     ? allActive
-    : allActive.filter(m => selectedParticipants.has(m.id));
+    : allActive.filter(m => currentParticipants.has(m.id));
 
   const rec = attendance[date] || { byMember: {}, signatures: {} };
   if (!rec.signatures) rec.signatures = {};
@@ -1576,24 +1578,43 @@ function saveSignature() {
 }
 
 let signManageMode = false;
-// selectedParticipants: null = 전체, Set = 선택된 memberId
-let selectedParticipants = null;
+
+// 날짜별 참여자 관리: { 'YYYY-MM-DD': null(전체) | Set(선택 id) }
+let participantsMap = {};
 (function loadParticipants() {
   try {
     const saved = localStorage.getItem(KEYS.p);
     if (saved) {
-      const arr = JSON.parse(saved);
-      if (Array.isArray(arr)) selectedParticipants = new Set(arr);
+      const obj = JSON.parse(saved);
+      Object.entries(obj).forEach(([date, arr]) => {
+        participantsMap[date] = arr === null ? null : new Set(arr);
+      });
     }
   } catch(e) {}
 })();
 
+function getParticipantsForDate(date) {
+  return participantsMap.hasOwnProperty(date) ? participantsMap[date] : null; // 없으면 전체
+}
+
+function saveParticipants() {
+  try {
+    const obj = {};
+    Object.entries(participantsMap).forEach(([date, val]) => {
+      obj[date] = val === null ? null : [...val];
+    });
+    localStorage.setItem(KEYS.p, JSON.stringify(obj));
+  } catch(e) {}
+}
+
 function openParticipantSelect() {
+  const date = document.getElementById('attendDate').value || todayISO();
+  const current = getParticipantsForDate(date);
   const activeMembers = members.filter(m => m.status === '활동중').sort((a,b) => (a.name||'').localeCompare(b.name||''));
   const list = document.getElementById('participantList');
 
   list.innerHTML = activeMembers.map(m => {
-    const checked = selectedParticipants === null || selectedParticipants.has(m.id);
+    const checked = current === null || current.has(m.id);
     return `<label class="participant-item">
       <input type="checkbox" id="pc_${m.id}" ${checked ? 'checked' : ''} onchange="updateParticipantCount()">
       <span class="p-name">${esc(m.name)}</span>
@@ -1625,6 +1646,7 @@ function updateParticipantCount() {
 }
 
 function confirmParticipants() {
+  const date = document.getElementById('attendDate').value || todayISO();
   const activeMembers = members.filter(m => m.status === '활동중');
   const allChecked = activeMembers.every(m => {
     const cb = document.getElementById('pc_' + m.id);
@@ -1632,32 +1654,35 @@ function confirmParticipants() {
   });
 
   if (allChecked) {
-    selectedParticipants = null;
-    localStorage.removeItem(KEYS.p);
+    participantsMap[date] = null; // 전체
   } else {
-    selectedParticipants = new Set();
+    const set = new Set();
     activeMembers.forEach(m => {
       const cb = document.getElementById('pc_' + m.id);
-      if (cb && cb.checked) selectedParticipants.add(m.id);
+      if (cb && cb.checked) set.add(m.id);
     });
-    localStorage.setItem(KEYS.p, JSON.stringify([...selectedParticipants]));
+    participantsMap[date] = set;
   }
+  saveParticipants();
   closeParticipantSelect();
   renderSignbook();
   updateParticipantBtn();
-  const count = selectedParticipants === null ? activeMembers.length : selectedParticipants.size;
-  toast(`참여자 ${count}명으로 서명부를 업데이트했습니다`);
+  const count = participantsMap[date] === null ? activeMembers.length : participantsMap[date].size;
+  toast(`${date} 참여자 ${count}명으로 저장했습니다`);
 }
 
 function updateParticipantBtn() {
   const btn = document.getElementById('participantBtn');
   if (!btn) return;
+  const date = document.getElementById('attendDate')?.value || todayISO();
+  const current = getParticipantsForDate(date);
   const activeTotal = members.filter(m => m.status === '활동중').length;
-  if (selectedParticipants === null) {
+  if (current === null) {
     btn.textContent = `👤 참여자 선택 (전체 ${activeTotal}명)`;
     btn.style.color = '';
+    btn.style.fontWeight = '';
   } else {
-    btn.textContent = `👤 참여자 선택 (${selectedParticipants.size}/${activeTotal}명)`;
+    btn.textContent = `👤 참여자 선택 (${current.size}/${activeTotal}명)`;
     btn.style.color = '#1e6eb5';
     btn.style.fontWeight = '600';
   }
