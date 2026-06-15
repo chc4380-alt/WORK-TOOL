@@ -460,17 +460,25 @@
   <!-- 서명부·출석 -->
   <div class="panel hidden" id="panel-attend">
     <div class="attend-header">
-      <label>📅 활동일</label>
-      <input type="date" id="attendDate" onchange="onAttendDateChange()">
-      <label style="margin-left:10px">일정 선택</label>
-      <select id="attendSchedule" onchange="onAttendScheduleChange()">
-        <option value="">— 일정 없음 —</option>
-      </select>
-      <button class="btn btn-accent btn-small" onclick="openTabletMode()" title="학생들에게 태블릿/PC를 건네줘서 직접 서명하게 하는 모드">👥 학생 서명 모드</button>
-      <button class="btn btn-secondary btn-small" onclick="openParticipantSelect()">👤 참여자 선택</button>
-      <button class="btn btn-secondary btn-small" id="signModeBtn" onclick="toggleSignManageMode()" title="서명 및 대표서명 삭제">🔧 서명 관리</button>
-      <button class="btn btn-secondary btn-small" onclick="clearAllSignatures()">🗑️ 전체 서명 지우기</button>
-      <button class="btn btn-primary btn-small" onclick="printSignbook()">🖨️ 서명부 인쇄</button>
+      <!-- 1행: 날짜 + 일정 -->
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; width:100%;">
+        <label>📅 활동일</label>
+        <input type="date" id="attendDate" onchange="onAttendDateChange()">
+        <label style="margin-left:4px">일정 선택</label>
+        <select id="attendSchedule" onchange="onAttendScheduleChange()" style="flex:1; min-width:160px;">
+          <option value="">— 일정 없음 —</option>
+        </select>
+      </div>
+      <!-- 2행: 버튼 그룹 -->
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; width:100%; padding-top:10px; border-top:1px solid #9FE1CB;">
+        <div style="display:flex; gap:6px; flex:1; flex-wrap:wrap;">
+          <button class="btn btn-accent btn-small" onclick="openTabletMode()" title="학생들에게 태블릿을 건네줘서 직접 서명하게 하는 모드">👥 학생 서명 모드</button>
+          <button class="btn btn-secondary btn-small" onclick="openParticipantSelect()" id="participantBtn">👤 참여자 선택</button>
+          <button class="btn btn-secondary btn-small" id="signModeBtn" onclick="toggleSignManageMode()" title="서명 및 대표서명 삭제">🔧 서명 관리</button>
+          <button class="btn btn-secondary btn-small" onclick="clearAllSignatures()">🗑️ 전체 서명 지우기</button>
+        </div>
+        <button class="btn btn-primary btn-small" onclick="printSignbook()" style="margin-left:auto;">🖨️ 서명부 인쇄</button>
+      </div>
     </div>
     <div id="attendInfoBox"></div>
     <div id="signManageBanner" class="sign-manage-mode-banner">
@@ -624,7 +632,7 @@
 
 <script>
 // ==================== 데이터 ====================
-const KEYS = { m:'club_members_v4', a:'club_attend_v4', s:'club_settings_v4', sc:'club_schedule_v4' };
+const KEYS = { m:'club_members_v4', a:'club_attend_v4', s:'club_settings_v4', sc:'club_schedule_v4', p:'club_participants_v4' };
 
 // ==================== Supabase 연동 ====================
 const SB_URL = 'https://brxyyxqhymfdvxqrbnee.supabase.co';
@@ -900,9 +908,7 @@ function switchTab(tab) {
     if (!document.getElementById('attendDate').value) document.getElementById('attendDate').value = todayISO();
     refreshAttendScheduleSelect();
     onAttendDateChange();
-    // 탭 진입 시 참여자 선택 초기화 후 모달 오픈
-    selectedParticipants = null;
-    setTimeout(() => openParticipantSelect(), 100);
+    setTimeout(() => updateParticipantBtn(), 50);
   }
   if (tab==='stats') renderStats();
 }
@@ -1570,7 +1576,17 @@ function saveSignature() {
 }
 
 let signManageMode = false;
-let selectedParticipants = null; // null = 전체, Set = 선택된 memberId
+// selectedParticipants: null = 전체, Set = 선택된 memberId
+let selectedParticipants = null;
+(function loadParticipants() {
+  try {
+    const saved = localStorage.getItem(KEYS.p);
+    if (saved) {
+      const arr = JSON.parse(saved);
+      if (Array.isArray(arr)) selectedParticipants = new Set(arr);
+    }
+  } catch(e) {}
+})();
 
 function openParticipantSelect() {
   const activeMembers = members.filter(m => m.status === '활동중').sort((a,b) => (a.name||'').localeCompare(b.name||''));
@@ -1616,18 +1632,35 @@ function confirmParticipants() {
   });
 
   if (allChecked) {
-    selectedParticipants = null; // 전체
+    selectedParticipants = null;
+    localStorage.removeItem(KEYS.p);
   } else {
     selectedParticipants = new Set();
     activeMembers.forEach(m => {
       const cb = document.getElementById('pc_' + m.id);
       if (cb && cb.checked) selectedParticipants.add(m.id);
     });
+    localStorage.setItem(KEYS.p, JSON.stringify([...selectedParticipants]));
   }
   closeParticipantSelect();
   renderSignbook();
+  updateParticipantBtn();
   const count = selectedParticipants === null ? activeMembers.length : selectedParticipants.size;
   toast(`참여자 ${count}명으로 서명부를 업데이트했습니다`);
+}
+
+function updateParticipantBtn() {
+  const btn = document.getElementById('participantBtn');
+  if (!btn) return;
+  const activeTotal = members.filter(m => m.status === '활동중').length;
+  if (selectedParticipants === null) {
+    btn.textContent = `👤 참여자 선택 (전체 ${activeTotal}명)`;
+    btn.style.color = '';
+  } else {
+    btn.textContent = `👤 참여자 선택 (${selectedParticipants.size}/${activeTotal}명)`;
+    btn.style.color = '#1e6eb5';
+    btn.style.fontWeight = '600';
+  }
 }
 function toggleSignManageMode() {
   signManageMode = !signManageMode;
