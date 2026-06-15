@@ -1899,22 +1899,30 @@ async function clearDefaultSignature() {
 // 인쇄 전 서명 이미지를 28px 높이로 리사이즈하여 행 높이 유지
 async function printSignbook() {
   const date = document.getElementById('attendDate').value || todayISO();
+  const key = getAttendKey();
   const rec = attendance[key] || { byMember: {}, signatures: {} };
   const sigs = rec.signatures || {};
   const linkedSch = rec.scheduleId ? schedules.find(s => s.id === rec.scheduleId) : null;
-  const activeMembers = members.filter(m => m.status === '활동중').sort((a,b) => (a.name||'').localeCompare(b.name||''));
+
+  // 참여자 선택 반영 + 임시 참여자 포함
+  const allActive = members.filter(m => m.status === '활동중').sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  const currentParticipants = getParticipantsForDate(key);
+  const activeMembers = currentParticipants === null ? allActive : allActive.filter(m => currentParticipants.has(m.id));
+  const guests = getGuestsForKey(key).map(g => ({ ...g, isGuest: true }));
+  const allParticipants = [...activeMembers, ...guests];
+
   const activityTitle = linkedSch ? linkedSch.title : '';
   const activityPlace = linkedSch ? linkedSch.location : '';
   const activityTime = linkedSch && linkedSch.time ? linkedSch.time : '';
 
-  // 행 높이 계산 (rowMM 먼저 선언)
+  // 행 높이 계산
   const totalMM = 258;
   const headerRowMM = 7;
-  const rowMM = Math.floor((totalMM - headerRowMM) / Math.max(activeMembers.length, 1));
+  const rowMM = Math.floor((totalMM - headerRowMM) / Math.max(allParticipants.length, 1));
 
   // 서명 이미지 리사이즈
   const resizedSigs = {};
-  await Promise.all(activeMembers.map(m => {
+  await Promise.all(allParticipants.map(m => {
     return new Promise(resolve => {
       if (!sigs[m.id]) { resolve(); return; }
       const img = new Image();
@@ -1936,14 +1944,14 @@ async function printSignbook() {
     });
   }));
 
-  const rows = activeMembers.map((m, i) => {
+  const rows = allParticipants.map((m, i) => {
     const sigImg = resizedSigs[m.id]
       ? `<img src="${resizedSigs[m.id]}" style="height:${rowMM - 1}mm; max-width:100%; display:block; margin:auto;">`
       : '';
     return `<tr>
       <td style="text-align:center">${i+1}</td>
       <td style="text-align:center">${esc(m.name)}</td>
-      <td style="text-align:center">${esc(schoolGradeStr(m))}</td>
+      <td style="text-align:center">${m.isGuest ? esc(m.school||'-') : esc(schoolGradeStr(m))}</td>
       <td style="text-align:center">${esc(m.gender||'-')}</td>
       <td style="text-align:center">${esc(bd6fmt(m.birthdate)||'-')}</td>
       <td style="text-align:center">${esc(m.phone||'-')}</td>
