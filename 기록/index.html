@@ -1420,9 +1420,9 @@ function renderSignbook() {
     const cellClick = isManageMode ? '' : `onclick="applyOrOpenSign('${m.id}')"`;
     const cellTitle = isManageMode ? '' : `title="${hasSaved && !sig ? '저장된 서명 자동 적용' : '클릭하여 서명'}"`;
 
-    html += `<tr${m.isGuest ? ' style="background:#fffef0;"' : ''}>
+    html += `<tr>
       <td>${i+1}</td>
-      <td>${esc(m.name)}${m.isGuest ? ' <span style="font-size:10px;color:#e67e00;background:#fff3cd;padding:1px 4px;border-radius:3px;">외부</span>' : ''}</td>
+      <td>${esc(m.name)}</td>
       <td>${m.isGuest ? esc(m.school||'-') : esc(schoolGradeStr(m))}</td>
       <td>${esc(m.gender||'-')}</td>
       <td>${m.isGuest ? '-' : esc(bd6fmt(m.birthdate)||'-')}</td>
