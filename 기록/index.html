@@ -565,12 +565,6 @@
     <div class="help-box">
       💡 <strong>설정 팁:</strong> "서명부 제목"은 출석부 출력 시 맨 위에 나오는 제목이에요. 예시의 "2026년 청소년동아리 기록 5기 서명부" 같이 넣어주세요.
     </div>
-    <div class="help-box" style="background:#f0f7ff; border-color:#1e6eb5;">
-      🔧 <strong>데이터 마이그레이션:</strong> 이전에 날짜+일정 연결로 저장된 서명부를 일정별 독립 서명부로 변환합니다. 최초 1회만 실행하면 됩니다.
-      <div style="margin-top:8px;">
-        <button class="btn btn-secondary btn-small" onclick="migrateAttendanceKeys()" style="color:#1e6eb5; border-color:#1e6eb5;">🔄 서명부 데이터 마이그레이션</button>
-      </div>
-    </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeSettings()">취소</button>
       <button class="btn btn-primary" onclick="saveSettings()">💾 저장</button>
@@ -692,8 +686,8 @@ async function loadFromDB() {
     if (atRows.length > 0) {
       attendance = {};
       atRows.forEach(r => {
-        // 일정ID가 있으면 일정ID를 키로, 없으면 날짜를 키로
-        const attKey = r.schedule_id || r.date;
+        // 날짜+일정ID 조합 키 (일정 없으면 날짜만)
+        const attKey = r.schedule_id ? r.date + '_' + r.schedule_id : r.date;
         attendance[attKey] = {
           byMember: r.by_member || {},
           scheduleId: r.schedule_id || null,
@@ -750,9 +744,9 @@ async function saveToDB() {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify(Object.entries(attendance).map(([attKey, val]) => {
-        // attKey가 일정ID(s_xxx) 형태면 scheduleId로부터 날짜 추출, 아니면 날짜 그대로
-        const sch = val.scheduleId ? schedules.find(s => s.id === val.scheduleId) : null;
-        const dateVal = sch ? sch.date : attKey;
+        // attKey: '2026-06-18' or '2026-06-18_s_xxx'
+        const parts = attKey.split('_s_');
+        const dateVal = parts[0];
         return {
           id: CLUB_ID + '_' + attKey, club_id: CLUB_ID,
           date: dateVal, schedule_id: val.scheduleId || null,
@@ -1290,12 +1284,12 @@ function refreshAttendScheduleSelect() {
   else sel.value = cur;
 }
 
-// 현재 선택된 일정ID or 날짜를 attendance 키로 반환
-// 일정 선택 시 → 일정ID, 없으면 → 날짜
+// 현재 선택된 날짜+일정ID 조합을 attendance 키로 반환
+// 일정 선택 시 → 날짜_일정ID, 없으면 → 날짜
 function getAttendKey() {
   const schId = document.getElementById('attendSchedule')?.value;
   const date = document.getElementById('attendDate')?.value || todayISO();
-  return schId || date;
+  return schId ? date + '_' + schId : date;
 }
 
 function onAttendDateChange() {
@@ -1736,13 +1730,14 @@ function deleteSignature(memberId, e) {
   const key = getAttendKey();
   const m = members.find(x => x.id === memberId);
   if (!m) return;
-  if (!confirm(`"${m.name}" 님의 오늘(${date}) 서명을 삭제할까요?`)) return;
-  if (attendance[key] && attendance[key].signatures) {
-    delete attendance[key].signatures[memberId];
+  if (!confirm(`"${m.name}" 님의 서명과 출석 기록을 삭제할까요?`)) return;
+  if (attendance[key]) {
+    if (attendance[key].signatures) delete attendance[key].signatures[memberId];
+    if (attendance[key].byMember) delete attendance[key].byMember[memberId];
   }
   saveAll();
   renderSignbook();
-  toast(`${m.name} 님의 서명이 삭제되었습니다`);
+  toast(`${m.name} 님의 서명과 출석 기록이 삭제되었습니다`);
 }
 
 async function deleteSavedSignatureInline(memberId, e) {
@@ -2323,62 +2318,22 @@ function saveSettings() {
   toast('✅ 설정이 저장되었습니다');
 }
 
-// ==================== 데이터 마이그레이션 ====================
-async function migrateAttendanceKeys() {
-  // 날짜 키로 저장된 것 중 scheduleId 있는 항목 → 일정ID 키로 이동
-  const toMigrate = Object.entries(attendance).filter(([key, val]) => {
-    // 날짜 형식(YYYY-MM-DD)이고 scheduleId가 있는 경우
-    return /^\d{4}-\d{2}-\d{2}$/.test(key) && val.scheduleId;
-  });
 
-  if (toMigrate.length === 0) {
-    toast('마이그레이션할 데이터가 없습니다 (이미 완료됐거나 해당 없음)');
-    return;
-  }
-
-  const names = toMigrate.map(([key, val]) => {
-    const sch = schedules.find(s => s.id === val.scheduleId);
-    return `${key} · ${sch ? sch.title : val.scheduleId}`;
-  });
-
-  if (!confirm(`다음 ${toMigrate.length}건을 일정ID 키로 마이그레이션할까요?\n\n${names.join('\n')}\n\n기존 날짜 키 데이터는 삭제됩니다.`)) return;
-
-  showSyncStatus('saving');
-
-  for (const [dateKey, val] of toMigrate) {
-    const schId = val.scheduleId;
-    // 새 키(일정ID)로 저장
-    attendance[schId] = { ...val };
-    // 기존 날짜 키 삭제
-    delete attendance[dateKey];
-    // Supabase에서 기존 날짜 키 행 삭제
-    try {
-      await sbFetch(`club_attendance?id=eq.${encodeURIComponent(CLUB_ID + '_' + dateKey)}`, { method: 'DELETE' });
-    } catch(e) { console.warn('기존 행 삭제 실패:', e); }
-  }
-
-  await saveToDB();
-  saveLocal();
-  renderSignbook();
-  toast(`✅ ${toMigrate.length}건 마이그레이션 완료`);
-}
+// ==================== 초기화 ====================
 (async function init() {
-  loadLocal(); // 로컬 캐시 먼저 표시 (빠른 초기 렌더링)
-  // 동아리명 항상 최신값으로 고정
+  loadLocal();
   settings.clubName = '청소년사진영상동아리 기록';
   settings.orgName = settings.orgName || '광양시청소년문화센터';
 
-  // 서명부 이미지 기반 초기 회원 데이터 (m_init_ ID 기준으로 중복 방지)
+  // init 회원 데이터 없으면 초기 27명 삽입
   const hasInitMembers = members.some(m => m.id && m.id.startsWith('m_init_'));
   if (!hasInitMembers) {
-    const gradeMap = { '초':'초', '중':'중', '고':'고' };
     function parseSchoolGrade(raw) {
       if (!raw || raw.trim() === '-' || raw.trim() === '') return { school: '', grade: '학교 밖' };
       if (raw.trim() === '학교 밖') return { school: '', grade: '학교 밖' };
       const m = raw.match(/^(.+?)\/(\d)$/);
       if (m) {
-        const schoolRaw = m[1].trim();
-        const num = m[2];
+        const schoolRaw = m[1].trim(); const num = m[2];
         let grade = '학교 밖';
         if (schoolRaw.includes('중')) grade = '중' + num;
         else if (schoolRaw.includes('고') || schoolRaw.includes('공고') || schoolRaw.includes('대')) grade = '고' + num;
@@ -2389,13 +2344,9 @@ async function migrateAttendanceKeys() {
     }
     function bd6ToFull(bd6) {
       if (!bd6 || bd6.trim() === '') return '';
-      const s = bd6.trim();
-      if (s.length !== 6) return '';
+      const s = bd6.trim(); if (s.length !== 6) return '';
       const yy = parseInt(s.slice(0,2));
-      const mm = s.slice(2,4);
-      const dd = s.slice(4,6);
-      const yyyy = yy >= 0 && yy <= 25 ? '200' + (yy < 10 ? '0'+yy : yy) : '19' + s.slice(0,2);
-      return `${yy <= 25 ? '20' : '19'}${s.slice(0,2)}-${mm}-${dd}`;
+      return `${yy <= 25 ? '20' : '19'}${s.slice(0,2)}-${s.slice(2,4)}-${s.slice(4,6)}`;
     }
     const rawMembers = [
       { name:'김미주', sg:'청암고/3', gender:'여', bd6:'081007', phone:'010-5594-0575' },
@@ -2428,29 +2379,17 @@ async function migrateAttendanceKeys() {
     ];
     rawMembers.forEach((r, i) => {
       const { school, grade } = parseSchoolGrade(r.sg);
-      members.push({
-        id: 'm_init_' + (i+1),
-        name: r.name,
-        gender: r.gender,
-        birthdate: bd6ToFull(r.bd6),
-        phone: r.phone,
-        school,
-        grade,
-        address: '',
-        guardianName: '', guardianRel: '', guardianPhone: '', emergencyPhone: '',
-        joinDate: '', role: '회원', status: '활동중',
-        history: '', advisorNote: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+      members.push({ id:'m_init_'+(i+1), name:r.name, gender:r.gender, birthdate:bd6ToFull(r.bd6),
+        phone:r.phone, school, grade, address:'', guardianName:'', guardianRel:'', guardianPhone:'',
+        emergencyPhone:'', joinDate:'', role:'회원', status:'활동중', history:'', advisorNote:'',
+        createdAt:new Date().toISOString(), updatedAt:new Date().toISOString() });
     });
-    saveAll();
+    saveLocal();
   }
 
   updateHeader();
   renderDashboard();
 
-  // DB에서 최신 데이터 로드 후 재렌더링
   await loadFromDB();
   settings.clubName = '청소년사진영상동아리 기록';
   updateHeader();
