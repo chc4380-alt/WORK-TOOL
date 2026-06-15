@@ -1456,23 +1456,36 @@ function saveSignature() {
   toast(saveAsDefault ? '✅ 서명 저장 + 기본 서명으로 등록됨' : '✅ 서명이 저장되었습니다');
 }
 
-function deleteSavedSignature(memberId) {
+async function deleteSavedSignature(memberId) {
   const m = members.find(x => x.id === memberId);
   if (!m || !m.savedSignature) return;
   if (!confirm(`"${m.name}" 님의 대표서명을 삭제할까요?\n다음 서명 시 패드가 다시 열립니다.`)) return;
   delete m.savedSignature;
   m.updatedAt = new Date().toISOString();
-  saveAll();
+  // Supabase에 saved_signature를 명시적으로 null로 업데이트
+  try {
+    await sbFetch(`club_members?id=eq.${encodeURIComponent(memberId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ saved_signature: null, updated_at: m.updatedAt })
+    });
+  } catch(e) { console.warn('DB 대표서명 삭제 실패:', e); }
+  saveLocal();
   renderList();
   toast(`${m.name} 님의 대표서명이 삭제되었습니다`);
 }
 
-function clearDefaultSignature() {
+async function clearDefaultSignature() {
   const m = members.find(x => x.id === currentSignMemberId);
   if (!m) return;
   delete m.savedSignature;
   m.updatedAt = new Date().toISOString();
-  saveAll();
+  try {
+    await sbFetch(`club_members?id=eq.${encodeURIComponent(currentSignMemberId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ saved_signature: null, updated_at: m.updatedAt })
+    });
+  } catch(e) { console.warn('DB 대표서명 삭제 실패:', e); }
+  saveLocal();
   document.getElementById('savedSignNotice').style.display = 'none';
   document.getElementById('saveAsDefault').checked = false;
   document.getElementById('clearDefaultBtn').style.display = 'none';
