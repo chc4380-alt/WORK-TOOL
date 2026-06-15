@@ -125,6 +125,62 @@
   .signbook .sb-table td.sb-sig-cell.readonly { cursor: default; }
   .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
   .signbook .sb-table td.sb-sig-cell img { max-height: 64px; max-width: 100%; vertical-align: middle; }
+
+  /* 서명 관리 모드 */
+  .sign-manage-mode .sb-sig-cell { position: relative; }
+  .sign-manage-mode .sb-sig-cell .sig-del-btn {
+    display: none;
+  }
+  .sign-manage-mode .sb-sig-cell.has-sig .sig-del-btn {
+    display: flex;
+    position: absolute;
+    top: 2px; right: 2px;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    font-size: 12px;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    line-height: 1;
+  }
+  .sign-manage-mode .sb-sig-cell .sig-saved-del-btn {
+    display: none;
+  }
+  .sign-manage-mode .sb-sig-cell .sig-saved-del-btn {
+    display: none;
+  }
+  .sign-manage-mode .sb-sig-cell.has-saved .sig-saved-del-btn {
+    display: flex;
+    position: absolute;
+    bottom: 2px; right: 2px;
+    background: #1e6eb5;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  .sign-manage-mode .sb-sig-cell { cursor: default !important; }
+  .sign-manage-mode .sb-sig-cell:hover { background: #fff8f0 !important; }
+  .sign-manage-mode-banner {
+    display: none;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #856404;
+    margin-bottom: 10px;
+  }
+  .sign-manage-mode-banner.show { display: block; }
+  #signModeBtn.active { background: #e74c3c; color: #fff; border-color: #e74c3c; }
   .signbook .sb-footer { text-align: right; margin-top: 20px; font-size: 14px; font-weight: 600; }
   .signbook .sb-table col.c-num { width: 40px; }
   .signbook .sb-table col.c-name { width: 80px; }
@@ -400,10 +456,14 @@
         <option value="">— 일정 없음 —</option>
       </select>
       <button class="btn btn-accent btn-small" onclick="openTabletMode()" title="학생들에게 태블릿/PC를 건네줘서 직접 서명하게 하는 모드">👥 학생 서명 모드</button>
+      <button class="btn btn-secondary btn-small" id="signModeBtn" onclick="toggleSignManageMode()" title="서명 및 대표서명 삭제">🔧 서명 관리</button>
       <button class="btn btn-secondary btn-small" onclick="clearAllSignatures()">🗑️ 전체 서명 지우기</button>
       <button class="btn btn-primary btn-small" onclick="printSignbook()">🖨️ 서명부 인쇄</button>
     </div>
     <div id="attendInfoBox"></div>
+    <div id="signManageBanner" class="sign-manage-mode-banner">
+      🔧 <strong>서명 관리 모드</strong> — 서명 셀의 <span style="color:#e74c3c">×</span> 버튼으로 서명 삭제, <span style="color:#1e6eb5">대표삭제</span> 버튼으로 대표서명을 삭제합니다. 완료 후 🔧 서명 관리 버튼을 다시 눌러 종료하세요.
+    </div>
     <div id="signbookContainer"></div>
   </div>
 
@@ -914,7 +974,6 @@ function renderList() {
       <td><div class="action-btns">
         <button class="view-btn" onclick="viewCard('${m.id}')">카드</button>
         <button class="edit-btn" onclick="editMember('${m.id}')">수정</button>
-        ${m.savedSignature ? `<button class="btn btn-secondary btn-small" style="font-size:11px; color:#c0392b; border-color:#c0392b;" onclick="deleteSavedSignature('${m.id}')">✏️서명삭제</button>` : ''}
         <button class="del-btn" onclick="deleteMember('${m.id}')">삭제</button>
       </div></td>
     </tr>`;
@@ -1262,7 +1321,24 @@ function renderSignbook() {
   activeMembers.forEach((m, i) => {
     const sig = rec.signatures[m.id];
     const hasSaved = !!m.savedSignature;
-    const sigContent = sig ? `<img src="${sig}" alt="서명">` : `<span class="sig-placeholder">${hasSaved ? '👆 탭하여 서명' : '클릭하여 서명'}</span>`;
+    const isManageMode = document.getElementById('signbookContainer').classList.contains('sign-manage-mode');
+
+    let sigContent;
+    if (isManageMode) {
+      sigContent = `
+        ${sig ? `<img src="${sig}" alt="서명"><button class="sig-del-btn" onclick="deleteSignature('${m.id}', event)" title="이 날 서명 삭제">×</button>` : '<span class="sig-placeholder" style="pointer-events:none">서명 없음</span>'}
+        ${hasSaved ? `<button class="sig-saved-del-btn" onclick="deleteSavedSignatureInline('${m.id}', event)" title="대표서명 삭제">대표삭제</button>` : ''}
+      `;
+    } else {
+      sigContent = sig
+        ? `<img src="${sig}" alt="서명">`
+        : `<span class="sig-placeholder">${hasSaved ? '👆 탭하여 서명' : '클릭하여 서명'}</span>`;
+    }
+
+    const cellClass = `sb-sig-cell ${sig ? 'has-sig' : ''} ${hasSaved && !sig ? 'has-saved-sig' : ''} ${hasSaved ? 'has-saved' : ''}`;
+    const cellClick = isManageMode ? '' : `onclick="applyOrOpenSign('${m.id}')"`;
+    const cellTitle = isManageMode ? '' : `title="${hasSaved && !sig ? '저장된 서명 자동 적용' : '클릭하여 서명'}"`;
+
     html += `<tr>
       <td>${i+1}</td>
       <td>${esc(m.name)}</td>
@@ -1270,7 +1346,7 @@ function renderSignbook() {
       <td>${esc(m.gender||'-')}</td>
       <td>${esc(bd6fmt(m.birthdate)||'-')}</td>
       <td>${esc(m.phone||'-')}</td>
-      <td class="sb-sig-cell ${sig?'has-sig':''} ${hasSaved&&!sig?'has-saved-sig':''}" onclick="applyOrOpenSign('${m.id}')" title="${hasSaved&&!sig?'저장된 서명 자동 적용 (길게 누르면 재등록)':'클릭하여 서명'}">${sigContent}</td>
+      <td class="${cellClass}" ${cellClick} ${cellTitle}>${sigContent}</td>
     </tr>`;
   });
   html += `</tbody></table>
@@ -1454,6 +1530,58 @@ function saveSignature() {
     renderSignbook();
   }
   toast(saveAsDefault ? '✅ 서명 저장 + 기본 서명으로 등록됨' : '✅ 서명이 저장되었습니다');
+}
+
+let signManageMode = false;
+function toggleSignManageMode() {
+  signManageMode = !signManageMode;
+  const container = document.getElementById('signbookContainer');
+  const btn = document.getElementById('signModeBtn');
+  const banner = document.getElementById('signManageBanner');
+  if (signManageMode) {
+    container.classList.add('sign-manage-mode');
+    btn.classList.add('active');
+    btn.textContent = '✅ 관리 종료';
+    banner.classList.add('show');
+  } else {
+    container.classList.remove('sign-manage-mode');
+    btn.classList.remove('active');
+    btn.textContent = '🔧 서명 관리';
+    banner.classList.remove('show');
+  }
+  renderSignbook();
+}
+
+function deleteSignature(memberId, e) {
+  e.stopPropagation();
+  const date = document.getElementById('attendDate').value || todayISO();
+  const m = members.find(x => x.id === memberId);
+  if (!m) return;
+  if (!confirm(`"${m.name}" 님의 오늘(${date}) 서명을 삭제할까요?`)) return;
+  if (attendance[date] && attendance[date].signatures) {
+    delete attendance[date].signatures[memberId];
+  }
+  saveAll();
+  renderSignbook();
+  toast(`${m.name} 님의 서명이 삭제되었습니다`);
+}
+
+async function deleteSavedSignatureInline(memberId, e) {
+  e.stopPropagation();
+  const m = members.find(x => x.id === memberId);
+  if (!m || !m.savedSignature) return;
+  if (!confirm(`"${m.name}" 님의 대표서명을 삭제할까요?`)) return;
+  delete m.savedSignature;
+  m.updatedAt = new Date().toISOString();
+  try {
+    await sbFetch(`club_members?id=eq.${encodeURIComponent(memberId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ saved_signature: null, updated_at: m.updatedAt })
+    });
+  } catch(e) { console.warn('DB 대표서명 삭제 실패:', e); }
+  saveLocal();
+  renderSignbook();
+  toast(`${m.name} 님의 대표서명이 삭제되었습니다`);
 }
 
 async function deleteSavedSignature(memberId) {
