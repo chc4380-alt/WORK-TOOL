@@ -503,14 +503,18 @@
     <!-- 임시 참여자 추가 -->
     <div style="margin-top:12px; padding:12px; background:#f9f8f4; border-radius:8px; border:1px solid #e8e6df;">
       <div style="font-size:13px; font-weight:600; color:#444; margin-bottom:8px;">➕ 임시 참여자 추가 (비회원)</div>
-      <div style="display:flex; gap:6px; margin-bottom:6px;">
-        <input type="text" id="guestName" placeholder="이름" style="flex:1; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+      <div style="display:grid; grid-template-columns:1fr 60px 1fr 1fr 1fr; gap:6px; margin-bottom:6px;">
+        <input type="text" id="guestName" placeholder="이름 *" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
         <select id="guestGender" style="padding:6px 8px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
           <option value="여">여</option>
           <option value="남">남</option>
         </select>
-        <input type="text" id="guestSchool" placeholder="학교/소속" style="flex:1.5; padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
-        <button class="btn btn-secondary btn-small" onclick="addGuestParticipant()">추가</button>
+        <input type="text" id="guestSchool" placeholder="학교/소속" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <input type="text" id="guestBirthdate" placeholder="생년월일 (예: 110321)" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+        <input type="text" id="guestPhone" placeholder="연락처" style="padding:6px 10px; border:1px solid #ddd; border-radius:5px; font-size:13px;">
+      </div>
+      <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+        <button class="btn btn-secondary btn-small" onclick="addGuestParticipant()">➕ 추가</button>
       </div>
       <div id="guestList" style="font-size:12px; color:#666;"></div>
     </div>
@@ -1425,8 +1429,8 @@ function renderSignbook() {
       <td>${esc(m.name)}</td>
       <td>${m.isGuest ? esc(m.school||'-') : esc(schoolGradeStr(m))}</td>
       <td>${esc(m.gender||'-')}</td>
-      <td>${m.isGuest ? '-' : esc(bd6fmt(m.birthdate)||'-')}</td>
-      <td>${m.isGuest ? '-' : esc(m.phone||'-')}</td>
+      <td>${m.isGuest ? esc(bd6fmt(m.birthdate)||'-') : esc(bd6fmt(m.birthdate)||'-')}</td>
+      <td>${esc(m.phone||'-')}</td>
       <td class="${cellClass}" ${cellClick} ${cellTitle}>${sigContent}</td>
     </tr>`;
   });
@@ -1658,17 +1662,27 @@ function addGuestParticipant() {
   if (!name) { toast('이름을 입력해주세요', 'warn'); return; }
   const gender = document.getElementById('guestGender').value;
   const school = document.getElementById('guestSchool').value.trim();
+  const bd6 = document.getElementById('guestBirthdate').value.trim();
+  const phone = document.getElementById('guestPhone').value.trim();
   const key = getAttendKey();
   if (!guestParticipants[key]) guestParticipants[key] = [];
-  // 중복 체크
   if (guestParticipants[key].some(g => g.name === name)) {
     toast('이미 추가된 이름입니다', 'warn'); return;
   }
+  // 생년월일 6자리 → full date 변환
+  let birthdate = '';
+  if (bd6.length === 6) {
+    const yy = parseInt(bd6.slice(0,2));
+    birthdate = `${yy <= 25 ? '20' : '19'}${bd6.slice(0,2)}-${bd6.slice(2,4)}-${bd6.slice(4,6)}`;
+  }
   const guestId = 'guest_' + Date.now();
-  guestParticipants[key].push({ id: guestId, name, gender, school });
+  guestParticipants[key].push({ id: guestId, name, gender, school, birthdate, phone });
   document.getElementById('guestName').value = '';
   document.getElementById('guestSchool').value = '';
+  document.getElementById('guestBirthdate').value = '';
+  document.getElementById('guestPhone').value = '';
   renderGuestList();
+  renderSignbook();
   toast(`${name} 님이 임시 참여자로 추가됐습니다`);
 }
 
