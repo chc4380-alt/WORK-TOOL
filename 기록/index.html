@@ -126,6 +126,15 @@
   .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
   .signbook .sb-table td.sb-sig-cell img { max-height: 64px; max-width: 100%; vertical-align: middle; }
 
+  /* 출석 상태 뱃지 */
+  .att-badge { display:inline-block; font-size:10px; padding:1px 5px; border-radius:3px; cursor:pointer; margin-left:4px; font-weight:600; user-select:none; vertical-align:middle; }
+  .att-badge.present { background:#1D9E75; color:#fff; }
+  .att-badge.late { background:#EF9F27; color:#fff; }
+  .att-badge.absent { background:#E24B4A; color:#fff; }
+  .att-badge.excused { background:#888; color:#fff; }
+  .att-badge.none { background:#f1efe8; color:#aaa; border:1px dashed #ccc; }
+  @media print { .att-badge { display:none !important; } }
+
   /* 서명 관리 모드 */
   .sign-manage-mode .sb-sig-cell { position: relative; }
   .sign-manage-mode .sb-sig-cell .sig-del-btn {
@@ -193,13 +202,13 @@
   .participant-item .p-name { font-weight: 600; font-size: 14px; min-width: 60px; }
   .participant-item .p-info { font-size: 12px; color: #888; }
   .signbook .sb-footer { text-align: right; margin-top: 20px; font-size: 14px; font-weight: 600; }
-  .signbook .sb-table col.c-num { width: 40px; }
-  .signbook .sb-table col.c-name { width: 80px; }
-  .signbook .sb-table col.c-school { width: 100px; }
-  .signbook .sb-table col.c-gender { width: 45px; }
-  .signbook .sb-table col.c-bd { width: 75px; }
-  .signbook .sb-table col.c-phone { width: 115px; }
-  .signbook .sb-table col.c-sig { width: auto; }
+  .signbook .sb-table col.c-num { width: 7.5%; }
+  .signbook .sb-table col.c-name { width: 11%; }
+  .signbook .sb-table col.c-school { width: 18.5%; }
+  .signbook .sb-table col.c-gender { width: 7%; }
+  .signbook .sb-table col.c-bd { width: 15%; }
+  .signbook .sb-table col.c-phone { width: 19%; }
+  .signbook .sb-table col.c-sig { width: 22%; }
 
   /* Modal */
   .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
@@ -273,7 +282,7 @@
       top: 0; left: 0;
       width: 100vw;
       height: 100vh;
-      padding: 8mm 10mm;
+      padding: 15mm 20mm;
       box-sizing: border-box;
       border: none;
       display: flex;
@@ -281,10 +290,10 @@
       font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
     }
 
-    #signbookPrint .sb-title { font-size: 18px !important; margin: 0 0 4px !important; }
-    #signbookPrint .sb-activity { font-size: 12px !important; margin: 0 0 6px !important; }
-    #signbookPrint .sb-info-section { margin-bottom: 6px !important; }
-    #signbookPrint .sb-info { font-size: 11px !important; margin: 2px 0 !important; }
+    #signbookPrint .sb-title { font-size: 20pt !important; margin: 0 0 2mm !important; }
+    #signbookPrint .sb-activity { font-size: 12pt !important; margin: 0 0 2mm !important; }
+    #signbookPrint .sb-info-section { margin-bottom: 3mm !important; }
+    #signbookPrint .sb-info { font-size: 10pt !important; margin: 1.5mm 0 !important; }
 
     #signbookPrint > div[style*="flex:1"] { flex: 1 !important; overflow: hidden !important; }
 
@@ -296,13 +305,13 @@
       table-layout: fixed !important;
     }
 
-    #signbookPrint .sb-table col.c-num   { width: 6% !important; }
-    #signbookPrint .sb-table col.c-name  { width: 10% !important; }
-    #signbookPrint .sb-table col.c-school{ width: 13% !important; }
-    #signbookPrint .sb-table col.c-gender{ width: 6% !important; }
-    #signbookPrint .sb-table col.c-bd    { width: 10% !important; }
-    #signbookPrint .sb-table col.c-phone { width: 15% !important; }
-    #signbookPrint .sb-table col.c-sig   { width: 40% !important; }
+    #signbookPrint .sb-table col.c-num   { width: 7.5% !important; }
+    #signbookPrint .sb-table col.c-name  { width: 11% !important; }
+    #signbookPrint .sb-table col.c-school{ width: 18.5% !important; }
+    #signbookPrint .sb-table col.c-gender{ width: 7% !important; }
+    #signbookPrint .sb-table col.c-bd    { width: 15% !important; }
+    #signbookPrint .sb-table col.c-phone { width: 19% !important; }
+    #signbookPrint .sb-table col.c-sig   { width: 22% !important; }
 
     #signbookPrint .sb-table th,
     #signbookPrint .sb-table td {
@@ -331,7 +340,7 @@
       margin: auto !important;
     }
     #signbookPrint .sb-table td.sb-sig-cell .sig-placeholder { display: none !important; }
-    #signbookPrint .sb-footer { font-size: 10px !important; margin-top: 4px !important; flex-shrink: 0; }
+    #signbookPrint .sb-footer { font-size: 10pt !important; margin-top: 2mm !important; flex-shrink: 0; }
 
     .close-btn, .print-btns, .tablet-mode,
     .header, .tabs, .panel:not(#panel-attend),
@@ -1337,9 +1346,17 @@ function onAttendScheduleChange() {
 
 function renderSignbook() {
   const date = document.getElementById('attendDate').value || todayISO();
-  const key = getAttendKey(); // 일정 있으면 일정ID, 없으면 날짜
+  const key = getAttendKey();
   const c = document.getElementById('signbookContainer');
   const infoBox = document.getElementById('attendInfoBox');
+
+  // 일정 미선택 시 서명부 차단
+  const schId = document.getElementById('attendSchedule')?.value;
+  if (!schId) {
+    c.innerHTML = '<div class="empty"><div class="empty-big">📅</div>위에서 <strong>일정을 먼저 선택</strong>해야 서명부를 사용할 수 있습니다.</div>';
+    infoBox.innerHTML = '';
+    return;
+  }
   const allActive = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   const currentParticipants = getParticipantsForDate(key);
   const activeMembers = currentParticipants === null
@@ -1425,9 +1442,13 @@ function renderSignbook() {
     const cellClick = isManageMode ? '' : `onclick="applyOrOpenSign('${m.id}')"`;
     const cellTitle = isManageMode ? '' : `title="${hasSaved && !sig ? '저장된 서명 자동 적용' : '클릭하여 서명'}"`;
 
+    const attStatus = rec.byMember[m.id] || '';
+    const attLabels = { present:'출석', late:'지각', absent:'결석', excused:'사유' };
+    const attBadge = `<span class="att-badge ${attStatus||'none'}" onclick="cycleAttStatus('${m.id}',event)" title="클릭하여 출석 상태 변경">${attStatus ? attLabels[attStatus] : '미기록'}</span>`;
+
     html += `<tr>
       <td>${i+1}</td>
-      <td>${esc(m.name)}</td>
+      <td>${esc(m.name)}${attBadge}</td>
       <td>${m.isGuest ? esc(m.school||'-') : esc(schoolGradeStr(m))}</td>
       <td>${esc(m.gender||'-')}</td>
       <td>${m.isGuest ? esc(bd6fmt(m.birthdate)||'-') : esc(bd6fmt(m.birthdate)||'-')}</td>
@@ -1464,7 +1485,7 @@ function applyOrOpenSign(memberId) {
     if (!attendance[key].signatures) attendance[key].signatures = {};
     if (!attendance[key].byMember) attendance[key].byMember = {};
     attendance[key].signatures[memberId] = m.savedSignature;
-    if (!attendance[key].byMember[memberId]) attendance[key].byMember[memberId] = 'present';
+    attendance[key].byMember[memberId] = 'present'; // 서명=출석 자동 연동
     saveAll();
     renderSignbook();
     toast(`✅ ${m.name} 서명 완료`);
@@ -1603,10 +1624,8 @@ function saveSignature() {
   const dataUrl = outCanvas.toDataURL('image/png');
 
   attendance[key].signatures[currentSignMemberId] = dataUrl;
-  // 서명하면 자동으로 '출석' 상태로 기록
-  if (!attendance[key].byMember[currentSignMemberId]) {
-    attendance[key].byMember[currentSignMemberId] = 'present';
-  }
+  // 서명하면 항상 '출석' 상태로 기록 (기존 결석/사유 포함 덮어씀)
+  attendance[key].byMember[currentSignMemberId] = 'present';
   // 기본 서명으로 저장 체크 시 회원 정보에 저장
   const saveAsDefault = document.getElementById('saveAsDefault').checked;
   const m = members.find(x => x.id === currentSignMemberId);
@@ -1898,6 +1917,8 @@ async function clearDefaultSignature() {
 
 // 인쇄 전 서명 이미지를 28px 높이로 리사이즈하여 행 높이 유지
 async function printSignbook() {
+  const schId = document.getElementById('attendSchedule')?.value;
+  if (!schId) { toast('일정을 먼저 선택해주세요', 'warn'); return; }
   const date = document.getElementById('attendDate').value || todayISO();
   const key = getAttendKey();
   const rec = attendance[key] || { byMember: {}, signatures: {} };
@@ -1916,8 +1937,8 @@ async function printSignbook() {
   const activityTime = linkedSch && linkedSch.time ? linkedSch.time : '';
 
   // 행 높이 계산
-  const totalMM = 258;
-  const headerRowMM = 7;
+  const totalMM = 228;
+  const headerRowMM = 8;
   const rowMM = Math.floor((totalMM - headerRowMM) / Math.max(allParticipants.length, 1));
 
   // 서명 이미지 리사이즈
@@ -1935,6 +1956,7 @@ async function printSignbook() {
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
+        ctx.filter = 'contrast(200%) brightness(0.75)';
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         resizedSigs[m.id] = canvas.toDataURL('image/png');
         resolve();
@@ -1963,15 +1985,15 @@ async function printSignbook() {
 <html lang="ko"><head><meta charset="UTF-8">
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; width:210mm; height:297mm; padding:8mm 10mm; font-size:10pt; color:#000; }
-  .sb-title { text-align:center; font-size:16pt; font-weight:700; margin-bottom:3mm; }
-  .sb-activity { text-align:center; font-size:10pt; margin-bottom:3mm; }
-  .sb-info { font-size:9pt; margin-bottom:1.5mm; }
+  body { font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif; width:210mm; height:297mm; padding:15mm 20mm; font-size:10pt; color:#000; }
+  .sb-title { text-align:center; font-size:20pt; font-weight:700; margin-bottom:2mm; }
+  .sb-activity { text-align:center; font-size:12pt; margin-bottom:2mm; }
+  .sb-info { font-size:10pt; margin-bottom:1.5mm; }
   table { width:100%; border-collapse:collapse; table-layout:fixed; }
-  th, td { border:1px solid #000; font-size:9pt; vertical-align:middle; overflow:hidden; height:${rowMM}mm; }
+  th, td { border:1px solid #000; font-size:10pt; vertical-align:middle; overflow:hidden; height:${rowMM}mm; }
   th { background:#FAE8C3; text-align:center; font-weight:700; height:${headerRowMM}mm; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  col.c-num{width:6%} col.c-name{width:10%} col.c-school{width:13%} col.c-gender{width:6%} col.c-bd{width:10%} col.c-phone{width:15%} col.c-sig{width:40%}
-  .sb-footer { text-align:right; font-size:9pt; margin-top:2mm; font-weight:600; }
+  col.c-num{width:7.5%} col.c-name{width:11%} col.c-school{width:18.5%} col.c-gender{width:7%} col.c-bd{width:15%} col.c-phone{width:19%} col.c-sig{width:22%}
+  .sb-footer { text-align:right; font-size:10pt; margin-top:2mm; font-weight:600; }
   @page { size:A4 portrait; margin:0; }
 </style></head>
 <body>
@@ -2002,6 +2024,20 @@ async function printSignbook() {
     }, 300);
   };
   iframe.srcdoc = html;
+}
+
+function cycleAttStatus(memberId, event) {
+  event.stopPropagation();
+  const key = getAttendKey();
+  if (!attendance[key]) attendance[key] = { byMember: {}, signatures: {}, scheduleId: document.getElementById('attendSchedule')?.value || null };
+  if (!attendance[key].byMember) attendance[key].byMember = {};
+  const cycle = ['present', 'late', 'absent', 'excused', ''];
+  const cur = attendance[key].byMember[memberId] || '';
+  const next = cycle[(cycle.indexOf(cur) + 1) % cycle.length];
+  if (next) attendance[key].byMember[memberId] = next;
+  else delete attendance[key].byMember[memberId];
+  saveAll();
+  renderSignbook();
 }
 
 function clearAllSignatures() {
@@ -2120,26 +2156,48 @@ function toggleStatDetail(uid) {
 
 
 // 통계용: attendance에서 날짜별 byMember 맵 반환 (날짜+일정ID 키 우선, 중복 방지)
+// 출석률 계산에서 제외할 활동 키 목록 (로컬 저장)
+let excludedStatKeys = JSON.parse(localStorage.getItem('excludedStatKeys_' + CLUB_ID) || '[]');
+function saveExcludedStatKeys() {
+  localStorage.setItem('excludedStatKeys_' + CLUB_ID, JSON.stringify(excludedStatKeys));
+}
+function toggleExcludedStatKey(key) {
+  if (excludedStatKeys.includes(key)) {
+    excludedStatKeys = excludedStatKeys.filter(k => k !== key);
+  } else {
+    excludedStatKeys.push(key);
+  }
+  saveExcludedStatKeys();
+  renderStats();
+}
+
 function getStatsByDate() {
-  const dateMap = {}; // { 'YYYY-MM-DD': { byMember: {} } }
+  const dateMap = {}; // { 'YYYY-MM-DD': { byMember: {}, key } }
   Object.entries(attendance).forEach(([key, val]) => {
+    if (!val.scheduleId) return; // 일정 미연결 기록 제외
+    if (excludedStatKeys.includes(key)) return; // 수동 제외 목록
     const isCombo = key.includes('_s_');
     const date = isCombo ? key.split('_s_')[0] : key;
     if (!dateMap[date]) {
-      dateMap[date] = { byMember: Object.assign({}, val.byMember || {}) };
+      dateMap[date] = { byMember: Object.assign({}, val.byMember || {}), key };
     } else {
-      // 일정 키(combo)가 날짜 키보다 우선
-      if (isCombo) {
-        Object.assign(dateMap[date].byMember, val.byMember || {});
-      } else {
-        // 날짜 키는 이미 없는 회원만 보완
-        Object.entries(val.byMember || {}).forEach(([mid, status]) => {
-          if (!dateMap[date].byMember[mid]) dateMap[date].byMember[mid] = status;
-        });
-      }
+      Object.assign(dateMap[date].byMember, val.byMember || {});
     }
   });
   return dateMap;
+}
+
+// 제외 없이 전체 일정 연결 활동 목록 (관리용)
+function getAllScheduledStatKeys() {
+  return Object.entries(attendance)
+    .filter(([, val]) => val.scheduleId)
+    .map(([key, val]) => {
+      const isCombo = key.includes('_s_');
+      const date = isCombo ? key.split('_s_')[0] : key;
+      const sch = schedules.find(s => s.id === val.scheduleId);
+      return { key, date, title: sch ? sch.title : '(삭제된 일정)', excluded: excludedStatKeys.includes(key) };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 function renderStats() {
   const c = document.getElementById('statsContent');
@@ -2184,6 +2242,74 @@ function renderStats() {
     }
   });
   html += '</tbody></table></div>';
+
+  // 월별 출석 달력
+  const allStatKeys = getAllScheduledStatKeys();
+  const calKeys = allStatKeys; // 제외된 것도 달력엔 표시
+  if (calKeys.length > 0) {
+    // 월 목록 추출
+    const months = [...new Set(calKeys.map(a => a.date.slice(0,7)))].sort();
+    html += `<div class="widget-section"><h3>📅 월별 활동 달력</h3>`;
+    months.forEach(ym => {
+      const [y, m] = ym.split('-').map(Number);
+      const firstDay = new Date(y, m-1, 1).getDay(); // 0=일
+      const lastDate = new Date(y, m, 0).getDate();
+      const monthKeys = calKeys.filter(a => a.date.startsWith(ym));
+      const actDates = {};
+      monthKeys.forEach(a => { actDates[a.date] = a; });
+
+      html += `<div style="display:inline-block; margin:0 16px 20px 0; vertical-align:top; min-width:210px;">
+        <div style="font-size:13px; font-weight:600; color:#0F6E56; margin-bottom:8px;">${y}년 ${m}월</div>
+        <table style="border-collapse:collapse; font-size:11px;">
+          <thead><tr>${['일','월','화','수','목','금','토'].map((d,i)=>`<th style="width:28px;height:22px;text-align:center;color:${i===0?'#e24b4a':i===6?'#1e6eb5':'#555'}">${d}</th>`).join('')}</tr></thead>
+          <tbody>`;
+      let day = 1, col = firstDay;
+      html += '<tr>' + '<td></td>'.repeat(firstDay);
+      while (day <= lastDate) {
+        const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const act = actDates[dateStr];
+        const isExcluded = act && act.excluded;
+        const dotColor = act ? (isExcluded ? '#ccc' : '#1D9E75') : 'transparent';
+        const title = act ? (isExcluded ? `[제외] ${act.title}` : act.title) : '';
+        html += `<td style="width:28px;height:28px;text-align:center;vertical-align:middle;position:relative;" title="${esc(title)}">
+          <div style="position:relative;display:inline-block;">
+            <span style="font-size:11px;color:${col===0?'#e24b4a':col===6?'#1e6eb5':'#333'}">${day}</span>
+            ${act ? `<span style="position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:${dotColor};display:block;"></span>` : ''}
+          </div>
+        </td>`;
+        col++; day++;
+        if (col === 7 && day <= lastDate) { html += '</tr><tr>'; col = 0; }
+      }
+      html += '</tr></tbody></table>';
+      if (monthKeys.length > 0) {
+        html += `<div style="margin-top:6px; font-size:11px; color:#5F5E5A;">`;
+        monthKeys.forEach(a => {
+          html += `<span style="margin-right:6px;">● ${a.date.slice(5)} ${esc(a.title)}${a.excluded?' <em style="color:#aaa">(제외)</em>':''}</span>`;
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // 활동 목록 관리 (출석률 포함/제외)
+  if (allStatKeys.length > 0) {
+    html += `<div class="widget-section"><h3>📋 활동 목록 관리 <span style="font-size:12px;font-weight:400;color:#888">(출석률 계산에 포함/제외)</span></h3>
+    <table class="list-table"><thead><tr><th>날짜</th><th>활동명</th><th style="width:80px;text-align:center">포함여부</th></tr></thead><tbody>`;
+    allStatKeys.forEach(a => {
+      html += `<tr style="${a.excluded ? 'opacity:0.5;' : ''}">
+        <td style="color:#5F5E5A">${a.date}</td>
+        <td>${esc(a.title)}</td>
+        <td style="text-align:center">
+          <button onclick="toggleExcludedStatKey('${a.key}')" class="btn btn-small ${a.excluded ? 'btn-secondary' : 'btn-primary'}" style="min-width:56px">
+            ${a.excluded ? '제외됨' : '포함'}
+          </button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
 
   if (dates.length > 0) {
     const rates = members.filter(m=>m.status==='활동중').map(m => {
