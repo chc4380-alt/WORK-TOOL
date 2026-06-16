@@ -119,21 +119,12 @@
   .signbook .sb-table td.sb-sig-cell { padding: 2px; background: #fff; height: 70px; min-height: 70px; position: relative; cursor: pointer; }
   .signbook .sb-table td.sb-sig-cell:hover { background: #FFFBF2; }
   .signbook .sb-table td.sb-sig-cell.has-sig { cursor: pointer; background: #fff; }
-  .signbook .sb-table td.sb-sig-cell.has-saved-sig { background: #f0f7ff; }
+  .signbook .sb-table td.sb-sig-cell.has-saved-sig { background: #fff; }
   .signbook .sb-table td.sb-sig-cell.has-saved-sig .sig-placeholder { color: #1e6eb5; font-weight: 500; font-style: normal; }
   .signbook .sb-table td.sb-sig-cell .sig-placeholder { color: #bbb; font-size: 11px; font-style: italic; }
   .signbook .sb-table td.sb-sig-cell.readonly { cursor: default; }
   .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
   .signbook .sb-table td.sb-sig-cell img { max-height: 64px; max-width: 100%; vertical-align: middle; }
-
-  /* 출석 상태 뱃지 */
-  .att-badge { display:inline-block; font-size:10px; padding:1px 5px; border-radius:3px; cursor:pointer; margin-left:4px; font-weight:600; user-select:none; vertical-align:middle; }
-  .att-badge.present { background:#1D9E75; color:#fff; }
-  .att-badge.late { background:#EF9F27; color:#fff; }
-  .att-badge.absent { background:#E24B4A; color:#fff; }
-  .att-badge.excused { background:#888; color:#fff; }
-  .att-badge.none { background:#f1efe8; color:#aaa; border:1px dashed #ccc; }
-  @media print { .att-badge { display:none !important; } }
 
   /* 서명 관리 모드 */
   .sign-manage-mode .sb-sig-cell { position: relative; }
@@ -1442,13 +1433,9 @@ function renderSignbook() {
     const cellClick = isManageMode ? '' : `onclick="applyOrOpenSign('${m.id}')"`;
     const cellTitle = isManageMode ? '' : `title="${hasSaved && !sig ? '저장된 서명 자동 적용' : '클릭하여 서명'}"`;
 
-    const attStatus = rec.byMember[m.id] || '';
-    const attLabels = { present:'출석', late:'지각', absent:'결석', excused:'사유' };
-    const attBadge = `<span class="att-badge ${attStatus||'none'}" onclick="cycleAttStatus('${m.id}',event)" title="클릭하여 출석 상태 변경">${attStatus ? attLabels[attStatus] : '미기록'}</span>`;
-
     html += `<tr>
       <td>${i+1}</td>
-      <td>${esc(m.name)}${attBadge}</td>
+      <td>${esc(m.name)}</td>
       <td>${m.isGuest ? esc(m.school||'-') : esc(schoolGradeStr(m))}</td>
       <td>${esc(m.gender||'-')}</td>
       <td>${m.isGuest ? esc(bd6fmt(m.birthdate)||'-') : esc(bd6fmt(m.birthdate)||'-')}</td>
@@ -2161,6 +2148,18 @@ let excludedStatKeys = JSON.parse(localStorage.getItem('excludedStatKeys_' + CLU
 function saveExcludedStatKeys() {
   localStorage.setItem('excludedStatKeys_' + CLUB_ID, JSON.stringify(excludedStatKeys));
 }
+function deleteStatActivity(key) {
+  const a = getAllScheduledStatKeys().find(x => x.key === key);
+  const label = a ? `${a.date} ${a.title}` : key;
+  if (!confirm(`"${label}" 출석 기록을 영구 삭제할까요?\n(서명 포함 모든 데이터가 삭제됩니다)`)) return;
+  delete attendance[key];
+  excludedStatKeys = excludedStatKeys.filter(k => k !== key);
+  saveExcludedStatKeys();
+  saveAll();
+  renderStats();
+  toast('활동 기록이 삭제되었습니다');
+}
+
 function toggleExcludedStatKey(key) {
   if (excludedStatKeys.includes(key)) {
     excludedStatKeys = excludedStatKeys.filter(k => k !== key);
@@ -2192,11 +2191,14 @@ function getAllScheduledStatKeys() {
   return Object.entries(attendance)
     .filter(([, val]) => val.scheduleId)
     .map(([key, val]) => {
-      const isCombo = key.includes('_s_');
-      const date = isCombo ? key.split('_s_')[0] : key;
       const sch = schedules.find(s => s.id === val.scheduleId);
+      // key가 'date_scheduleId' 형식인지 확인, 아니면 일정의 날짜 사용
+      const isCombo = key.includes('_s_') && /^\d{4}-\d{2}-\d{2}_/.test(key);
+      const date = isCombo ? key.split('_s_')[0] : (sch ? sch.date : '');
+      if (!date) return null; // 날짜 불명 레코드 제외
       return { key, date, title: sch ? sch.title : '(삭제된 일정)', excluded: excludedStatKeys.includes(key) };
     })
+    .filter(Boolean)
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 function renderStats() {
@@ -2245,52 +2247,60 @@ function renderStats() {
 
   // 월별 출석 달력
   const allStatKeys = getAllScheduledStatKeys();
-  const calKeys = allStatKeys; // 제외된 것도 달력엔 표시
+  const calKeys = allStatKeys;
   if (calKeys.length > 0) {
-    // 월 목록 추출
     const months = [...new Set(calKeys.map(a => a.date.slice(0,7)))].sort();
-    html += `<div class="widget-section"><h3>📅 월별 활동 달력</h3>`;
+    html += `<div class="widget-section"><h3>📅 월별 활동 달력</h3><div style="display:flex; flex-wrap:wrap; gap:20px;">`;
     months.forEach(ym => {
       const [y, m] = ym.split('-').map(Number);
-      const firstDay = new Date(y, m-1, 1).getDay(); // 0=일
+      const firstDay = new Date(y, m-1, 1).getDay();
       const lastDate = new Date(y, m, 0).getDate();
       const monthKeys = calKeys.filter(a => a.date.startsWith(ym));
       const actDates = {};
       monthKeys.forEach(a => { actDates[a.date] = a; });
 
-      html += `<div style="display:inline-block; margin:0 16px 20px 0; vertical-align:top; min-width:210px;">
-        <div style="font-size:13px; font-weight:600; color:#0F6E56; margin-bottom:8px;">${y}년 ${m}월</div>
-        <table style="border-collapse:collapse; font-size:11px;">
-          <thead><tr>${['일','월','화','수','목','금','토'].map((d,i)=>`<th style="width:28px;height:22px;text-align:center;color:${i===0?'#e24b4a':i===6?'#1e6eb5':'#555'}">${d}</th>`).join('')}</tr></thead>
+      html += `<div style="background:#fff; border:1px solid #E1F5EE; border-radius:10px; padding:14px; min-width:220px;">
+        <div style="font-size:13px; font-weight:700; color:#0F6E56; margin-bottom:10px; text-align:center;">${y}년 ${m}월
+          <span style="font-size:11px; font-weight:400; color:#888; margin-left:6px">활동 ${monthKeys.filter(a=>!a.excluded).length}회</span>
+        </div>
+        <table style="border-collapse:collapse; width:100%;">
+          <thead><tr>${['일','월','화','수','목','금','토'].map((d,i)=>`<th style="width:14.28%;padding:3px 0;text-align:center;font-size:11px;font-weight:600;color:${i===0?'#e24b4a':i===6?'#1e6eb5':'#888'}">${d}</th>`).join('')}</tr></thead>
           <tbody>`;
       let day = 1, col = firstDay;
-      html += '<tr>' + '<td></td>'.repeat(firstDay);
+      html += '<tr>' + '<td style="padding:2px"></td>'.repeat(firstDay);
       while (day <= lastDate) {
         const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
         const act = actDates[dateStr];
         const isExcluded = act && act.excluded;
-        const dotColor = act ? (isExcluded ? '#ccc' : '#1D9E75') : 'transparent';
-        const title = act ? (isExcluded ? `[제외] ${act.title}` : act.title) : '';
-        html += `<td style="width:28px;height:28px;text-align:center;vertical-align:middle;position:relative;" title="${esc(title)}">
-          <div style="position:relative;display:inline-block;">
-            <span style="font-size:11px;color:${col===0?'#e24b4a':col===6?'#1e6eb5':'#333'}">${day}</span>
-            ${act ? `<span style="position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:${dotColor};display:block;"></span>` : ''}
-          </div>
+        const bg = act ? (isExcluded ? '#f5f5f5' : '#E1F5EE') : 'transparent';
+        const numColor = act ? (isExcluded ? '#aaa' : '#0F6E56') : (col===0?'#e24b4a':col===6?'#1e6eb5':'#333');
+        const fw = act && !isExcluded ? '700' : '400';
+        const border = act && !isExcluded ? '1px solid #1D9E75' : (isExcluded ? '1px solid #ddd' : 'none');
+        const titleAttr = act ? `title="${esc(act.title)}${isExcluded?' (제외됨)':''}"` : '';
+        html += `<td style="padding:2px;text-align:center;" ${titleAttr}>
+          <div style="width:26px;height:26px;border-radius:50%;background:${bg};border:${border};display:flex;align-items:center;justify-content:center;margin:auto;font-size:11px;font-weight:${fw};color:${numColor};">${day}</div>
         </td>`;
         col++; day++;
         if (col === 7 && day <= lastDate) { html += '</tr><tr>'; col = 0; }
       }
       html += '</tr></tbody></table>';
+      // 활동 목록 요약
       if (monthKeys.length > 0) {
-        html += `<div style="margin-top:6px; font-size:11px; color:#5F5E5A;">`;
+        html += `<div style="margin-top:10px; padding-top:8px; border-top:1px solid #E1F5EE;">`;
         monthKeys.forEach(a => {
-          html += `<span style="margin-right:6px;">● ${a.date.slice(5)} ${esc(a.title)}${a.excluded?' <em style="color:#aaa">(제외)</em>':''}</span>`;
+          const tagBg = a.excluded ? '#f5f5f5' : '#E1F5EE';
+          const tagColor = a.excluded ? '#aaa' : '#0F6E56';
+          html += `<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:2px 0;">
+            <span style="background:${tagBg};color:${tagColor};border-radius:3px;padding:1px 5px;font-weight:600;white-space:nowrap;">${a.date.slice(5)}</span>
+            <span style="color:${a.excluded?'#aaa':'#333'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(a.title)}</span>
+            ${a.excluded ? '<span style="color:#aaa;font-size:10px;white-space:nowrap">제외</span>' : ''}
+          </div>`;
         });
         html += '</div>';
       }
       html += '</div>';
     });
-    html += '</div>';
+    html += '</div></div>';
   }
 
   // 활동 목록 관리 (출석률 포함/제외)
@@ -2298,13 +2308,16 @@ function renderStats() {
     html += `<div class="widget-section"><h3>📋 활동 목록 관리 <span style="font-size:12px;font-weight:400;color:#888">(출석률 계산에 포함/제외)</span></h3>
     <table class="list-table"><thead><tr><th>날짜</th><th>활동명</th><th style="width:80px;text-align:center">포함여부</th></tr></thead><tbody>`;
     allStatKeys.forEach(a => {
-      html += `<tr style="${a.excluded ? 'opacity:0.5;' : ''}">
+      html += `<tr style="${a.excluded ? 'opacity:0.55;' : ''}">
         <td style="color:#5F5E5A">${a.date}</td>
-        <td>${esc(a.title)}</td>
+        <td style="color:${a.excluded?'#aaa':'inherit'}">${esc(a.title)}</td>
         <td style="text-align:center">
-          <button onclick="toggleExcludedStatKey('${a.key}')" class="btn btn-small ${a.excluded ? 'btn-secondary' : 'btn-primary'}" style="min-width:56px">
-            ${a.excluded ? '제외됨' : '포함'}
-          </button>
+          <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
+            <button onclick="toggleExcludedStatKey('${a.key}')" class="btn btn-small ${a.excluded ? 'btn-secondary' : 'btn-primary'}" style="min-width:52px">
+              ${a.excluded ? '제외됨' : '포함'}
+            </button>
+            ${a.excluded ? `<button onclick="deleteStatActivity('${a.key}')" class="btn btn-small btn-danger" title="출석 기록 영구 삭제">🗑️</button>` : ''}
+          </div>
         </td>
       </tr>`;
     });
