@@ -678,6 +678,15 @@ async function sbFetch(path, options = {}) {
 async function loadFromDB() {
   try {
     showSyncStatus('loading');
+    // 로컬 변경이 DB 동기화보다 최신이면 → 로컬 데이터를 DB에 올리고 덮어쓰기 스킵
+    const localChangeTime = parseInt(localStorage.getItem('localChangeTime_' + CLUB_ID) || '0');
+    const dbSyncTime = parseInt(localStorage.getItem('dbSyncTime_' + CLUB_ID) || '0');
+    if (localChangeTime > dbSyncTime) {
+      // 로컬이 더 최신 → DB에 push 후 완료
+      await saveToDB();
+      showSyncStatus('ok');
+      return;
+    }
     const [mRows, scRows, atRows, stRows] = await Promise.all([
       sbFetch(`club_members?club_id=eq.${CLUB_ID}&order=created_at.asc`),
       sbFetch(`club_schedules?club_id=eq.${CLUB_ID}&order=date.asc`),
@@ -792,6 +801,7 @@ async function saveToDB() {
     }));
     await Promise.all(tasks);
     saveLocal();
+    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
     showSyncStatus('ok');
   } catch(e) {
     console.warn('DB 저장 실패:', e);
@@ -872,6 +882,7 @@ function saveLocal() {
     localStorage.setItem(KEYS.a, JSON.stringify(attendance));
     localStorage.setItem(KEYS.s, JSON.stringify(settings));
     localStorage.setItem(KEYS.sc, JSON.stringify(schedules));
+    localStorage.setItem('localChangeTime_' + CLUB_ID, String(Date.now()));
   } catch(e) {
     toast('저장 용량 초과! JSON 백업 후 오래된 서명을 정리해주세요', 'error');
   }
