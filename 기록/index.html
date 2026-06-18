@@ -401,6 +401,7 @@
     <button class="tab-btn" data-tab="schedule" onclick="switchTab('schedule')">📅 일정 관리</button>
     <button class="tab-btn" data-tab="attend" onclick="switchTab('attend')">✍️ 서명부·출석</button>
     <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 통계·내보내기</button>
+    <button class="tab-btn" data-tab="activity" onclick="switchTab('activity')">🗂️ 활동별 참여현황</button>
   </div>
 
   <!-- 대시보드 -->
@@ -557,6 +558,10 @@
       <button class="btn btn-secondary" onclick="exportAllXLSX()">📊 전체 데이터 엑셀</button>
     </div>
     <div id="statsContent"></div>
+  </div>
+
+  <div class="panel hidden" id="panel-activity">
+    <div id="activityContent"></div>
   </div>
 </div>
 
@@ -1025,6 +1030,7 @@ function switchTab(tab) {
     setTimeout(() => updateParticipantBtn(), 50);
   }
   if (tab==='stats') renderStats();
+  if (tab==='activity') renderActivity();
 }
 
 function updateHeader() {
@@ -2259,6 +2265,115 @@ function deleteDefaultSignature(memberId) {
   viewCard(memberId);
 }
 
+// ==================== 활동별 참여현황 ====================
+function renderActivity() {
+  const c = document.getElementById('activityContent');
+  if (schedules.length === 0) {
+    c.innerHTML = '<div class="empty"><div class="empty-big">🗂️</div>등록된 일정이 없습니다.</div>';
+    return;
+  }
+
+  // scheduleId → statKey 맵
+  const statKeyMap = {};
+  getAllScheduledStatKeys().filter(a => !a.deleted).forEach(a => {
+    const schId = attendance[a.key]?.scheduleId;
+    if (schId) statKeyMap[schId] = a.key;
+  });
+
+  // 월별 그룹화
+  const months = [...new Set(schedules.map(s => s.date.slice(0,7)))].sort().reverse();
+  const today = todayISO();
+
+  let html = '';
+  months.forEach(ym => {
+    const [y, m] = ym.split('-').map(Number);
+    const monthScheds = schedules.filter(s => s.date.startsWith(ym)).sort((a,b) => b.date.localeCompare(a.date));
+
+    html += `<div class="widget-section">
+      <h3>📅 ${y}년 ${m}월 <span style="font-size:13px;font-weight:400;color:#888">— ${monthScheds.length}개 활동</span></h3>`;
+
+    monthScheds.forEach(sch => {
+      const attKey = statKeyMap[sch.id];
+      const att = attKey ? attendance[attKey] : null;
+      const byMember = att?.byMember || {};
+      const sigs = att?.signatures || {};
+      const guests = attKey ? (guestParticipants[attKey] || []) : [];
+      const isPast = sch.date <= today;
+
+      // 참여 회원 (present + late)
+      const presentIds = Object.entries(byMember).filter(([,v]) => v==='present'||v==='late').map(([id]) => id);
+      const absentIds = Object.entries(byMember).filter(([,v]) => v==='absent'||v==='excused').map(([id]) => id);
+      const totalParticipants = presentIds.length + guests.length;
+
+      const statusBadge = !isPast
+        ? `<span style="background:#E8F4FD;color:#1a73e8;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600">예정</span>`
+        : att
+          ? `<span style="background:#E1F5EE;color:#0F6E56;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600">출석 완료</span>`
+          : `<span style="background:#FFF3E0;color:#E65100;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:600">출석 미기록</span>`;
+
+      html += `<div style="border:1px solid #e8e8e8;border-radius:10px;margin-bottom:14px;overflow:hidden;">
+        <div style="background:#f8f9fa;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #e8e8e8;">
+          <span style="font-weight:700;font-size:14px;color:#222;">${esc(sch.title)}</span>
+          ${statusBadge}
+          <span style="color:#888;font-size:12px;margin-left:auto">${sch.date} ${sch.time ? '· '+esc(sch.time) : ''}</span>
+        </div>`;
+
+      if (!att && isPast) {
+        html += `<div style="padding:14px 16px;color:#aaa;font-size:13px;">출석부가 아직 기록되지 않았습니다.</div>`;
+      } else if (!att && !isPast) {
+        html += `<div style="padding:14px 16px;color:#aaa;font-size:13px;">예정된 활동입니다.</div>`;
+      } else {
+        // 참여자 목록
+        html += `<div style="padding:12px 16px;">`;
+        html += `<div style="font-size:12px;color:#666;margin-bottom:8px;">참여 <strong style="color:#0F6E56">${totalParticipants}명</strong>${absentIds.length ? ` · 결석/사유 ${absentIds.length}명` : ''}</div>`;
+
+        if (presentIds.length > 0) {
+          html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">`;
+          presentIds.forEach(id => {
+            const mem = members.find(x => x.id === id);
+            if (!mem) return;
+            const hasSig = !!sigs[id];
+            html += `<div style="display:flex;align-items:center;gap:5px;background:${hasSig?'#E1F5EE':'#f1f3f4'};border-radius:20px;padding:4px 10px;font-size:12px;">
+              ${hasSig ? `<img src="${sigs[id]}" style="height:18px;max-width:40px;filter:contrast(200%) brightness(0.75);vertical-align:middle">` : ''}
+              <span style="color:${hasSig?'#0F6E56':'#555'};font-weight:${hasSig?'600':'400'}">${esc(mem.name)}</span>
+              <span style="color:#aaa;font-size:10px">${esc(mem.school||'')} ${esc(mem.grade||'')}</span>
+            </div>`;
+          });
+          html += `</div>`;
+        }
+
+        if (guests.length > 0) {
+          html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">`;
+          guests.forEach(g => {
+            html += `<div style="background:#FFF8E1;border-radius:20px;padding:4px 10px;font-size:12px;color:#795548;">👤 ${esc(g.name||'게스트')}</div>`;
+          });
+          html += `</div>`;
+        }
+
+        if (absentIds.length > 0) {
+          html += `<div style="display:flex;flex-wrap:wrap;gap:6px;">`;
+          absentIds.forEach(id => {
+            const mem = members.find(x => x.id === id);
+            if (!mem) return;
+            const status = byMember[id];
+            html += `<div style="background:#fafafa;border:1px solid #eee;border-radius:20px;padding:4px 10px;font-size:12px;color:#aaa;">
+              ${esc(mem.name)} <span style="font-size:10px">${status==='excused'?'사유결석':'결석'}</span>
+            </div>`;
+          });
+          html += `</div>`;
+        }
+
+        html += `</div>`;
+      }
+      html += `</div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  c.innerHTML = html;
+}
+
 // ==================== 통계 ====================
 function toggleStatDetail(uid) {
   const detail = document.getElementById(uid + '_detail');
@@ -2285,10 +2400,15 @@ async function deleteStatActivity(key) {
   saveExcludedStatKeys();
   saveLocal();
   renderStats();
-  // Supabase에서도 삭제
-  const dbId = encodeURIComponent(CLUB_ID + '_' + key);
+  // Supabase에서도 삭제 — schedule_id + date로 조회해서 삭제 (id 키 불일치 방지)
+  const schedId = val?.scheduleId;
+  const attDate = key.includes('_s_') ? key.split('_s_')[0] : key;
   try {
-    await sbFetch(`club_attendance?id=eq.${dbId}`, { method: 'DELETE' });
+    if (schedId) {
+      await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}&schedule_id=eq.${encodeURIComponent(schedId)}`, { method: 'DELETE' });
+    } else {
+      await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}&date=eq.${attDate}`, { method: 'DELETE' });
+    }
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
     toast('활동 기록이 삭제되었습니다');
   } catch(e) {
