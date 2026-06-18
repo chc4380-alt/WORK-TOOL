@@ -2395,19 +2395,23 @@ async function deleteStatActivity(key) {
   const a = getAllScheduledStatKeys().find(x => x.key === key);
   const label = a ? `${a.date} ${a.title}` : key;
   if (!confirm(`"${label}" 출석 기록을 영구 삭제할까요?\n(서명 포함 모든 데이터가 삭제됩니다)`)) return;
+
+  // 반드시 delete 전에 scheduleId 추출
+  const schedId = attendance[key]?.scheduleId;
+
   delete attendance[key];
   excludedStatKeys = excludedStatKeys.filter(k => k !== key);
   saveExcludedStatKeys();
   saveLocal();
   renderStats();
-  // Supabase에서도 삭제 — schedule_id + date로 조회해서 삭제 (id 키 불일치 방지)
-  const schedId = val?.scheduleId;
-  const attDate = key.includes('_s_') ? key.split('_s_')[0] : key;
+
   try {
     if (schedId) {
+      // schedule_id로 삭제 — DB의 id 컬럼 형식과 무관하게 정확히 삭제
       await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}&schedule_id=eq.${encodeURIComponent(schedId)}`, { method: 'DELETE' });
     } else {
-      await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}&date=eq.${attDate}`, { method: 'DELETE' });
+      const attDate = key.includes('_s_') ? key.split('_s_')[0] : key;
+      await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}&date=eq.${attDate}&schedule_id=is.null`, { method: 'DELETE' });
     }
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
     toast('활동 기록이 삭제되었습니다');
