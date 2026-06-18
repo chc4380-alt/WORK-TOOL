@@ -126,6 +126,29 @@
   .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
   .signbook .sb-table td.sb-sig-cell img { max-height: 64px; max-width: 100%; vertical-align: middle; }
 
+  /* 서명 개별 삭제 버튼 (항상 표시) */
+  .sb-sig-cell .sig-quick-del {
+    display: none;
+    position: absolute;
+    top: 2px; right: 2px;
+    background: rgba(231,76,60,0.85);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    font-size: 11px;
+    line-height: 1;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+  }
+  .sb-sig-cell.has-sig:hover .sig-quick-del { display: flex; }
+  @media (pointer: coarse) {
+    /* 터치 기기에서는 항상 표시 */
+    .sb-sig-cell.has-sig .sig-quick-del { display: flex; }
+  }
+  @media print { .sig-quick-del { display: none !important; } }
+
   /* 서명 관리 모드 */
   .sign-manage-mode .sb-sig-cell { position: relative; }
   .sign-manage-mode .sb-sig-cell .sig-del-btn {
@@ -888,6 +911,17 @@ function saveLocal() {
   }
 }
 
+// 서명처럼 즉시 저장이 필요한 경우 — 디바운스 없이 바로 DB 저장
+async function saveImmediate() {
+  saveLocal();
+  clearTimeout(saveDBTimer);
+  hasUnsaved = false;
+  setAutoSaveIndicator('unsaved');
+  await saveToDB();
+  setAutoSaveIndicator('saved');
+  setTimeout(() => setAutoSaveIndicator('idle'), 3000);
+}
+
 // saveLocal 이후 DB에도 동기화 (디바운스 1초)
 let saveDBTimer = null;
 let hasUnsaved = false;
@@ -1481,11 +1515,10 @@ function renderSignbook() {
     if (isManageMode) {
       sigContent = `
         ${sig ? `<img src="${sig}" alt="서명"><button class="sig-del-btn" onclick="deleteSignature('${m.id}', event)" title="이 날 서명 삭제">×</button>` : '<span class="sig-placeholder" style="pointer-events:none">서명 없음</span>'}
-        ${hasSaved ? `<button class="sig-saved-del-btn" onclick="deleteSavedSignatureInline('${m.id}', event)" title="대표서명 삭제">대표삭제</button>` : ''}
       `;
     } else {
       sigContent = sig
-        ? `<img src="${sig}" alt="서명">`
+        ? `<img src="${sig}" alt="서명"><button class="sig-quick-del" onclick="quickDeleteSignature('${m.id}',event)" title="서명 삭제">×</button>`
         : `<span class="sig-placeholder">${hasSaved ? '👆 탭하여 서명' : '클릭하여 서명'}</span>`;
     }
 
@@ -1533,9 +1566,8 @@ function applyOrOpenSign(memberId) {
     if (!attendance[key].byMember) attendance[key].byMember = {};
     attendance[key].signatures[memberId] = m.savedSignature;
     attendance[key].byMember[memberId] = 'present'; // 서명=출석 자동 연동
-    saveAll();
+    saveImmediate().then(() => toast(`✅ ${m.name} 서명 완료`));
     renderSignbook();
-    toast(`✅ ${m.name} 서명 완료`);
     return;
   }
 
@@ -1682,7 +1714,7 @@ function saveSignature() {
     }
     m.updatedAt = new Date().toISOString();
   }
-  saveAll();
+  saveImmediate(); // 서명은 디바운스 없이 즉시 DB 저장
   closeSignPad();
   // 현재 모드에 따라 렌더링
   if (document.getElementById('tabletMode').classList.contains('show')) {
@@ -1890,6 +1922,20 @@ function toggleSignManageMode() {
     banner.classList.remove('show');
   }
   renderSignbook();
+}
+
+function quickDeleteSignature(memberId, e) {
+  e.stopPropagation();
+  const key = getAttendKey();
+  const m = members.find(x => x.id === memberId)
+    || (guestParticipants[key] || []).find(x => x.id === memberId);
+  if (!m) return;
+  if (!confirm(`"${m.name}" 님의 서명을 삭제할까요?`)) return;
+  if (attendance[key]?.signatures) delete attendance[key].signatures[memberId];
+  if (attendance[key]?.byMember) delete attendance[key].byMember[memberId];
+  saveImmediate();
+  renderSignbook();
+  toast(`${m.name} 님의 서명이 삭제되었습니다`);
 }
 
 function deleteSignature(memberId, e) {
@@ -2186,9 +2232,31 @@ function viewCard(id) {
         <span>작성일: ${new Date().toLocaleDateString('ko-KR')}</span>
         <span>${esc(settings.orgName)}${settings.advisorName?' / 지도: '+esc(settings.advisorName):''}</span>
       </div>
+    </div>
+    <div class="card-sig-section" style="margin-top:18px; padding:14px 16px; background:#f8f9fa; border-radius:8px; border:1px solid #e0e0e0;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:10px; color:#333;">✍️ 대표서명 관리</div>
+      ${m.savedSignature
+        ? `<div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+             <div style="border:1px solid #ccc; border-radius:6px; background:#fff; padding:4px; display:inline-block;">
+               <img src="${m.savedSignature}" alt="대표서명" style="max-width:180px; max-height:70px; display:block; filter:contrast(200%) brightness(0.75);">
+             </div>
+             <button onclick="deleteDefaultSignature('${m.id}')" style="background:#e74c3c; color:#fff; border:none; border-radius:6px; padding:7px 14px; font-size:13px; cursor:pointer; font-weight:600;">🗑️ 대표서명 삭제</button>
+           </div>`
+        : `<span style="color:#999; font-size:13px;">등록된 대표서명이 없습니다.</span>`
+      }
     </div>`;
   document.getElementById('cardContent').innerHTML = html;
   document.getElementById('cardModal').classList.add('show');
+}
+
+function deleteDefaultSignature(memberId) {
+  const m = members.find(x => x.id === memberId);
+  if (!m) return;
+  if (!confirm(`"${m.name}" 님의 대표서명을 완전히 삭제할까요?\n\n삭제 후에는 서명부에서 자동 불러오기가 되지 않습니다.`)) return;
+  delete m.savedSignature;
+  saveImmediate();
+  toast(`${m.name} 님의 대표서명이 삭제되었습니다`);
+  viewCard(memberId);
 }
 
 // ==================== 통계 ====================
@@ -2208,16 +2276,25 @@ let excludedStatKeys = JSON.parse(localStorage.getItem('excludedStatKeys_' + CLU
 function saveExcludedStatKeys() {
   localStorage.setItem('excludedStatKeys_' + CLUB_ID, JSON.stringify(excludedStatKeys));
 }
-function deleteStatActivity(key) {
+async function deleteStatActivity(key) {
   const a = getAllScheduledStatKeys().find(x => x.key === key);
   const label = a ? `${a.date} ${a.title}` : key;
   if (!confirm(`"${label}" 출석 기록을 영구 삭제할까요?\n(서명 포함 모든 데이터가 삭제됩니다)`)) return;
   delete attendance[key];
   excludedStatKeys = excludedStatKeys.filter(k => k !== key);
   saveExcludedStatKeys();
-  saveAll();
+  saveLocal();
   renderStats();
-  toast('활동 기록이 삭제되었습니다');
+  // Supabase에서도 삭제
+  const dbId = encodeURIComponent(CLUB_ID + '_' + key);
+  try {
+    await sbFetch(`club_attendance?id=eq.${dbId}`, { method: 'DELETE' });
+    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+    toast('활동 기록이 삭제되었습니다');
+  } catch(e) {
+    console.warn('DB 삭제 실패:', e);
+    toast('로컬 삭제 완료 (DB 삭제 실패 — 다시 저장해주세요)', 'warn');
+  }
 }
 
 function toggleExcludedStatKey(key) {
