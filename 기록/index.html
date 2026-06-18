@@ -2325,15 +2325,23 @@ function getStatsByDate() {
 
 // 제외 없이 전체 일정 연결 활동 목록 (관리용)
 function getAllScheduledStatKeys() {
-  return Object.entries(attendance)
-    .filter(([, val]) => val.scheduleId)
-    .map(([key, val]) => {
+  // scheduleId별로 그룹화하여 중복 제거 (date_sId 형식 키 우선)
+  const bySchId = {};
+  Object.entries(attendance).forEach(([key, val]) => {
+    if (!val.scheduleId) return;
+    const prev = bySchId[val.scheduleId];
+    const isCombo = key.includes('_s_') && /^\d{4}-\d{2}-\d{2}_/.test(key);
+    if (!prev || isCombo) bySchId[val.scheduleId] = { key, val };
+  });
+
+  return Object.values(bySchId)
+    .map(({ key, val }) => {
       const sch = schedules.find(s => s.id === val.scheduleId);
-      // key가 'date_scheduleId' 형식인지 확인, 아니면 일정의 날짜 사용
       const isCombo = key.includes('_s_') && /^\d{4}-\d{2}-\d{2}_/.test(key);
       const date = isCombo ? key.split('_s_')[0] : (sch ? sch.date : '');
-      if (!date) return null; // 날짜 불명 레코드 제외
-      return { key, date, title: sch ? sch.title : '(삭제된 일정)', excluded: excludedStatKeys.includes(key) };
+      if (!date) return null;
+      const deleted = !sch;
+      return { key, date, title: deleted ? '(삭제된 일정)' : sch.title, excluded: excludedStatKeys.includes(key), deleted };
     })
     .filter(Boolean)
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -2382,23 +2390,33 @@ function renderStats() {
   });
   html += '</tbody></table></div>';
 
-  // 월별 출석 달력
+  // 월별 출석 달력 — schedules 기준으로 렌더링
   const allStatKeys = getAllScheduledStatKeys();
-  const calKeys = allStatKeys;
-  if (calKeys.length > 0) {
-    const months = [...new Set(calKeys.map(a => a.date.slice(0,7)))].sort();
+  const statKeyMap = {}; // scheduleId → statKey 정보
+  allStatKeys.filter(a => !a.deleted).forEach(a => {
+    const schId = attendance[a.key]?.scheduleId;
+    if (schId) statKeyMap[schId] = a;
+  });
+
+  if (schedules.length > 0) {
+    const months = [...new Set(schedules.map(s => s.date.slice(0,7)))].sort();
     html += `<div class="widget-section"><h3>📅 월별 활동 달력</h3><div style="display:flex; flex-wrap:wrap; gap:20px;">`;
     months.forEach(ym => {
       const [y, m] = ym.split('-').map(Number);
       const firstDay = new Date(y, m-1, 1).getDay();
       const lastDate = new Date(y, m, 0).getDate();
-      const monthKeys = calKeys.filter(a => a.date.startsWith(ym));
-      const actDates = {};
-      monthKeys.forEach(a => { actDates[a.date] = a; });
+      const monthScheds = schedules.filter(s => s.date.startsWith(ym));
+      // 날짜별 일정 맵 (같은 날 여러 일정 고려)
+      const schedByDate = {};
+      monthScheds.forEach(s => {
+        if (!schedByDate[s.date]) schedByDate[s.date] = [];
+        schedByDate[s.date].push(s);
+      });
+      const actCount = monthScheds.length;
 
       html += `<div style="background:#fff; border:1px solid #E1F5EE; border-radius:10px; padding:14px; min-width:220px;">
         <div style="font-size:13px; font-weight:700; color:#0F6E56; margin-bottom:10px; text-align:center;">${y}년 ${m}월
-          <span style="font-size:11px; font-weight:400; color:#888; margin-left:6px">활동 ${monthKeys.filter(a=>!a.excluded).length}회</span>
+          <span style="font-size:11px; font-weight:400; color:#888; margin-left:6px">활동 ${actCount}회</span>
         </div>
         <table style="border-collapse:collapse; width:100%;">
           <thead><tr>${['일','월','화','수','목','금','토'].map((d,i)=>`<th style="width:14.28%;padding:3px 0;text-align:center;font-size:11px;font-weight:600;color:${i===0?'#e24b4a':i===6?'#1e6eb5':'#888'}">${d}</th>`).join('')}</tr></thead>
@@ -2407,13 +2425,16 @@ function renderStats() {
       html += '<tr>' + '<td style="padding:2px"></td>'.repeat(firstDay);
       while (day <= lastDate) {
         const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const act = actDates[dateStr];
-        const isExcluded = act && act.excluded;
-        const bg = act ? (isExcluded ? '#f5f5f5' : '#E1F5EE') : 'transparent';
-        const numColor = act ? (isExcluded ? '#aaa' : '#0F6E56') : (col===0?'#e24b4a':col===6?'#1e6eb5':'#333');
-        const fw = act && !isExcluded ? '700' : '400';
-        const border = act && !isExcluded ? '1px solid #1D9E75' : (isExcluded ? '1px solid #ddd' : 'none');
-        const titleAttr = act ? `title="${esc(act.title)}${isExcluded?' (제외됨)':''}"` : '';
+        const dayScheds = schedByDate[dateStr];
+        // 해당 날짜 일정 중 출석 데이터가 있는지 확인
+        const hasAtt = dayScheds && dayScheds.some(s => statKeyMap[s.id]);
+        const hasSched = !!dayScheds;
+        const titles = dayScheds ? dayScheds.map(s => s.title).join(', ') : '';
+        const bg = hasSched ? (hasAtt ? '#E1F5EE' : '#FFF8E1') : 'transparent';
+        const border = hasSched ? (hasAtt ? '1px solid #1D9E75' : '1px solid #F0C040') : 'none';
+        const numColor = hasSched ? (hasAtt ? '#0F6E56' : '#B8860B') : (col===0?'#e24b4a':col===6?'#1e6eb5':'#333');
+        const fw = hasSched ? '700' : '400';
+        const titleAttr = hasSched ? `title="${esc(titles)}${hasAtt ? ' (출석 완료)' : ' (출석 미기록)'}"` : '';
         html += `<td style="padding:2px;text-align:center;" ${titleAttr}>
           <div style="width:26px;height:26px;border-radius:50%;background:${bg};border:${border};display:flex;align-items:center;justify-content:center;margin:auto;font-size:11px;font-weight:${fw};color:${numColor};">${day}</div>
         </td>`;
@@ -2422,29 +2443,32 @@ function renderStats() {
       }
       html += '</tr></tbody></table>';
       // 활동 목록 요약
-      if (monthKeys.length > 0) {
-        html += `<div style="margin-top:10px; padding-top:8px; border-top:1px solid #E1F5EE;">`;
-        monthKeys.forEach(a => {
-          const tagBg = a.excluded ? '#f5f5f5' : '#E1F5EE';
-          const tagColor = a.excluded ? '#aaa' : '#0F6E56';
-          html += `<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:2px 0;">
-            <span style="background:${tagBg};color:${tagColor};border-radius:3px;padding:1px 5px;font-weight:600;white-space:nowrap;">${a.date.slice(5)}</span>
-            <span style="color:${a.excluded?'#aaa':'#333'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(a.title)}</span>
-            ${a.excluded ? '<span style="color:#aaa;font-size:10px;white-space:nowrap">제외</span>' : ''}
-          </div>`;
-        });
-        html += '</div>';
-      }
+      html += `<div style="margin-top:10px; padding-top:8px; border-top:1px solid #E1F5EE;">`;
+      monthScheds.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s => {
+        const sk = statKeyMap[s.id];
+        const hasAtt = !!sk;
+        const isExcluded = sk && sk.excluded;
+        const tagBg = isExcluded ? '#f5f5f5' : (hasAtt ? '#E1F5EE' : '#FFF8E1');
+        const tagColor = isExcluded ? '#aaa' : (hasAtt ? '#0F6E56' : '#B8860B');
+        html += `<div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:2px 0;">
+          <span style="background:${tagBg};color:${tagColor};border-radius:3px;padding:1px 5px;font-weight:600;white-space:nowrap;">${s.date.slice(5)}</span>
+          <span style="color:${isExcluded?'#aaa':'#333'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.title)}</span>
+          ${isExcluded ? '<span style="color:#aaa;font-size:10px;white-space:nowrap">제외</span>' : (!hasAtt ? '<span style="color:#B8860B;font-size:10px;white-space:nowrap">미기록</span>' : '')}
+        </div>`;
+      });
+      html += '</div>';
       html += '</div>';
     });
     html += '</div></div>';
   }
 
   // 활동 목록 관리 (출석률 포함/제외)
+  const validStatKeys = allStatKeys.filter(a => !a.deleted);
+  const deletedStatKeys = allStatKeys.filter(a => a.deleted);
   if (allStatKeys.length > 0) {
     html += `<div class="widget-section"><h3>📋 활동 목록 관리 <span style="font-size:12px;font-weight:400;color:#888">(출석률 계산에 포함/제외)</span></h3>
     <table class="list-table"><thead><tr><th>날짜</th><th>활동명</th><th style="width:80px;text-align:center">포함여부</th></tr></thead><tbody>`;
-    allStatKeys.forEach(a => {
+    validStatKeys.forEach(a => {
       html += `<tr style="${a.excluded ? 'opacity:0.55;' : ''}">
         <td style="color:#5F5E5A">${a.date}</td>
         <td style="color:${a.excluded?'#aaa':'inherit'}">${esc(a.title)}</td>
@@ -2458,6 +2482,20 @@ function renderStats() {
         </td>
       </tr>`;
     });
+    if (deletedStatKeys.length > 0) {
+      html += `<tr><td colspan="3" style="padding:8px 12px; background:#fff8f8; font-size:12px; color:#999; border-top:2px dashed #eee;">
+        ⚠️ 삭제된 일정의 출석 데이터 (통계 미반영) — 정리하려면 🗑️를 눌러 삭제하세요.
+      </td></tr>`;
+      deletedStatKeys.forEach(a => {
+        html += `<tr style="opacity:0.5; background:#fafafa;">
+          <td style="color:#aaa">${a.date}</td>
+          <td style="color:#aaa;font-style:italic">${esc(a.title)}</td>
+          <td style="text-align:center">
+            <button onclick="deleteStatActivity('${a.key}')" class="btn btn-small btn-danger" title="출석 기록 영구 삭제">🗑️ 삭제</button>
+          </td>
+        </tr>`;
+      });
+    }
     html += '</tbody></table></div>';
   }
 
