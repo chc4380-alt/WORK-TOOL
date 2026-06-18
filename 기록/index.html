@@ -2407,13 +2407,14 @@ async function deleteStatActivity(key) {
 
   try {
     if (schedId) {
-      // schedule_id로 삭제 — DB의 id 컬럼 형식과 무관하게 정확히 삭제
       await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}&schedule_id=eq.${encodeURIComponent(schedId)}`, { method: 'DELETE' });
     } else {
       const attDate = key.includes('_s_') ? key.split('_s_')[0] : key;
       await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}&date=eq.${attDate}&schedule_id=is.null`, { method: 'DELETE' });
     }
-    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+    // dbSyncTime을 직접 설정하지 않고 saveToDB()로 전체 재동기화
+    // → 삭제 직전/직후 서명이 있어도 모두 포함해서 DB에 올림
+    await saveToDB();
     toast('활동 기록이 삭제되었습니다');
   } catch(e) {
     console.warn('DB 삭제 실패:', e);
