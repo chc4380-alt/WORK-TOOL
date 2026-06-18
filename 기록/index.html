@@ -386,6 +386,7 @@
       <span id="autoSaveIndicator" style="font-size:11px; color:#aaa; transition:color 0.3s;"></span>
       <button class="btn btn-primary btn-small" onclick="manualSave()" id="manualSaveBtn" title="지금 바로 저장">💾 저장</button>
       <button class="btn btn-secondary btn-small" onclick="loadFromDB().then(()=>{updateHeader();renderDashboard();switchTab(document.querySelector('.tab-btn.active')?.dataset.tab||'dashboard');})" title="서버에서 최신 데이터 불러오기">🔄 새로고침</button>
+      <button class="btn btn-small" onclick="recoverSignatures()" title="Supabase에서 서명 복구" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;">🚑 서명 복구</button>
       <a href="../" class="btn btn-secondary btn-small" style="text-decoration:none">🏠 허브로</a>
       <button class="btn btn-secondary btn-small" onclick="openSettings()">⚙️ 설정</button>
       <button class="btn btn-secondary btn-small" onclick="exportData()">📥 JSON 백업</button>
@@ -715,7 +716,11 @@ async function sbFetch(path, options = {}) {
 async function loadFromDB() {
   try {
     showSyncStatus('loading');
-    // 로컬 변경이 DB 동기화보다 최신이면 → 로컬 데이터를 DB에 올리고 덮어쓰기 스킵
+
+    // 로컬 저장 데이터 미리 백업 (서명 병합에 사용)
+    const localAttendance = JSON.parse(localStorage.getItem(KEYS.a) || '{}');
+    const localMembers = JSON.parse(localStorage.getItem(KEYS.m) || '[]');
+
     const localChangeTime = parseInt(localStorage.getItem('localChangeTime_' + CLUB_ID) || '0');
     const dbSyncTime = parseInt(localStorage.getItem('dbSyncTime_' + CLUB_ID) || '0');
     if (localChangeTime > dbSyncTime) {
@@ -731,16 +736,21 @@ async function loadFromDB() {
       sbFetch(`club_settings?club_id=eq.${CLUB_ID}`)
     ]);
     if (mRows.length > 0) {
-      members = mRows.map(r => ({
-        id: r.id, name: r.name, gender: r.gender, birthdate: r.birthdate,
-        phone: r.phone, school: r.school, grade: r.grade, address: r.address,
-        guardianName: r.guardian_name, guardianRel: r.guardian_rel,
-        guardianPhone: r.guardian_phone, emergencyPhone: r.emergency_phone,
-        joinDate: r.join_date, role: r.role, status: r.status,
-        history: r.history, advisorNote: r.advisor_note,
-        savedSignature: r.saved_signature || null,
-        createdAt: r.created_at, updatedAt: r.updated_at
-      }));
+      members = mRows.map(r => {
+        // 로컬에 savedSignature가 있으면 우선 유지 (DB에 없는 경우 대비)
+        const localM = localMembers.find(m => m.id === r.id);
+        const savedSig = r.saved_signature || (localM?.savedSignature) || null;
+        return {
+          id: r.id, name: r.name, gender: r.gender, birthdate: r.birthdate,
+          phone: r.phone, school: r.school, grade: r.grade, address: r.address,
+          guardianName: r.guardian_name, guardianRel: r.guardian_rel,
+          guardianPhone: r.guardian_phone, emergencyPhone: r.emergency_phone,
+          joinDate: r.join_date, role: r.role, status: r.status,
+          history: r.history, advisorNote: r.advisor_note,
+          savedSignature: savedSig,
+          createdAt: r.created_at, updatedAt: r.updated_at
+        };
+      });
     }
     if (scRows.length > 0) {
       schedules = scRows.map(r => ({
@@ -753,13 +763,26 @@ async function loadFromDB() {
       guestParticipants = {};
       atRows.forEach(r => {
         const attKey = r.schedule_id ? r.date + '_' + r.schedule_id : r.date;
+        const dbSigs = r.signatures || {};
+        // 로컬에 서명이 있으면 병합 (로컬 서명 우선 — DB보다 최신일 수 있음)
+        const localSigs = localAttendance[attKey]?.signatures || {};
+        const mergedSigs = { ...dbSigs, ...localSigs };
+        const dbByMember = r.by_member || {};
+        const localByMember = localAttendance[attKey]?.byMember || {};
+        const mergedByMember = { ...dbByMember, ...localByMember };
         attendance[attKey] = {
-          byMember: r.by_member || {},
-          scheduleId: r.schedule_id || null,
-          signatures: r.signatures || {}
+          byMember: mergedByMember,
+          scheduleId: r.schedule_id || localAttendance[attKey]?.scheduleId || null,
+          signatures: mergedSigs
         };
         if (r.guests && r.guests.length > 0) {
           guestParticipants[attKey] = r.guests;
+        }
+      });
+      // DB에 없지만 로컬에만 있는 attendance 키도 보존
+      Object.entries(localAttendance).forEach(([key, val]) => {
+        if (!attendance[key] && (Object.keys(val.signatures || {}).length > 0 || Object.keys(val.byMember || {}).length > 0)) {
+          attendance[key] = val;
         }
       });
     }
@@ -808,22 +831,10 @@ async function saveToDB() {
         location: s.location, content: s.content, note: s.note
       })))
     }));
-    if (Object.keys(attendance).length > 0) tasks.push(sbFetch('club_attendance', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify(Object.entries(attendance).map(([attKey, val]) => {
-        const parts = attKey.split('_s_');
-        const dateVal = parts[0];
-        return {
-          id: CLUB_ID + '_' + attKey, club_id: CLUB_ID,
-          date: dateVal, schedule_id: val.scheduleId || null,
-          by_member: val.byMember || {},
-          signatures: val.signatures || {},
-          guests: guestParticipants[attKey] || [],
-          updated_at: new Date().toISOString()
-        };
-      }))
-    }));
+    // 출석 레코드를 개별 저장 (대용량 배치 실패 방지)
+    for (const [attKey, val] of Object.entries(attendance)) {
+      tasks.push(saveAttendanceRecordToDB(attKey, val));
+    }
     tasks.push(sbFetch('club_settings', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
@@ -843,6 +854,31 @@ async function saveToDB() {
   } catch(e) {
     console.warn('DB 저장 실패:', e);
     showSyncStatus('error');
+  }
+}
+
+// 출석 레코드 단건 저장 (서명 포함, 개별 전송으로 대용량 실패 방지)
+function attendanceToRow(attKey, val) {
+  const isCombo = /^\d{4}-\d{2}-\d{2}_/.test(attKey);
+  const dateVal = isCombo ? attKey.split('_s_')[0] : attKey;
+  return {
+    id: CLUB_ID + '_' + attKey, club_id: CLUB_ID,
+    date: dateVal, schedule_id: val.scheduleId || null,
+    by_member: val.byMember || {},
+    signatures: val.signatures || {},
+    guests: guestParticipants[attKey] || [],
+    updated_at: new Date().toISOString()
+  };
+}
+async function saveAttendanceRecordToDB(attKey, val) {
+  try {
+    await sbFetch('club_attendance', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify([attendanceToRow(attKey, val)])
+    });
+  } catch(e) {
+    console.warn('출석 레코드 저장 실패:', attKey, e);
   }
 }
 
@@ -932,6 +968,18 @@ async function saveImmediate() {
   hasUnsaved = false;
   setAutoSaveIndicator('unsaved');
   await saveToDB();
+  setAutoSaveIndicator('saved');
+  setTimeout(() => setAutoSaveIndicator('idle'), 3000);
+}
+
+// 서명 1건만 즉시 저장 (전체 saveToDB 없이 해당 레코드만 Supabase 저장)
+async function saveSignatureNow(attKey) {
+  saveLocal();
+  setAutoSaveIndicator('unsaved');
+  const val = attendance[attKey];
+  if (!val) return;
+  await saveAttendanceRecordToDB(attKey, val);
+  localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
   setAutoSaveIndicator('saved');
   setTimeout(() => setAutoSaveIndicator('idle'), 3000);
 }
@@ -1518,12 +1566,18 @@ function onAttendScheduleChange() {
   const schId = document.getElementById('attendSchedule').value;
   if (schId) {
     const s = schedules.find(x=>x.id===schId);
-    // 다른 날짜 일정 선택 시 날짜도 이동
-    if (s && s.date !== date) {
-      document.getElementById('attendDate').value = s.date;
+    if (!s) { saveAll(); renderSignbook(); updateParticipantBtn(); return; }
+    if (s.date !== date) document.getElementById('attendDate').value = s.date;
+    const newKey = s.date + '_' + schId;
+    if (!attendance[newKey]) {
+      if (attendance[schId]) {
+        attendance[newKey] = { ...attendance[schId], scheduleId: schId };
+        delete attendance[schId];
+      } else {
+        attendance[newKey] = { byMember: {}, signatures: {}, scheduleId: schId };
+      }
     }
-    // 일정 ID 키로 attendance 초기화
-    if (!attendance[schId]) attendance[schId] = { byMember: {}, signatures: {}, scheduleId: schId };
+    if (!attendance[newKey].scheduleId) attendance[newKey].scheduleId = schId;
   }
   saveAll();
   renderSignbook();
@@ -1555,11 +1609,15 @@ function renderSignbook() {
   }));
   const allParticipants = [...activeMembers, ...guests];
 
+  // 신형 키(date_schId)로 먼저 찾고, 없으면 구형 키(schId)에서 병합
+  if (schId && !attendance[key] && attendance[schId]) {
+    attendance[key] = { ...attendance[schId], scheduleId: schId };
+    delete attendance[schId];
+    saveSignatureNow(key);
+  }
   const rec = attendance[key] || { byMember: {}, signatures: {} };
   if (!rec.signatures) rec.signatures = {};
-  // scheduleId는 드롭다운에서 직접 가져옴 (rec에 없어도 연결 표시)
   const linkedSch = schId ? schedules.find(s=>s.id===schId) : null;
-  // 기존 rec에 scheduleId 없으면 보완
   if (schId && attendance[key] && !attendance[key].scheduleId) attendance[key].scheduleId = schId;
 
   // 상단 안내 박스
@@ -1670,7 +1728,8 @@ function applyOrOpenSign(memberId) {
     if (!attendance[key].byMember) attendance[key].byMember = {};
     attendance[key].signatures[memberId] = m.savedSignature;
     attendance[key].byMember[memberId] = 'present'; // 서명=출석 자동 연동
-    saveImmediate().then(() => toast(`✅ ${m.name} 서명 완료`));
+    if (!attendance[key].scheduleId) attendance[key].scheduleId = document.getElementById('attendSchedule')?.value || null;
+    saveSignatureNow(key).then(() => toast(`✅ ${m.name} 서명 완료`));
     renderSignbook();
     return;
   }
@@ -1818,7 +1877,7 @@ function saveSignature() {
     }
     m.updatedAt = new Date().toISOString();
   }
-  saveImmediate(); // 서명은 디바운스 없이 즉시 DB 저장
+  saveSignatureNow(key); // 해당 레코드만 즉시 저장 (전체 배치 대신 단건)
   closeSignPad();
   // 현재 모드에 따라 렌더링
   if (document.getElementById('tabletMode').classList.contains('show')) {
@@ -2037,7 +2096,7 @@ function quickDeleteSignature(memberId, e) {
   if (!confirm(`"${m.name}" 님의 서명을 삭제할까요?`)) return;
   if (attendance[key]?.signatures) delete attendance[key].signatures[memberId];
   if (attendance[key]?.byMember) delete attendance[key].byMember[memberId];
-  saveImmediate();
+  saveSignatureNow(key);
   renderSignbook();
   toast(`${m.name} 님의 서명이 삭제되었습니다`);
 }
@@ -2361,6 +2420,80 @@ function deleteDefaultSignature(memberId) {
   saveImmediate();
   toast(`${m.name} 님의 대표서명이 삭제되었습니다`);
   viewCard(memberId);
+}
+
+// 구형 키(s_xxx) → 신형 키(date_s_xxx) 마이그레이션
+function migrateAttendanceKeys() {
+  let migrated = false;
+  Object.keys(attendance).forEach(key => {
+    // 신형 키는 날짜로 시작 (YYYY-MM-DD_)
+    if (/^\d{4}-\d{2}-\d{2}_/.test(key)) return;
+    // 구형 키: scheduleId만 있는 경우 (s_xxx 형태)
+    const val = attendance[key];
+    const schId = val.scheduleId || key;
+    const sch = schedules.find(s => s.id === schId);
+    if (!sch) return;
+    const newKey = sch.date + '_' + schId;
+    if (newKey === key) return;
+    if (!attendance[newKey]) {
+      attendance[newKey] = { ...val, scheduleId: schId };
+    } else {
+      // 신형 키가 이미 있으면 서명/출석 병합
+      const existing = attendance[newKey];
+      existing.signatures = { ...val.signatures, ...existing.signatures };
+      existing.byMember = { ...val.byMember, ...existing.byMember };
+      if (!existing.scheduleId) existing.scheduleId = schId;
+    }
+    delete attendance[key];
+    migrated = true;
+  });
+  if (migrated) {
+    saveLocal();
+    // 마이그레이션된 각 키 개별 저장
+    Object.entries(attendance).forEach(([k, v]) => saveAttendanceRecordToDB(k, v));
+    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+  }
+}
+
+// 서명 복구: Supabase + 로컬 병합하여 서명 최대한 살리기
+async function recoverSignatures() {
+  if (!confirm('Supabase에서 서명을 복구합니다.\n현재 로컬 서명은 유지되고, DB에 있는 서명이 추가됩니다.\n계속할까요?')) return;
+  toast('서명 복구 중…');
+  try {
+    const atRows = await sbFetch(`club_attendance?club_id=eq.${CLUB_ID}`);
+    let recovered = 0;
+    atRows.forEach(r => {
+      const dbSigs = r.signatures || {};
+      if (Object.keys(dbSigs).length === 0) return;
+      const attKey = r.schedule_id ? r.date + '_' + r.schedule_id : r.date;
+      if (!attendance[attKey]) attendance[attKey] = { byMember: r.by_member || {}, scheduleId: r.schedule_id || null, signatures: {} };
+      Object.entries(dbSigs).forEach(([mid, sig]) => {
+        if (sig && !attendance[attKey].signatures[mid]) {
+          attendance[attKey].signatures[mid] = sig;
+          recovered++;
+        }
+      });
+    });
+    // 로컬 백업에서도 복구 시도
+    const localBackup = JSON.parse(localStorage.getItem(KEYS.a) || '{}');
+    Object.entries(localBackup).forEach(([k, v]) => {
+      Object.entries(v.signatures || {}).forEach(([mid, sig]) => {
+        const targetKey = /^\d{4}-\d{2}-\d{2}_/.test(k) ? k : null;
+        if (!targetKey) return;
+        if (!attendance[targetKey]) attendance[targetKey] = { ...v };
+        if (sig && !attendance[targetKey].signatures[mid]) {
+          attendance[targetKey].signatures[mid] = sig;
+          recovered++;
+        }
+      });
+    });
+    migrateAttendanceKeys();
+    saveLocal();
+    toast(`서명 복구 완료! ${recovered}개 서명 복원됨`);
+    renderSignbook();
+  } catch(e) {
+    toast('복구 실패: ' + e.message, 'error');
+  }
 }
 
 // ==================== 활동별 참여현황 ====================
@@ -3064,6 +3197,7 @@ function saveSettings() {
   renderDashboard();
 
   await loadFromDB();
+  migrateAttendanceKeys();
   settings.clubName = '청소년사진영상동아리 기록';
   updateHeader();
   renderDashboard();
