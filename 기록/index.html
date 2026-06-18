@@ -943,7 +943,7 @@ function tryMigrateFromV3() {
         if (oldS) settings = { ...settings, ...JSON.parse(oldS) };
         const oldSc = localStorage.getItem('club_schedule_v3');
         if (oldSc) schedules = JSON.parse(oldSc);
-        saveAll();
+        saveImmediate();
         setTimeout(()=>toast('✅ 이전 버전(v3) 데이터를 자동으로 불러왔습니다'), 1000);
       } catch(e) {}
     }
@@ -980,6 +980,58 @@ async function saveSignatureNow(attKey) {
   if (!val) return;
   await saveAttendanceRecordToDB(attKey, val);
   localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+  setAutoSaveIndicator('saved');
+  setTimeout(() => setAutoSaveIndicator('idle'), 3000);
+}
+
+// 회원 1건 즉시 저장
+async function saveMemberNow(memberId) {
+  saveLocal();
+  setAutoSaveIndicator('unsaved');
+  const m = members.find(x => x.id === memberId);
+  if (!m) return;
+  try {
+    await sbFetch('club_members', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ ...m, club_id: CLUB_ID, updated_at: new Date().toISOString() }])
+    });
+    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+  } catch(e) { console.warn('회원 저장 실패:', memberId, e); }
+  setAutoSaveIndicator('saved');
+  setTimeout(() => setAutoSaveIndicator('idle'), 3000);
+}
+
+// 일정 1건 즉시 저장
+async function saveScheduleNow(scheduleId) {
+  saveLocal();
+  setAutoSaveIndicator('unsaved');
+  const s = schedules.find(x => x.id === scheduleId);
+  if (!s) return;
+  try {
+    await sbFetch('club_schedules', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ ...s, club_id: CLUB_ID, updated_at: new Date().toISOString() }])
+    });
+    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+  } catch(e) { console.warn('일정 저장 실패:', scheduleId, e); }
+  setAutoSaveIndicator('saved');
+  setTimeout(() => setAutoSaveIndicator('idle'), 3000);
+}
+
+// 설정 즉시 저장
+async function saveSettingsNow() {
+  saveLocal();
+  setAutoSaveIndicator('unsaved');
+  try {
+    await sbFetch('club_settings', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify([{ id: CLUB_ID, club_id: CLUB_ID, data: settings, updated_at: new Date().toISOString() }])
+    });
+    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+  } catch(e) { console.warn('설정 저장 실패:', e); }
   setAutoSaveIndicator('saved');
   setTimeout(() => setAutoSaveIndicator('idle'), 3000);
 }
@@ -1125,7 +1177,7 @@ function saveMember(e) {
   const idx = members.findIndex(m=>m.id===id);
   if (idx>=0) members[idx] = {...members[idx], ...data};
   else { data.createdAt = new Date().toISOString(); members.push(data); }
-  saveAll();
+  saveMemberNow(id);
   resetForm();
   switchTab('list');
   toast('✅ 저장되었습니다');
@@ -1152,7 +1204,7 @@ function deleteMember(id) {
     if(attendance[d].signatures) delete attendance[d].signatures[id];
   });
   deleteFromDB('club_members', id);
-  saveAll();
+  saveImmediate();
   renderList();
   toast('삭제되었습니다');
 }
@@ -1348,7 +1400,7 @@ function saveSchedule(e) {
   const idx = schedules.findIndex(s=>s.id===id);
   if (idx>=0) schedules[idx] = {...schedules[idx], ...data};
   else { data.createdAt = new Date().toISOString(); schedules.push(data); }
-  saveAll();
+  saveScheduleNow(id);
   closeScheduleForm();
   renderSchedule();
   toast('✅ 일정이 저장되었습니다');
@@ -1364,7 +1416,7 @@ function deleteSchedule(id) {
   schedules = schedules.filter(x=>x.id!==id);
   linked.forEach(d => { delete attendance[d].scheduleId; });
   deleteFromDB('club_schedules', id);
-  saveAll();
+  saveImmediate();
   renderSchedule();
   toast('일정이 삭제되었습니다');
 }
@@ -1430,7 +1482,7 @@ function openAttendFromSchedule(scheduleId) {
     document.getElementById('attendSchedule').value = s.id;
     if (!attendance[s.date]) attendance[s.date] = { byMember: {}, signatures: {} };
     attendance[s.date].scheduleId = s.id;
-    saveAll();
+    saveSignatureNow(s.date);
     onAttendDateChange();
   }, 100);
 }
@@ -1566,7 +1618,7 @@ function onAttendScheduleChange() {
   const schId = document.getElementById('attendSchedule').value;
   if (schId) {
     const s = schedules.find(x=>x.id===schId);
-    if (!s) { saveAll(); renderSignbook(); updateParticipantBtn(); return; }
+    if (!s) { saveLocal(); renderSignbook(); updateParticipantBtn(); return; }
     if (s.date !== date) document.getElementById('attendDate').value = s.date;
     const newKey = s.date + '_' + schId;
     if (!attendance[newKey]) {
@@ -1578,8 +1630,10 @@ function onAttendScheduleChange() {
       }
     }
     if (!attendance[newKey].scheduleId) attendance[newKey].scheduleId = schId;
+    saveSignatureNow(newKey);
+  } else {
+    saveLocal();
   }
-  saveAll();
   renderSignbook();
   updateParticipantBtn();
 }
@@ -1954,7 +2008,7 @@ function addGuestParticipant() {
   document.getElementById('guestPhone').value = '';
   // attendance에 해당 key 없으면 초기화 (guests만 있는 경우)
   if (!attendance[key]) attendance[key] = { byMember: {}, signatures: {}, scheduleId: document.getElementById('attendSchedule')?.value || null };
-  saveAll();
+  saveSignatureNow(key);
   renderGuestList();
   renderSignbook();
   toast(`${name} 님이 임시 참여자로 추가됐습니다`);
@@ -1965,7 +2019,7 @@ function removeGuestParticipant(guestId) {
   if (guestParticipants[key]) {
     guestParticipants[key] = guestParticipants[key].filter(g => g.id !== guestId);
   }
-  saveAll();
+  saveSignatureNow(key);
   renderGuestList();
   renderSignbook();
 }
@@ -2112,7 +2166,7 @@ function deleteSignature(memberId, e) {
     if (attendance[key].signatures) delete attendance[key].signatures[memberId];
     if (attendance[key].byMember) delete attendance[key].byMember[memberId];
   }
-  saveAll();
+  saveSignatureNow(key);
   renderSignbook();
   toast(`${m.name} 님의 서명과 출석 기록이 삭제되었습니다`);
 }
@@ -2292,7 +2346,7 @@ function cycleAttStatus(memberId, event) {
   const next = cycle[(cycle.indexOf(cur) + 1) % cycle.length];
   if (next) attendance[key].byMember[memberId] = next;
   else delete attendance[key].byMember[memberId];
-  saveAll();
+  saveSignatureNow(key);
   renderSignbook();
 }
 
@@ -2305,7 +2359,7 @@ function clearAllSignatures() {
   if (!confirm(`${dateFmt(date)}의 모든 서명과 출석 기록을 지울까요?`)) return;
   attendance[key].signatures = {};
   attendance[key].byMember = {};
-  saveAll();
+  saveSignatureNow(key);
   renderSignbook();
   toast('전체 서명이 삭제되었습니다');
 }
@@ -2665,15 +2719,21 @@ function toggleExcludedStatKey(key) {
 
 function getStatsByDate() {
   const dateMap = {}; // { 'YYYY-MM-DD': { byMember: {}, key } }
+  const activeIds = members.filter(m => m.status === '활동중').map(m => m.id);
   Object.entries(attendance).forEach(([key, val]) => {
-    if (!val.scheduleId) return; // 일정 미연결 기록 제외
-    if (excludedStatKeys.includes(key)) return; // 수동 제외 목록
+    if (!val.scheduleId) return;
+    if (excludedStatKeys.includes(key)) return;
     const isCombo = key.includes('_s_');
     const date = isCombo ? key.split('_s_')[0] : key;
+    // 서명부가 열린 적 있는 날짜 → 미기록 활동 회원은 결석 처리
+    const byMember = Object.assign({}, val.byMember || {});
+    activeIds.forEach(id => {
+      if (!byMember[id]) byMember[id] = 'absent';
+    });
     if (!dateMap[date]) {
-      dateMap[date] = { byMember: Object.assign({}, val.byMember || {}), key };
+      dateMap[date] = { byMember, key };
     } else {
-      Object.assign(dateMap[date].byMember, val.byMember || {});
+      Object.assign(dateMap[date].byMember, byMember);
     }
   });
   return dateMap;
@@ -3118,7 +3178,7 @@ function saveSettings() {
   settings.clubName = document.getElementById('setClubName').value.trim() || '청소년사진영상동아리 기록';
   settings.orgName = document.getElementById('setOrgName').value.trim() || '광양시청소년문화센터';
   settings.advisorName = document.getElementById('setAdvisorName').value.trim();
-  saveAll();
+  saveSettingsNow();
   updateHeader();
   closeSettings();
   toast('✅ 설정이 저장되었습니다');
