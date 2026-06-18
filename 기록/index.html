@@ -2633,11 +2633,8 @@ function renderStats() {
       const participatedDates = [];
       dates.forEach(d => {
         const s = (statsByDate[d]?.byMember||{})[m.id];
-        // 실제 attendance 키 찾기 (날짜_일정ID 또는 날짜)
-        const attKey = Object.keys(attendance).find(k => {
-          const kDate = k.includes('_s_') ? k.split('_s_')[0] : k;
-          return kDate === d;
-        }) || d;
+        // getStatsByDate()가 반환한 key 사용 (scheduleId 있는 올바른 키)
+        const attKey = statsByDate[d]?.key || d;
         if (s==='present') { p++; participatedDates.push({date:d, key:attKey, status:'present'}); }
         else if (s==='late') { l++; participatedDates.push({date:d, key:attKey, status:'late'}); }
         else if (s==='absent') { a++; participatedDates.push({date:d, key:attKey, status:'absent'}); }
