@@ -1462,7 +1462,10 @@ function renderSignbook() {
 
   const rec = attendance[key] || { byMember: {}, signatures: {} };
   if (!rec.signatures) rec.signatures = {};
-  const linkedSch = rec.scheduleId ? schedules.find(s=>s.id===rec.scheduleId) : null;
+  // scheduleId는 드롭다운에서 직접 가져옴 (rec에 없어도 연결 표시)
+  const linkedSch = schId ? schedules.find(s=>s.id===schId) : null;
+  // 기존 rec에 scheduleId 없으면 보완
+  if (schId && attendance[key] && !attendance[key].scheduleId) attendance[key].scheduleId = schId;
 
   // 상단 안내 박스
   const sigCount = Object.keys(rec.signatures).filter(id => rec.signatures[id]).length;
