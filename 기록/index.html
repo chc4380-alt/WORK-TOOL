@@ -723,14 +723,6 @@ async function loadFromDB() {
     const localAttendance = JSON.parse(localStorage.getItem(KEYS.a) || '{}');
     const localMembers = JSON.parse(localStorage.getItem(KEYS.m) || '[]');
 
-    const localChangeTime = parseInt(localStorage.getItem('localChangeTime_' + CLUB_ID) || '0');
-    const dbSyncTime = parseInt(localStorage.getItem('dbSyncTime_' + CLUB_ID) || '0');
-    if (localChangeTime > dbSyncTime) {
-      // 로컬이 더 최신 → DB에 push 후 완료
-      await saveToDB();
-      showSyncStatus('ok');
-      return;
-    }
     const [mRows, scRows, atRows, stRows] = await Promise.all([
       sbFetch(`club_members?club_id=eq.${CLUB_ID}&order=created_at.asc`),
       sbFetch(`club_schedules?club_id=eq.${CLUB_ID}&order=date.asc`),
@@ -755,9 +747,11 @@ async function loadFromDB() {
       });
     }
     if (scRows.length > 0) {
+      const vStatus = JSON.parse(localStorage.getItem('club_volunteer_v4') || '{}');
       schedules = scRows.map(r => ({
         id: r.id, date: r.date, time: r.time, title: r.title,
-        location: r.location, content: r.content, note: r.note
+        location: r.location, content: r.content, note: r.note,
+        volunteerDone: !!vStatus[r.id]
       }));
     }
     if (atRows.length > 0) {
@@ -798,6 +792,13 @@ async function loadFromDB() {
       };
     }
     saveLocal();
+    localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+    // 로컬에만 있는 서명/출석 레코드를 DB에 업로드
+    const dbKeys = new Set(atRows.map(r => r.schedule_id ? r.date + '_' + r.schedule_id : r.date));
+    const localOnlyKeys = Object.keys(attendance).filter(k => !dbKeys.has(k));
+    if (localOnlyKeys.length > 0) {
+      await Promise.all(localOnlyKeys.map(k => saveAttendanceRecordToDB(k, attendance[k])));
+    }
     showSyncStatus('ok');
   } catch(e) {
     console.warn('DB 로드 실패, 로컬 사용:', e);
@@ -2664,7 +2665,9 @@ function toggleVolunteerDone(schId) {
   const sch = schedules.find(s => s.id === schId);
   if (!sch) return;
   sch.volunteerDone = !sch.volunteerDone;
-  saveScheduleNow(schId);
+  const vStatus = JSON.parse(localStorage.getItem('club_volunteer_v4') || '{}');
+  vStatus[schId] = sch.volunteerDone;
+  localStorage.setItem('club_volunteer_v4', JSON.stringify(vStatus));
   renderActivity();
 }
 
