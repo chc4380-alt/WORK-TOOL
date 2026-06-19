@@ -1482,9 +1482,10 @@ function openAttendFromSchedule(scheduleId) {
     document.getElementById('attendDate').value = s.date;
     refreshAttendScheduleSelect();
     document.getElementById('attendSchedule').value = s.id;
-    if (!attendance[s.date]) attendance[s.date] = { byMember: {}, signatures: {} };
-    attendance[s.date].scheduleId = s.id;
-    saveSignatureNow(s.date);
+    const attKey = s.date + '_' + s.id;
+    if (!attendance[attKey]) attendance[attKey] = { byMember: {}, signatures: {}, scheduleId: s.id };
+    if (!attendance[attKey].scheduleId) attendance[attKey].scheduleId = s.id;
+    saveSignatureNow(attKey);
     onAttendDateChange();
   }, 100);
 }
@@ -2479,12 +2480,12 @@ function deleteDefaultSignature(memberId) {
 }
 
 // 구형 키(s_xxx) → 신형 키(date_s_xxx) 마이그레이션
-function migrateAttendanceKeys() {
+async function migrateAttendanceKeys() {
   let migrated = false;
+  const oldKeys = [];
   Object.keys(attendance).forEach(key => {
-    // 신형 키는 날짜로 시작 (YYYY-MM-DD_)
+    // 신형 키는 YYYY-MM-DD_ 형태
     if (/^\d{4}-\d{2}-\d{2}_/.test(key)) return;
-    // 구형 키: scheduleId만 있는 경우 (s_xxx 형태)
     const val = attendance[key];
     const schId = val.scheduleId || key;
     const sch = schedules.find(s => s.id === schId);
@@ -2494,20 +2495,26 @@ function migrateAttendanceKeys() {
     if (!attendance[newKey]) {
       attendance[newKey] = { ...val, scheduleId: schId };
     } else {
-      // 신형 키가 이미 있으면 서명/출석 병합
       const existing = attendance[newKey];
       existing.signatures = { ...val.signatures, ...existing.signatures };
       existing.byMember = { ...val.byMember, ...existing.byMember };
       if (!existing.scheduleId) existing.scheduleId = schId;
     }
+    oldKeys.push(key);
     delete attendance[key];
     migrated = true;
   });
   if (migrated) {
     saveLocal();
-    // 마이그레이션된 각 키 개별 저장
-    Object.entries(attendance).forEach(([k, v]) => saveAttendanceRecordToDB(k, v));
+    // 신형 키 DB 저장
+    await Promise.all(Object.entries(attendance).map(([k, v]) => saveAttendanceRecordToDB(k, v)));
+    // 구버전 레코드 Supabase에서 삭제
+    await Promise.all(oldKeys.map(oldKey =>
+      sbFetch(`club_attendance?id=eq.${encodeURIComponent(CLUB_ID + '_' + oldKey)}`, { method: 'DELETE' })
+        .catch(e => console.warn('구버전 레코드 삭제 실패:', oldKey, e))
+    ));
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
+    console.log(`✅ 구버전 키 ${oldKeys.length}개 마이그레이션 완료:`, oldKeys);
   }
 }
 
