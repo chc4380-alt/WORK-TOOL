@@ -625,8 +625,7 @@ body.dark .dp-day:hover { background: #1E3F5A; }
   <div class="home-settings">
     <a onclick="openHomeSettings()">⚙ 기관 설정</a>
     <a onclick="openJointScheduleHome()">🔗 합동 일정 관리</a>
-    <a onclick="doImportHome()">📂 데이터 불러오기</a>
-    <a onclick="doExportHome()">💾 데이터 저장</a>
+    <a onclick="doImportHome()">📂 백업 파일 불러오기</a>
     <a onclick="toggleDark()" id="homeDarkBtn">🌙 다크모드</a>
   </div>
 </div>
@@ -642,12 +641,10 @@ body.dark .dp-day:hover { background: #1E3F5A; }
       </div>
     </div>
     <div class="topbar-right">
+      <span id="syncStatus" style="font-size:11px;opacity:0.85;margin-right:2px;white-space:nowrap;"></span>
       <button class="dark-toggle" onclick="toggleDark()" id="darkToggleBtn" title="다크모드 전환">🌙</button>
-      <button class="topbar-btn" onclick="openGDrivePanel()">☁ Drive</button>
-      <button class="topbar-btn" id="btnSaveFile" onclick="doSaveToFile()" title="파일에 저장 (처음엔 위치 선택)">💾 저장</button>
-      <button class="topbar-btn" onclick="doPickSaveLocation()" title="저장 위치 변경">📁</button>
+      <button class="topbar-btn" onclick="manualSync()" title="클라우드와 지금 동기화">🔄 동기화</button>
       <button class="topbar-btn" onclick="doExportXLSX()">📊 엑셀</button>
-      <button class="topbar-btn" onclick="doImport()">📂 불러오기</button>
       <button class="topbar-btn" onclick="openSettingsModal()">⚙ 설정</button>
     </div>
   </div>
@@ -1099,82 +1096,20 @@ body.dark .dp-day:hover { background: #1E3F5A; }
 </div>
 
 <!-- JSON 저장 링크 설정 모달 -->
-<div class="modal" id="jsonLinkModal">
+<!-- 기구 입장 비밀번호 모달 -->
+<div class="modal" id="orgPasswordModal">
   <div class="modal-wrap narrow">
-    <button class="close-btn" onclick="closeModal('jsonLinkModal')">×</button>
-    <div class="modal-title">🔗 JSON 저장 파일명 / 경로 설정</div>
-    <div class="info-box" style="margin-bottom:14px;">
-      백업 파일명을 고정하면 매번 같은 이름으로 저장되어 Google Drive에서 덮어쓰기가 편리합니다.<br>
-      <span style="font-size:11px;opacity:0.8;">예: <code>청소년참여기구_최신.json</code></span>
-    </div>
+    <button class="close-btn" onclick="closeModal('orgPasswordModal')">×</button>
+    <div class="modal-title">🔒 기구 비밀번호 입력</div>
+    <div class="info-box" style="margin-bottom:14px;">담당자끼리 공유하는 비밀번호를 입력하면 이 브라우저에서는 다시 묻지 않습니다.</div>
     <div class="form-group" style="margin-bottom:10px;">
-      <label>파일명 (확장자 .json 포함)</label>
-      <input type="text" id="jsonLinkInput" placeholder="예: 청소년참여기구_최신.json">
+      <label>비밀번호</label>
+      <input type="password" id="orgPwInput" onkeydown="if(event.key==='Enter')submitOrgPassword()">
     </div>
-    <div id="jsonLinkPreview" style="font-size:12px;color:var(--gray-3);margin-bottom:14px;padding:8px;background:var(--gray-bg);">설정된 경로 없음</div>
-    <div class="info-box" style="background:var(--yellow-light);border-color:#C19C00;color:#6B5300;margin-bottom:14px;font-size:12px;">
-      💡 <strong>사용 방법</strong><br>
-      1. 파일명을 설정하고 저장<br>
-      2. 상단 💾 JSON 백업 클릭 → 설정한 파일명으로 다운로드<br>
-      3. 같은 파일명으로 Google Drive에 업로드(덮어쓰기)<br>
-      4. 다른 PC: Drive에서 같은 파일 다운로드 → 📂 불러오기
-    </div>
+    <div id="orgPwError" style="display:none;color:var(--red);font-size:12px;margin-bottom:10px;">비밀번호가 올바르지 않습니다.</div>
     <div class="btn-row">
-      <button class="btn btn-danger btn-sm" onclick="clearJsonLink()">초기화</button>
-      <button class="btn btn-secondary" onclick="closeModal('jsonLinkModal')">취소</button>
-      <button class="btn btn-primary" onclick="saveJsonLink()">💾 저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- Google Drive 연동 안내 패널 -->
-<div class="modal" id="gdriveModal">
-  <div class="modal-wrap" style="max-width:580px;">
-    <button class="close-btn" onclick="closeModal('gdriveModal')">×</button>
-    <div class="modal-title">☁ Google Drive 연동 가이드</div>
-
-    <div style="background:var(--blue-pale);border-left:4px solid var(--blue);padding:14px 16px;margin-bottom:18px;font-size:13px;line-height:1.8;color:var(--blue-dark);">
-      <strong>이 시스템은 HTML 단일 파일입니다.</strong><br>
-      서버 없이 작동하기 때문에 실시간 자동 동기화는 불가능하지만,<br>
-      아래 방법으로 <strong>여러 컴퓨터에서 항상 최신 데이터</strong>를 사용할 수 있습니다.
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
-      <div style="background:var(--gray-bg);padding:14px;border:1px solid var(--gray-1);">
-        <div style="font-size:13px;font-weight:700;color:var(--blue);margin-bottom:8px;">📤 저장할 때</div>
-        <ol style="font-size:12px;color:var(--gray-4);line-height:2;padding-left:16px;">
-          <li>상단 <strong>💾 JSON 백업</strong> 클릭</li>
-          <li>다운로드된 JSON 파일을<br><strong>Google Drive에 업로드</strong></li>
-          <li>(덮어쓰기 또는 날짜별 저장)</li>
-        </ol>
-      </div>
-      <div style="background:var(--gray-bg);padding:14px;border:1px solid var(--gray-1);">
-        <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:8px;">📥 다른 PC에서 열 때</div>
-        <ol style="font-size:12px;color:var(--gray-4);line-height:2;padding-left:16px;">
-          <li>Google Drive에서<br>JSON 파일 <strong>다운로드</strong></li>
-          <li>이 시스템에서<br><strong>📂 불러오기</strong> 클릭</li>
-          <li>파일 선택 → 즉시 연동 완료</li>
-        </ol>
-      </div>
-    </div>
-
-    <div style="background:#E6F1FB;border-left:3px solid var(--blue);padding:12px 14px;font-size:12px;color:#0C447C;line-height:1.8;margin-bottom:16px;">
-      💡 <strong>더 편리하게 사용하는 팁</strong><br>
-      · Google Drive에 <strong>바로가기 폴더</strong>를 만들어 JSON 파일을 항상 같은 위치에 저장하세요.<br>
-      · <strong>Google Drive 앱(PC용)</strong>을 설치하면 파일 탐색기에서 바로 접근 가능합니다.<br>
-      · 파일명을 <code style="background:rgba(0,0,0,0.06);padding:1px 4px;">청소년참여기구_최신.json</code>으로 고정하면 매번 같은 파일을 덮어쓸 수 있어요.
-    </div>
-
-    <div style="background:var(--green-light);border-left:3px solid var(--green);padding:12px 14px;font-size:12px;color:var(--green);line-height:1.8;margin-bottom:16px;">
-      ✅ <strong>지금 바로 백업하기</strong>
-    </div>
-
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="doSaveToFile()">💾 JSON 저장 (위치 지정)</button>
-      <button class="btn btn-success" onclick="doExportXLSX()">📊 엑셀 백업 다운로드</button>
-      <button class="btn btn-secondary" onclick="doPickSaveLocation()">📁 저장 위치 변경</button>
-      <button class="btn btn-secondary" onclick="doImport()">📂 JSON 불러오기</button>
-      <button class="btn btn-secondary" onclick="window.open('https://drive.google.com','_blank')">☁ Google Drive 열기</button>
+      <button class="btn btn-secondary" onclick="closeModal('orgPasswordModal')">취소</button>
+      <button class="btn btn-primary" onclick="submitOrgPassword()">입장</button>
     </div>
   </div>
 </div>
@@ -1255,8 +1190,220 @@ const ORG_A = 'A'; // 참여위원회
 const ORG_B = 'B'; // 운영위원회
 
 let currentOrg = null;
+let _pendingOrg = null;
 
-// 전체 앱 데이터 (localStorage 저장)
+// =====================================================
+// Supabase 연동 (사진동아리 기록 프로그램과 동일 패턴)
+// =====================================================
+const SB_URL = 'https://brxyyxqhymfdvxqrbnee.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHl5eHFoeW1mZHZ4cXJibmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTkzNDUsImV4cCI6MjA5NjczNTM0NX0.0QDZ-BeHCF5RwysH6eAC1VDg5Nc3IigsYMqYdvH4qng';
+// 기구별 공유 비밀번호 — 필요하면 직접 바꿔서 사용하세요
+const ORG_PASSWORDS = { A: 'A참여2026', B: 'B운영2026' };
+
+const sbHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': 'Bearer ' + SB_KEY,
+  'Prefer': 'resolution=merge-duplicates'
+};
+
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: { ...sbHeaders, ...(options.headers || {}) }
+  });
+  if (!res.ok) { const err = await res.text(); throw new Error('Supabase 오류: ' + err); }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+function showSyncStatus(state) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const map = { unsaved: '● 저장 대기중', saving: '☁ 동기화 중…', ok: '✅ 동기화됨', error: '⚠ 오프라인(로컬 저장됨)' };
+  el.textContent = map[state] || '';
+  clearTimeout(el._t);
+  if (state === 'ok') el._t = setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+// ===== 행 <-> 앱 객체 매핑 =====
+function memberToRow(m, org) {
+  return {
+    id: m.id, org_id: org, name: m.name, gender: m.gender, birth: m.birth,
+    phone: m.phone, address: m.address, school: m.school, grade: m.grade,
+    guardian_name: m.guardName, guardian_rel: m.guardRel, guardian_phone: m.guardPhone,
+    emergency_phone: m.emergency, join_date: m.joinDate, role: m.role, gen: m.gen,
+    status: m.status, history: m.history, note: m.note,
+    photo: m.photo || null, signature: m.signature || null,
+    updated_at: new Date().toISOString()
+  };
+}
+function rowToMember(r) {
+  return {
+    id: r.id, name: r.name, gender: r.gender, birth: r.birth, phone: r.phone,
+    address: r.address, school: r.school, grade: r.grade,
+    guardName: r.guardian_name, guardRel: r.guardian_rel, guardPhone: r.guardian_phone,
+    emergency: r.emergency_phone, joinDate: r.join_date, role: r.role, gen: r.gen,
+    status: r.status, history: r.history, note: r.note,
+    photo: r.photo, signature: r.signature
+  };
+}
+function scheduleToRow(s, org) {
+  return {
+    id: s.id, org_id: org, title: s.title, date: s.date, time: s.time,
+    location: s.location, content: s.content, note: s.note, joint: !!s.joint,
+    updated_at: new Date().toISOString()
+  };
+}
+function rowToSchedule(r) {
+  return { id: r.id, title: r.title, date: r.date, time: r.time, location: r.location, content: r.content, note: r.note, joint: !!r.joint };
+}
+function attendanceToRow(date, val, org) {
+  return {
+    id: org + '_' + date, org_id: org, date, schedule_id: val.scheduleId || null,
+    by_member: val.byMember || {}, signatures: val.signatures || {},
+    updated_at: new Date().toISOString()
+  };
+}
+function activityToRow(a, org) {
+  return {
+    id: a.id, org_id: org, title: a.title, date: a.date, location: a.location,
+    content: a.content, memo: a.memo, photos: a.photos || [],
+    updated_at: new Date().toISOString()
+  };
+}
+function rowToActivity(r) {
+  return { id: r.id, title: r.title, date: r.date, location: r.location, content: r.content, memo: r.memo, photos: r.photos || [] };
+}
+function minutesToRow(m, org) {
+  return {
+    id: m.id, org_id: org, title: m.title, date: m.date, location: m.location,
+    chair: m.chair, writer: m.writer, attendees: m.attendees, agenda: m.agenda,
+    discussion: m.discussion, decision: m.decision, action: m.action,
+    by_youth: !!m._byYouth, updated_at: new Date().toISOString()
+  };
+}
+function rowToMinutes(r) {
+  return {
+    id: r.id, title: r.title, date: r.date, location: r.location, chair: r.chair,
+    writer: r.writer, attendees: r.attendees, agenda: r.agenda, discussion: r.discussion,
+    decision: r.decision, action: r.action, _byYouth: !!r.by_youth
+  };
+}
+
+// ===== 기구 데이터(A/B)를 DB로 업로드 =====
+async function syncOrgToDB(org) {
+  const d = appData[org];
+  const tasks = [];
+  if (d.members.length > 0) tasks.push(sbFetch('yo_members', {
+    method: 'POST', body: JSON.stringify(d.members.map(m => memberToRow(m, org)))
+  }));
+  if (d.schedules.length > 0) tasks.push(sbFetch('yo_schedules', {
+    method: 'POST', body: JSON.stringify(d.schedules.map(s => scheduleToRow(s, org)))
+  }));
+  Object.entries(d.attendance).forEach(([date, val]) => {
+    tasks.push(sbFetch('yo_attendance', { method: 'POST', body: JSON.stringify([attendanceToRow(date, val, org)]) }));
+  });
+  d.activities.forEach(a => {
+    tasks.push(sbFetch('yo_activities', { method: 'POST', body: JSON.stringify([activityToRow(a, org)]) }));
+  });
+  if (d.minutes.length > 0) tasks.push(sbFetch('yo_minutes', {
+    method: 'POST', body: JSON.stringify(d.minutes.map(m => minutesToRow(m, org)))
+  }));
+  tasks.push(sbFetch('yo_settings', {
+    method: 'POST',
+    body: JSON.stringify([{
+      org_id: org, sign_title: d.settings.signTitle, org_name: d.settings.orgName,
+      inst_name: d.settings.instName, advisor: d.settings.advisor, year: d.settings.year,
+      updated_at: new Date().toISOString()
+    }])
+  }));
+  await Promise.all(tasks);
+}
+
+// ===== 기구 데이터(A/B)를 DB에서 로드 (로컬과 병합) =====
+async function loadFromDB(org) {
+  try {
+    showSyncStatus('saving');
+    const localD = appData[org];
+    const [mRows, scRows, atRows, acRows, minRows, stRows] = await Promise.all([
+      sbFetch(`yo_members?org_id=eq.${org}&order=name.asc`),
+      sbFetch(`yo_schedules?org_id=eq.${org}&order=date.asc`),
+      sbFetch(`yo_attendance?org_id=eq.${org}`),
+      sbFetch(`yo_activities?org_id=eq.${org}&order=date.desc`),
+      sbFetch(`yo_minutes?org_id=eq.${org}&order=date.desc`),
+      sbFetch(`yo_settings?org_id=eq.${org}`)
+    ]);
+    if (mRows.length > 0) localD.members = mRows.map(rowToMember);
+    if (scRows.length > 0) localD.schedules = scRows.map(rowToSchedule);
+    if (atRows.length > 0) {
+      const merged = {};
+      atRows.forEach(r => {
+        const localVal = localD.attendance[r.date];
+        merged[r.date] = {
+          scheduleId: r.schedule_id || localVal?.scheduleId || '',
+          byMember: { ...(r.by_member || {}), ...(localVal?.byMember || {}) },
+          signatures: { ...(r.signatures || {}), ...(localVal?.signatures || {}) }
+        };
+      });
+      Object.entries(localD.attendance).forEach(([date, val]) => {
+        if (!merged[date]) merged[date] = val;
+      });
+      localD.attendance = merged;
+    }
+    if (acRows.length > 0) localD.activities = acRows.map(rowToActivity);
+    if (minRows.length > 0) localD.minutes = minRows.map(rowToMinutes);
+    if (stRows.length > 0) {
+      const st = stRows[0];
+      localD.settings = {
+        ...localD.settings,
+        signTitle: st.sign_title || localD.settings.signTitle,
+        orgName: st.org_name || localD.settings.orgName,
+        instName: st.inst_name || localD.settings.instName,
+        advisor: st.advisor || localD.settings.advisor,
+        year: st.year || localD.settings.year
+      };
+    }
+    saveLocal();
+    // DB에 없던 로컬 전용 출석 기록은 업로드해서 보존
+    const dbAtKeys = new Set(atRows.map(r => r.date));
+    const localOnlyAt = Object.keys(localD.attendance).filter(k => !dbAtKeys.has(k));
+    await Promise.all(localOnlyAt.map(date =>
+      sbFetch('yo_attendance', { method: 'POST', body: JSON.stringify([attendanceToRow(date, localD.attendance[date], org)]) })
+    ));
+    showSyncStatus('ok');
+  } catch (e) {
+    console.warn('DB 로드 실패, 로컬 데이터 사용:', e);
+    showSyncStatus('error');
+  }
+}
+
+// ===== 전역 데이터(기관명, 합동일정) 동기화 =====
+async function syncGlobalToDB() {
+  await sbFetch('yo_global', {
+    method: 'POST',
+    body: JSON.stringify([{
+      id: 'global', inst_name: appData.globalSettings.orgName,
+      joint_schedules: appData.jointSchedules, updated_at: new Date().toISOString()
+    }])
+  });
+}
+
+async function loadGlobalFromDB() {
+  try {
+    const rows = await sbFetch('yo_global?id=eq.global');
+    if (rows.length > 0) {
+      const r = rows[0];
+      if (r.inst_name) appData.globalSettings.orgName = r.inst_name;
+      if (r.joint_schedules) appData.jointSchedules = r.joint_schedules;
+      saveLocal();
+      const el = document.getElementById('homeOrgName');
+      if (el) el.textContent = appData.globalSettings.orgName;
+    }
+  } catch (e) { console.warn('전역 데이터 로드 실패:', e); }
+}
+
+// 전체 앱 데이터 (localStorage 캐시 + Supabase 동기화)
 function emptyOrgData() {
   return {
     settings: { signTitle:'', orgName:'', instName:'광양시청소년문화센터', advisor:'', year: new Date().getFullYear() },
@@ -1281,16 +1428,34 @@ appData.B.settings.orgName = '청소년운영위원회';
 // =====================================================
 // 저장/로드
 // =====================================================
-function saveAll() {
+function saveLocal() {
   try {
-    const json = JSON.stringify(appData);
-    localStorage.setItem('youthOrgSystem_v1', json);
-    // 파일 핸들 있으면 미저장 표시
-    if (_fsFileHandle) updateSaveBtn('unsaved', '💾 저장*');
+    localStorage.setItem('youthOrgSystem_v1', JSON.stringify(appData));
   } catch(e) {
     toast('저장 용량 초과. 일부 사진을 삭제해주세요.', 'error');
   }
 }
+
+let _saveDBTimer = null;
+function saveAll() {
+  saveLocal();
+  showSyncStatus('unsaved');
+  clearTimeout(_saveDBTimer);
+  _saveDBTimer = setTimeout(syncNow, 800);
+}
+
+async function syncNow() {
+  showSyncStatus('saving');
+  try {
+    await syncGlobalToDB();
+    if (currentOrg) await syncOrgToDB(currentOrg);
+    showSyncStatus('ok');
+  } catch(e) {
+    console.warn('동기화 실패:', e);
+    showSyncStatus('error');
+  }
+}
+function manualSync() { clearTimeout(_saveDBTimer); syncNow(); }
 
 function loadAll() {
   try {
@@ -1354,6 +1519,34 @@ function showHome() {
 }
 
 function enterOrg(org) {
+  if (localStorage.getItem('unlocked_' + org) !== '1') {
+    openOrgPasswordModal(org);
+    return;
+  }
+  doEnterOrg(org);
+}
+
+function openOrgPasswordModal(org) {
+  _pendingOrg = org;
+  document.getElementById('orgPwInput').value = '';
+  document.getElementById('orgPwError').style.display = 'none';
+  openModal('orgPasswordModal');
+  setTimeout(() => document.getElementById('orgPwInput').focus(), 100);
+}
+
+function submitOrgPassword() {
+  const org = _pendingOrg;
+  const pw = document.getElementById('orgPwInput').value;
+  if (pw && pw === ORG_PASSWORDS[org]) {
+    localStorage.setItem('unlocked_' + org, '1');
+    closeModal('orgPasswordModal');
+    doEnterOrg(org);
+  } else {
+    document.getElementById('orgPwError').style.display = 'block';
+  }
+}
+
+async function doEnterOrg(org) {
   currentOrg = org;
   document.getElementById('homeScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'flex';
@@ -1363,6 +1556,9 @@ function enterOrg(org) {
   switchTab('dashboard');
   // 연도 셀렉트 채우기
   fillYearSelect();
+  await loadFromDB(org);
+  // DB에서 받아온 최신 데이터로 현재 화면 갱신
+  switchTab(document.querySelector('.nav-btn.active')?.dataset.tab || 'dashboard');
 }
 
 function goHome() {
@@ -2710,125 +2906,6 @@ function printAs(mode) {
 }
 
 // =====================================================
-// JSON 저장 링크(경로) 지정 기능
-// =====================================================
-function openJsonLinkSettings() {
-  const saved = localStorage.getItem('youthOrg_jsonLink') || '';
-  document.getElementById('jsonLinkInput').value = saved;
-  document.getElementById('jsonLinkPreview').textContent = saved ? '현재 경로: ' + saved : '설정된 경로 없음';
-  openModal('jsonLinkModal');
-}
-
-function saveJsonLink() {
-  const val = document.getElementById('jsonLinkInput').value.trim();
-  localStorage.setItem('youthOrg_jsonLink', val);
-  document.getElementById('jsonLinkPreview').textContent = val ? '현재 경로: ' + val : '설정된 경로 없음';
-  closeModal('jsonLinkModal');
-  toast('저장 경로가 설정되었습니다', 'success');
-}
-
-function clearJsonLink() {
-  localStorage.removeItem('youthOrg_jsonLink');
-  document.getElementById('jsonLinkInput').value = '';
-  document.getElementById('jsonLinkPreview').textContent = '설정된 경로 없음';
-  toast('경로가 초기화되었습니다');
-}
-
-// =====================================================
-// JSON 파일 저장 — File System Access API (Chrome/Edge)
-// 처음: 위치 선택 다이얼로그 → 이후: 같은 파일에 덮어쓰기
-// =====================================================
-let _fsFileHandle = null; // 선택된 파일 핸들 (메모리, 새로고침 시 초기화)
-
-// 저장 버튼 상태 업데이트
-function updateSaveBtn(state, label) {
-  const btn = document.getElementById('btnSaveFile');
-  if (!btn) return;
-  btn.classList.remove('saved','unsaved','saving');
-  if (state) btn.classList.add(state);
-  btn.textContent = label || '💾 저장';
-}
-
-// 저장 위치 선택 (항상 새로 선택)
-async function doPickSaveLocation() {
-  if (!window.showSaveFilePicker) {
-    toast('이 브라우저는 파일 위치 선택을 지원하지 않습니다. Chrome/Edge를 사용해주세요.','warn');
-    doExportFallback();
-    return;
-  }
-  try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: '청소년참여기구_데이터.json',
-      types: [{ description: 'JSON 데이터 파일', accept: { 'application/json': ['.json'] } }]
-    });
-    _fsFileHandle = handle;
-    // 파일 핸들 이름 저장 (표시용)
-    localStorage.setItem('youthOrg_savedFileName', handle.name);
-    await _writeToHandle(_fsFileHandle);
-    updateSaveBtn('saved', '💾 ' + handle.name);
-    toast(`✅ "${handle.name}" 에 저장되었습니다`, 'success');
-  } catch(e) {
-    if (e.name !== 'AbortError') toast('저장 위치 선택 실패: ' + e.message, 'error');
-  }
-}
-
-// 저장 (핸들 있으면 덮어쓰기, 없으면 위치 선택)
-async function doSaveToFile() {
-  if (!window.showSaveFilePicker) {
-    doExportFallback();
-    return;
-  }
-  if (_fsFileHandle) {
-    // 기존 파일에 덮어쓰기
-    updateSaveBtn('saving', '⏳ 저장 중...');
-    try {
-      await _writeToHandle(_fsFileHandle);
-      updateSaveBtn('saved', '✅ ' + _fsFileHandle.name);
-      toast(`✅ "${_fsFileHandle.name}" 덮어쓰기 완료`, 'success');
-      setTimeout(() => updateSaveBtn('', '💾 저장'), 3000);
-    } catch(e) {
-      // 권한 만료된 경우 다시 선택
-      if (e.name === 'NotAllowedError' || e.name === 'SecurityError') {
-        toast('파일 접근 권한이 만료되었습니다. 위치를 다시 선택해주세요.', 'warn');
-        _fsFileHandle = null;
-        updateSaveBtn('unsaved', '💾 저장');
-        await doPickSaveLocation();
-      } else {
-        updateSaveBtn('unsaved', '💾 저장');
-        toast('저장 실패: ' + e.message, 'error');
-      }
-    }
-  } else {
-    // 처음이거나 핸들 없음 → 위치 선택
-    await doPickSaveLocation();
-  }
-}
-
-// 실제 파일 쓰기
-async function _writeToHandle(handle) {
-  const json = JSON.stringify(appData, null, 2);
-  const writable = await handle.createWritable();
-  await writable.write(json);
-  await writable.close();
-}
-
-// 폴백: File System API 미지원 시 기존 다운로드 방식
-function doExportFallback() {
-  const json = JSON.stringify(appData, null, 2);
-  const blob = new Blob([json], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = '청소년참여기구_데이터_' + todayISO() + '.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('💾 다운로드 완료 (이 브라우저는 덮어쓰기 미지원)');
-}
-
-// 기존 doExport 이름도 유지 (Drive 패널 등에서 호출)
-function doExport() { doSaveToFile(); }
-
-// saveAll 호출 시 저장 버튼을 "미저장" 표시로 변경
-// =====================================================
 // 날짜 피커 — 연/월 인라인 스크롤 + 팝업 위치 고정
 // =====================================================
 let _dpScrollMode = {};
@@ -3062,11 +3139,6 @@ function applyDarkPref() {
     if (homeBtn) homeBtn.textContent = '☀ 라이트모드';
   }
 }
-
-// =====================================================
-// Google Drive 안내 패널
-// =====================================================
-function openGDrivePanel() { openModal('gdriveModal'); }
 
 // =====================================================
 // 위원 현황판 인쇄
@@ -3625,7 +3697,6 @@ function importData(e) {
   e.target.value = '';
 }
 
-function doExportHome() { doSaveToFile(); }
 function doImportHome() { document.getElementById('importFileInputHome').click(); }
 function importDataHome(e) { importData({target:{files:e.target.files}}); e.target.value=''; }
 
@@ -3636,6 +3707,7 @@ function importDataHome(e) { importData({target:{files:e.target.files}}); e.targ
   loadAll();
   applyDarkPref();
   showHome();
+  loadGlobalFromDB(); // 비동기로 기관명/합동일정 최신화 (실패해도 로컬 캐시로 동작)
   // 키보드 ESC 닫기
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
