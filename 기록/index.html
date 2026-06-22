@@ -852,7 +852,7 @@ async function saveToDB() {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify([{
-        id: CLUB_ID, club_id: CLUB_ID,
+        club_id: CLUB_ID,
         club_name: settings.clubName,
         org_name: settings.orgName,
         advisor_name: settings.advisorName,
@@ -1029,8 +1029,7 @@ async function saveScheduleNow(scheduleId) {
       body: JSON.stringify([{
         id: s.id, club_id: CLUB_ID, date: s.date, time: s.time, title: s.title,
         location: s.location, content: s.content, note: s.note,
-        volunteer_done: !!s.volunteerDone,
-        updated_at: new Date().toISOString()
+        volunteer_done: !!s.volunteerDone
       }])
     });
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
@@ -1050,7 +1049,7 @@ async function saveSettingsNow() {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify([{
-        id: CLUB_ID, club_id: CLUB_ID,
+        club_id: CLUB_ID,
         club_name: settings.clubName, org_name: settings.orgName,
         advisor_name: settings.advisorName, signbook_title: settings.signbookTitle,
         data: { participantsMap: pMapObj, excludedStatKeys },
