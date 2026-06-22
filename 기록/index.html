@@ -1306,6 +1306,9 @@ function renderDashboard() {
     const rec = Object.entries(attendance)
       .filter(([k]) => k.startsWith(lastDate) && attendance[k].scheduleId)
       .reduce((acc, [, v]) => Object.assign(acc, v.byMember || {}), {});
+    // 활동중 회원 중 표시 안 된 사람은 결석으로 처리
+    const activeIds2 = members.filter(m => m.status === '활동중').map(m => m.id);
+    activeIds2.forEach(id => { if (!rec[id]) rec[id] = 'absent'; });
     const present = Object.values(rec).filter(v => v==='present'||v==='late').length;
     const totalMarked = Object.values(rec).filter(v=>v).length;
     if (totalMarked > 0) attendRate = Math.round(present/totalMarked*100)+'%';
