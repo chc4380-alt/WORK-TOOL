@@ -747,11 +747,10 @@ async function loadFromDB() {
       });
     }
     if (scRows.length > 0) {
-      const vStatus = JSON.parse(localStorage.getItem('club_volunteer_v4') || '{}');
       schedules = scRows.map(r => ({
         id: r.id, date: r.date, time: r.time, title: r.title,
         location: r.location, content: r.content, note: r.note,
-        volunteerDone: !!vStatus[r.id]
+        volunteerDone: !!r.volunteer_done
       }));
     }
     if (atRows.length > 0) {
@@ -784,12 +783,20 @@ async function loadFromDB() {
     }
     if (stRows.length > 0) {
       const st = stRows[0];
+      const extra = st.data || {};
       settings = { ...settings,
         clubName: st.club_name || settings.clubName,
         orgName: st.org_name || settings.orgName,
         advisorName: st.advisor_name || '',
         signbookTitle: st.signbook_title || settings.signbookTitle
       };
+      // 참여자 선택 맵 (DB가 기준)
+      participantsMap = {};
+      Object.entries(extra.participantsMap || {}).forEach(([date, arr]) => {
+        participantsMap[date] = arr === null ? null : new Set(arr);
+      });
+      // 통계 제외 목록 (DB가 기준)
+      excludedStatKeys = extra.excludedStatKeys || [];
     }
     saveLocal();
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
@@ -831,22 +838,26 @@ async function saveToDB() {
       body: JSON.stringify(schedules.map(s => ({
         id: s.id, club_id: CLUB_ID,
         date: s.date, time: s.time, title: s.title,
-        location: s.location, content: s.content, note: s.note
+        location: s.location, content: s.content, note: s.note,
+        volunteer_done: !!s.volunteerDone
       })))
     }));
     // 출석 레코드를 개별 저장 (대용량 배치 실패 방지)
     for (const [attKey, val] of Object.entries(attendance)) {
       tasks.push(saveAttendanceRecordToDB(attKey, val));
     }
+    const pMapObj = {};
+    Object.entries(participantsMap).forEach(([date, val]) => { pMapObj[date] = val === null ? null : [...val]; });
     tasks.push(sbFetch('club_settings', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify([{
-        club_id: CLUB_ID,
+        id: CLUB_ID, club_id: CLUB_ID,
         club_name: settings.clubName,
         org_name: settings.orgName,
         advisor_name: settings.advisorName,
         signbook_title: settings.signbookTitle,
+        data: { participantsMap: pMapObj, excludedStatKeys },
         updated_at: new Date().toISOString()
       }])
     }));
@@ -1015,7 +1026,12 @@ async function saveScheduleNow(scheduleId) {
     await sbFetch('club_schedules', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify([{ ...s, club_id: CLUB_ID, updated_at: new Date().toISOString() }])
+      body: JSON.stringify([{
+        id: s.id, club_id: CLUB_ID, date: s.date, time: s.time, title: s.title,
+        location: s.location, content: s.content, note: s.note,
+        volunteer_done: !!s.volunteerDone,
+        updated_at: new Date().toISOString()
+      }])
     });
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
   } catch(e) { console.warn('일정 저장 실패:', scheduleId, e); }
@@ -1023,15 +1039,23 @@ async function saveScheduleNow(scheduleId) {
   setTimeout(() => setAutoSaveIndicator('idle'), 3000);
 }
 
-// 설정 즉시 저장
+// 설정 즉시 저장 (참여자 선택맵 · 통계 제외목록 포함)
 async function saveSettingsNow() {
   saveLocal();
   setAutoSaveIndicator('unsaved');
   try {
+    const pMapObj = {};
+    Object.entries(participantsMap).forEach(([date, val]) => { pMapObj[date] = val === null ? null : [...val]; });
     await sbFetch('club_settings', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify([{ id: CLUB_ID, club_id: CLUB_ID, data: settings, updated_at: new Date().toISOString() }])
+      body: JSON.stringify([{
+        id: CLUB_ID, club_id: CLUB_ID,
+        club_name: settings.clubName, org_name: settings.orgName,
+        advisor_name: settings.advisorName, signbook_title: settings.signbookTitle,
+        data: { participantsMap: pMapObj, excludedStatKeys },
+        updated_at: new Date().toISOString()
+      }])
     });
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
   } catch(e) { console.warn('설정 저장 실패:', e); }
@@ -1974,6 +1998,7 @@ function saveParticipants() {
     });
     localStorage.setItem(KEYS.p, JSON.stringify(obj));
   } catch(e) {}
+  saveSettingsNow();
 }
 
 // 날짜별 임시 참여자: { 'key': [{id, name, gender, school, birthdate, phone}] }
@@ -2665,9 +2690,7 @@ function toggleVolunteerDone(schId) {
   const sch = schedules.find(s => s.id === schId);
   if (!sch) return;
   sch.volunteerDone = !sch.volunteerDone;
-  const vStatus = JSON.parse(localStorage.getItem('club_volunteer_v4') || '{}');
-  vStatus[schId] = sch.volunteerDone;
-  localStorage.setItem('club_volunteer_v4', JSON.stringify(vStatus));
+  saveScheduleNow(schId);
   renderActivity();
 }
 
@@ -2833,6 +2856,7 @@ function toggleStatDetail(uid) {
 let excludedStatKeys = JSON.parse(localStorage.getItem('excludedStatKeys_' + CLUB_ID) || '[]');
 function saveExcludedStatKeys() {
   localStorage.setItem('excludedStatKeys_' + CLUB_ID, JSON.stringify(excludedStatKeys));
+  saveSettingsNow();
 }
 async function deleteStatActivity(key) {
   const a = getAllScheduledStatKeys().find(x => x.key === key);
@@ -3391,7 +3415,7 @@ function saveSettings() {
       { name:'오다연', sg:'중동중/1', gender:'여', bd6:'130419', phone:'010-4312-6085' },
       { name:'유혜수', sg:'학교 밖', gender:'여', bd6:'080331', phone:'010-3701-4162' },
       { name:'이건우', sg:'순천공고/3', gender:'남', bd6:'081101', phone:'010-8805-2714' },
-      { name:'이다슬', sg:'백운중/3', gender:'여', bd6:'110105', phone:'010-4131-6671' },
+      { name:'이다솔', sg:'백운중/3', gender:'여', bd6:'110105', phone:'010-4131-6671' },
       { name:'이민아', sg:'학교 밖', gender:'여', bd6:'090826', phone:'010-3574-3560' },
       { name:'이세찬', sg:'순천제일대/1', gender:'남', bd6:'071214', phone:'010-3789-9828' },
       { name:'이윤우', sg:'광양고/3', gender:'남', bd6:'080802', phone:'010-3166-3482' },
