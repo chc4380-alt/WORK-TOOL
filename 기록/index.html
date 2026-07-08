@@ -1674,11 +1674,11 @@ function renderSignbook() {
     let sigContent;
     if (isManageMode) {
       sigContent = `
-        ${sig ? `<img src="${sig}" alt="서명"><button class="sig-del-btn" onclick="deleteSignature('${m.id}', event)" title="이 날 서명 삭제">×</button>` : '<span class="sig-placeholder" style="pointer-events:none">서명 없음</span>'}
+        ${sig ? `<img src="${sig}" alt="서명" onload="processSignImg(this)"><button class="sig-del-btn" onclick="deleteSignature('${m.id}', event)" title="이 날 서명 삭제">×</button>` : '<span class="sig-placeholder" style="pointer-events:none">서명 없음</span>'}
       `;
     } else {
       sigContent = sig
-        ? `<img src="${sig}" alt="서명"><button class="sig-quick-del" onclick="quickDeleteSignature('${m.id}',event)" title="서명 삭제">×</button>`
+        ? `<img src="${sig}" alt="서명" onload="processSignImg(this)"><button class="sig-quick-del" onclick="quickDeleteSignature('${m.id}',event)" title="서명 삭제">×</button>`
         : `<span class="sig-placeholder">${hasSaved ? '👆 탭하여 서명' : '클릭하여 서명'}</span>`;
     }
 
@@ -1734,6 +1734,30 @@ function applyOrOpenSign(memberId) {
 
   // 저장된 서명 없으면 패드 열기
   openSignPad(memberId);
+}
+
+function processSignImg(img) {
+  removeWhiteBg(img.src).then(url => { img.src = url; });
+}
+
+function removeWhiteBg(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0, 0, c.width, c.height);
+      for (let i = 0; i < d.data.length; i += 4) {
+        if (d.data[i] > 200 && d.data[i+1] > 200 && d.data[i+2] > 200) d.data[i+3] = 0;
+      }
+      ctx.putImageData(d, 0, 0);
+      resolve(c.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
 }
 
 function openSignPad(memberId) {
@@ -2388,7 +2412,7 @@ function viewCard(id) {
       ${m.savedSignature
         ? `<div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
              <div style="border:1px solid #ccc; border-radius:6px; background:#fff; padding:4px; display:inline-block;">
-               <img src="${m.savedSignature}" alt="대표서명" style="max-width:180px; max-height:70px; display:block; filter:contrast(200%) brightness(0.75);">
+               <img src="${m.savedSignature}" alt="대표서명" style="max-width:180px; max-height:70px; display:block; filter:contrast(200%) brightness(0.75);" onload="processSignImg(this)">
              </div>
              <button onclick="deleteDefaultSignature('${m.id}')" style="background:#e74c3c; color:#fff; border:none; border-radius:6px; padding:7px 14px; font-size:13px; cursor:pointer; font-weight:600;">🗑️ 대표서명 삭제</button>
            </div>`
