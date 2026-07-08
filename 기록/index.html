@@ -857,8 +857,7 @@ async function saveToDB() {
         org_name: settings.orgName,
         advisor_name: settings.advisorName,
         signbook_title: settings.signbookTitle,
-        data: { participantsMap: pMapObj, excludedStatKeys },
-        updated_at: new Date().toISOString()
+        data: { participantsMap: pMapObj, excludedStatKeys }
       }])
     }));
     await Promise.all(tasks);
@@ -1052,8 +1051,7 @@ async function saveSettingsNow() {
         club_id: CLUB_ID,
         club_name: settings.clubName, org_name: settings.orgName,
         advisor_name: settings.advisorName, signbook_title: settings.signbookTitle,
-        data: { participantsMap: pMapObj, excludedStatKeys },
-        updated_at: new Date().toISOString()
+        data: { participantsMap: pMapObj, excludedStatKeys }
       }])
     });
     localStorage.setItem('dbSyncTime_' + CLUB_ID, String(Date.now()));
