@@ -1674,11 +1674,11 @@ function renderSignbook() {
     let sigContent;
     if (isManageMode) {
       sigContent = `
-        ${sig ? `<img src="${sig}" alt="서명" onload="processSignImg(this)"><button class="sig-del-btn" onclick="deleteSignature('${m.id}', event)" title="이 날 서명 삭제">×</button>` : '<span class="sig-placeholder" style="pointer-events:none">서명 없음</span>'}
+        ${sig ? `<img src="${sig}" alt="서명"><button class="sig-del-btn" onclick="deleteSignature('${m.id}', event)" title="이 날 서명 삭제">×</button>` : '<span class="sig-placeholder" style="pointer-events:none">서명 없음</span>'}
       `;
     } else {
       sigContent = sig
-        ? `<img src="${sig}" alt="서명" onload="processSignImg(this)"><button class="sig-quick-del" onclick="quickDeleteSignature('${m.id}',event)" title="서명 삭제">×</button>`
+        ? `<img src="${sig}" alt="서명"><button class="sig-quick-del" onclick="quickDeleteSignature('${m.id}',event)" title="서명 삭제">×</button>`
         : `<span class="sig-placeholder">${hasSaved ? '👆 탭하여 서명' : '클릭하여 서명'}</span>`;
     }
 
@@ -1701,6 +1701,9 @@ function renderSignbook() {
     <div class="sb-footer">${esc(settings.orgName)}</div>
   </div>`;
   c.innerHTML = html;
+  c.querySelectorAll('.sb-sig-cell img').forEach(img => {
+    removeWhiteBg(img.src).then(url => { img.src = url; });
+  });
 }
 
 // ==================== 서명 패드 ====================
@@ -2412,7 +2415,7 @@ function viewCard(id) {
       ${m.savedSignature
         ? `<div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
              <div style="border:1px solid #ccc; border-radius:6px; background:#fff; padding:4px; display:inline-block;">
-               <img src="${m.savedSignature}" alt="대표서명" style="max-width:180px; max-height:70px; display:block; filter:contrast(200%) brightness(0.75);" onload="processSignImg(this)">
+               <img src="${m.savedSignature}" alt="대표서명" style="max-width:180px; max-height:70px; display:block; filter:contrast(200%) brightness(0.75);">
              </div>
              <button onclick="deleteDefaultSignature('${m.id}')" style="background:#e74c3c; color:#fff; border:none; border-radius:6px; padding:7px 14px; font-size:13px; cursor:pointer; font-weight:600;">🗑️ 대표서명 삭제</button>
            </div>`
