@@ -1,10 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>청소년참여기구 관리 시스템</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
 /* ===== FLAT DESIGN — Windows 8/10 Intranet Style ===== */
 :root {
@@ -1193,29 +1195,21 @@ let currentOrg = null;
 let _pendingOrg = null;
 
 // =====================================================
-// Supabase 연동 (사진동아리 기록 프로그램과 동일 패턴)
+// Firebase Firestore 연동
 // =====================================================
-const SB_URL = 'https://brxyyxqhymfdvxqrbnee.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyeHl5eHFoeW1mZHZ4cXJibmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNTkzNDUsImV4cCI6MjA5NjczNTM0NX0.0QDZ-BeHCF5RwysH6eAC1VDg5Nc3IigsYMqYdvH4qng';
-// 기구별 공유 비밀번호 — 필요하면 직접 바꿔서 사용하세요
 const ORG_PASSWORDS = { A: '0000', B: '0000' };
 
-const sbHeaders = {
-  'Content-Type': 'application/json',
-  'apikey': SB_KEY,
-  'Authorization': 'Bearer ' + SB_KEY,
-  'Prefer': 'resolution=merge-duplicates'
-};
-
-async function sbFetch(path, options = {}) {
-  const res = await fetch(SB_URL + '/rest/v1/' + path, {
-    ...options,
-    headers: { ...sbHeaders, ...(options.headers || {}) }
-  });
-  if (!res.ok) { const err = await res.text(); throw new Error('Supabase 오류: ' + err); }
-  const text = await res.text();
-  return text ? JSON.parse(text) : [];
-}
+firebase.initializeApp({
+  apiKey: "AIzaSyBkQ2_Hdv5Tzwr9OpZlb8tAYwWxigvyYKM",
+  authDomain: "youthgroup-7f5d3.firebaseapp.com",
+  projectId: "youthgroup-7f5d3",
+  storageBucket: "youthgroup-7f5d3.firebasestorage.app",
+  messagingSenderId: "387401045856",
+  appId: "1:387401045856:web:34cde87c848d9cf67bb005"
+});
+const db = firebase.firestore();
+const orgRef = (org) => db.collection('youthorg').doc(org);
+const globalRef = db.collection('youthorg').doc('global');
 
 function showSyncStatus(state) {
   const el = document.getElementById('syncStatus');
@@ -1226,99 +1220,32 @@ function showSyncStatus(state) {
   if (state === 'ok') el._t = setTimeout(() => { el.textContent = ''; }, 3000);
 }
 
-// ===== 행 <-> 앱 객체 매핑 =====
-function memberToRow(m, org) {
-  return {
-    id: m.id, org_id: org, name: m.name, gender: m.gender, birth: m.birth,
-    phone: m.phone, address: m.address, school: m.school, grade: m.grade,
-    guardian_name: m.guardName, guardian_rel: m.guardRel, guardian_phone: m.guardPhone,
-    emergency_phone: m.emergency, join_date: m.joinDate, role: m.role, gen: m.gen,
-    status: m.status, history: m.history, note: m.note,
-    photo: m.photo || null, signature: m.signature || null,
-    updated_at: new Date().toISOString()
-  };
-}
-function rowToMember(r) {
-  return {
-    id: r.id, name: r.name, gender: r.gender, birth: r.birth, phone: r.phone,
-    address: r.address, school: r.school, grade: r.grade,
-    guardName: r.guardian_name, guardRel: r.guardian_rel, guardPhone: r.guardian_phone,
-    emergency: r.emergency_phone, joinDate: r.join_date, role: r.role, gen: r.gen,
-    status: r.status, history: r.history, note: r.note,
-    photo: r.photo, signature: r.signature
-  };
-}
-function scheduleToRow(s, org) {
-  return {
-    id: s.id, org_id: org, title: s.title, date: s.date, time: s.time,
-    location: s.location, content: s.content, note: s.note, joint: !!s.joint,
-    updated_at: new Date().toISOString()
-  };
-}
-function rowToSchedule(r) {
-  return { id: r.id, title: r.title, date: r.date, time: r.time, location: r.location, content: r.content, note: r.note, joint: !!r.joint };
-}
-function attendanceToRow(date, val, org) {
-  return {
-    id: org + '_' + date, org_id: org, date, schedule_id: val.scheduleId || null,
-    by_member: val.byMember || {}, signatures: val.signatures || {},
-    updated_at: new Date().toISOString()
-  };
-}
-function activityToRow(a, org) {
-  return {
-    id: a.id, org_id: org, title: a.title, date: a.date, location: a.location,
-    content: a.content, memo: a.memo, photos: a.photos || [],
-    updated_at: new Date().toISOString()
-  };
-}
-function rowToActivity(r) {
-  return { id: r.id, title: r.title, date: r.date, location: r.location, content: r.content, memo: r.memo, photos: r.photos || [] };
-}
-function minutesToRow(m, org) {
-  return {
-    id: m.id, org_id: org, title: m.title, date: m.date, location: m.location,
-    chair: m.chair, writer: m.writer, attendees: m.attendees, agenda: m.agenda,
-    discussion: m.discussion, decision: m.decision, action: m.action,
-    by_youth: !!m._byYouth, updated_at: new Date().toISOString()
-  };
-}
-function rowToMinutes(r) {
-  return {
-    id: r.id, title: r.title, date: r.date, location: r.location, chair: r.chair,
-    writer: r.writer, attendees: r.attendees, agenda: r.agenda, discussion: r.discussion,
-    decision: r.decision, action: r.action, _byYouth: !!r.by_youth
-  };
-}
-
 // ===== 기구 데이터(A/B)를 DB로 업로드 =====
 async function syncOrgToDB(org) {
   const d = appData[org];
-  const tasks = [];
-  if (d.members.length > 0) tasks.push(sbFetch('yo_members', {
-    method: 'POST', body: JSON.stringify(d.members.map(m => memberToRow(m, org)))
-  }));
-  if (d.schedules.length > 0) tasks.push(sbFetch('yo_schedules', {
-    method: 'POST', body: JSON.stringify(d.schedules.map(s => scheduleToRow(s, org)))
-  }));
-  Object.entries(d.attendance).forEach(([date, val]) => {
-    tasks.push(sbFetch('yo_attendance', { method: 'POST', body: JSON.stringify([attendanceToRow(date, val, org)]) }));
+  const ref = orgRef(org);
+  const batch = db.batch();
+  d.members.forEach(m => {
+    batch.set(ref.collection('members').doc(m.id), JSON.parse(JSON.stringify(m)), { merge: true });
+  });
+  d.schedules.forEach(s => {
+    batch.set(ref.collection('schedules').doc(s.id), s, { merge: true });
   });
   d.activities.forEach(a => {
-    tasks.push(sbFetch('yo_activities', { method: 'POST', body: JSON.stringify([activityToRow(a, org)]) }));
+    batch.set(ref.collection('activities').doc(a.id), JSON.parse(JSON.stringify(a)), { merge: true });
   });
-  if (d.minutes.length > 0) tasks.push(sbFetch('yo_minutes', {
-    method: 'POST', body: JSON.stringify(d.minutes.map(m => minutesToRow(m, org)))
-  }));
-  tasks.push(sbFetch('yo_settings', {
-    method: 'POST',
-    body: JSON.stringify([{
-      org_id: org, sign_title: d.settings.signTitle, org_name: d.settings.orgName,
-      inst_name: d.settings.instName, advisor: d.settings.advisor, year: d.settings.year,
-      updated_at: new Date().toISOString()
-    }])
-  }));
-  await Promise.all(tasks);
+  d.minutes.forEach(m => {
+    batch.set(ref.collection('minutes').doc(m.id), m, { merge: true });
+  });
+  batch.set(ref.collection('settings').doc('main'), d.settings, { merge: true });
+  await batch.commit();
+  await Promise.all(Object.entries(d.attendance).map(([date, val]) =>
+    ref.collection('attendance').doc(date).set({
+      scheduleId: val.scheduleId || null,
+      byMember: val.byMember || {},
+      signatures: val.signatures || {}
+    }, { merge: true }).catch(e => console.warn('출석 저장 실패:', date, e))
+  ));
 }
 
 // ===== 기구 데이터(A/B)를 DB에서 로드 (로컬과 병합) =====
@@ -1326,23 +1253,26 @@ async function loadFromDB(org) {
   try {
     showSyncStatus('saving');
     const localD = appData[org];
-    const [mRows, scRows, atRows, acRows, minRows, stRows] = await Promise.all([
-      sbFetch(`yo_members?org_id=eq.${org}&order=name.asc`),
-      sbFetch(`yo_schedules?org_id=eq.${org}&order=date.asc`),
-      sbFetch(`yo_attendance?org_id=eq.${org}`),
-      sbFetch(`yo_activities?org_id=eq.${org}&order=date.desc`),
-      sbFetch(`yo_minutes?org_id=eq.${org}&order=date.desc`),
-      sbFetch(`yo_settings?org_id=eq.${org}`)
+    const ref = orgRef(org);
+    const [mSnap, scSnap, atSnap, acSnap, minSnap, stSnap] = await Promise.all([
+      ref.collection('members').orderBy('name').get(),
+      ref.collection('schedules').orderBy('date').get(),
+      ref.collection('attendance').get(),
+      ref.collection('activities').orderBy('date', 'desc').get(),
+      ref.collection('minutes').orderBy('date', 'desc').get(),
+      ref.collection('settings').doc('main').get()
     ]);
-    if (mRows.length > 0) localD.members = mRows.map(rowToMember);
-    if (scRows.length > 0) localD.schedules = scRows.map(rowToSchedule);
-    if (atRows.length > 0) {
+    if (!mSnap.empty) localD.members = mSnap.docs.map(d => d.data());
+    if (!scSnap.empty) localD.schedules = scSnap.docs.map(d => d.data());
+    if (!atSnap.empty) {
       const merged = {};
-      atRows.forEach(r => {
-        const localVal = localD.attendance[r.date];
-        merged[r.date] = {
-          scheduleId: r.schedule_id || localVal?.scheduleId || '',
-          byMember: { ...(r.by_member || {}), ...(localVal?.byMember || {}) },
+      atSnap.docs.forEach(doc => {
+        const date = doc.id;
+        const r = doc.data();
+        const localVal = localD.attendance[date];
+        merged[date] = {
+          scheduleId: r.scheduleId || localVal?.scheduleId || '',
+          byMember: { ...(r.byMember || {}), ...(localVal?.byMember || {}) },
           signatures: { ...(r.signatures || {}), ...(localVal?.signatures || {}) }
         };
       });
@@ -1351,25 +1281,18 @@ async function loadFromDB(org) {
       });
       localD.attendance = merged;
     }
-    if (acRows.length > 0) localD.activities = acRows.map(rowToActivity);
-    if (minRows.length > 0) localD.minutes = minRows.map(rowToMinutes);
-    if (stRows.length > 0) {
-      const st = stRows[0];
-      localD.settings = {
-        ...localD.settings,
-        signTitle: st.sign_title || localD.settings.signTitle,
-        orgName: st.org_name || localD.settings.orgName,
-        instName: st.inst_name || localD.settings.instName,
-        advisor: st.advisor || localD.settings.advisor,
-        year: st.year || localD.settings.year
-      };
-    }
+    if (!acSnap.empty) localD.activities = acSnap.docs.map(d => d.data());
+    if (!minSnap.empty) localD.minutes = minSnap.docs.map(d => d.data());
+    if (stSnap.exists) localD.settings = { ...localD.settings, ...stSnap.data() };
     saveLocal();
-    // DB에 없던 로컬 전용 출석 기록은 업로드해서 보존
-    const dbAtKeys = new Set(atRows.map(r => r.date));
+    const dbAtKeys = new Set(atSnap.docs.map(d => d.id));
     const localOnlyAt = Object.keys(localD.attendance).filter(k => !dbAtKeys.has(k));
     await Promise.all(localOnlyAt.map(date =>
-      sbFetch('yo_attendance', { method: 'POST', body: JSON.stringify([attendanceToRow(date, localD.attendance[date], org)]) })
+      ref.collection('attendance').doc(date).set({
+        scheduleId: localD.attendance[date].scheduleId || null,
+        byMember: localD.attendance[date].byMember || {},
+        signatures: localD.attendance[date].signatures || {}
+      }, { merge: true }).catch(e => console.warn('출석 업로드 실패:', date, e))
     ));
     showSyncStatus('ok');
   } catch (e) {
@@ -1380,22 +1303,19 @@ async function loadFromDB(org) {
 
 // ===== 전역 데이터(기관명, 합동일정) 동기화 =====
 async function syncGlobalToDB() {
-  await sbFetch('yo_global', {
-    method: 'POST',
-    body: JSON.stringify([{
-      id: 'global', inst_name: appData.globalSettings.orgName,
-      joint_schedules: appData.jointSchedules, updated_at: new Date().toISOString()
-    }])
-  });
+  await globalRef.set({
+    orgName: appData.globalSettings.orgName,
+    jointSchedules: appData.jointSchedules
+  }, { merge: true });
 }
 
 async function loadGlobalFromDB() {
   try {
-    const rows = await sbFetch('yo_global?id=eq.global');
-    if (rows.length > 0) {
-      const r = rows[0];
-      if (r.inst_name) appData.globalSettings.orgName = r.inst_name;
-      if (r.joint_schedules) appData.jointSchedules = r.joint_schedules;
+    const snap = await globalRef.get();
+    if (snap.exists) {
+      const r = snap.data();
+      if (r.orgName) appData.globalSettings.orgName = r.orgName;
+      if (r.jointSchedules) appData.jointSchedules = r.jointSchedules;
       saveLocal();
       const el = document.getElementById('homeOrgName');
       if (el) el.textContent = appData.globalSettings.orgName;
@@ -1403,7 +1323,7 @@ async function loadGlobalFromDB() {
   } catch (e) { console.warn('전역 데이터 로드 실패:', e); }
 }
 
-// 전체 앱 데이터 (localStorage 캐시 + Supabase 동기화)
+// 전체 앱 데이터 (localStorage 캐시 + Firebase 동기화)
 function emptyOrgData() {
   return {
     settings: { signTitle:'', orgName:'', instName:'광양시청소년문화센터', advisor:'', year: new Date().getFullYear() },
