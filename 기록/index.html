@@ -1773,8 +1773,7 @@ function initSignCanvas() {
   signCanvas.style.width = rect.width + 'px';
   signCanvas.style.height = '240px';
   // 캔버스 크기만 4배, 드로잉 설정은 scale 전에
-  signCtx.fillStyle = '#fff';
-  signCtx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  signCtx.clearRect(0, 0, signCanvas.width, signCanvas.height);
   signCtx.scale(4, 4);
   signCtx.strokeStyle = '#000000';
   signCtx.lineWidth = 3;
@@ -1835,8 +1834,7 @@ function stopDraw() { signDrawing = false; }
 
 function clearSignCanvas() {
   if (!signCtx) return;
-  signCtx.fillStyle = '#fff';
-  signCtx.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  signCtx.clearRect(0, 0, signCanvas.width, signCanvas.height);
   signHasDrawing = false;
   document.getElementById('signCanvasWrap').classList.remove('has-drawing');
 }
