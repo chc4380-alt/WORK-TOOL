@@ -836,6 +836,7 @@ function setupRealtimeListeners() {
             signatures: r.signatures || {}
           };
           if (r.guests && r.guests.length > 0) guestParticipants[key] = r.guests;
+          else delete guestParticipants[key];
         }
         if (key === currentKey) changed = true;
       });
@@ -1672,7 +1673,7 @@ async function renderSignbook() {
     return;
   }
   const allActive = members.filter(m=>m.status==='활동중').sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-  const currentParticipants = getParticipantsForDate(key);
+  const currentParticipants = getParticipantsForDate(date);
   const activeMembers = currentParticipants === null
     ? allActive
     : allActive.filter(m => currentParticipants.has(m.id));
@@ -2279,7 +2280,7 @@ async function printSignbook() {
 
   // 참여자 선택 반영 + 임시 참여자 포함
   const allActive = members.filter(m => m.status === '활동중').sort((a,b) => (a.name||'').localeCompare(b.name||''));
-  const currentParticipants = getParticipantsForDate(key);
+  const currentParticipants = getParticipantsForDate(date);
   const activeMembers = currentParticipants === null ? allActive : allActive.filter(m => currentParticipants.has(m.id));
   const guests = getGuestsForKey(key).map(g => ({ ...g, isGuest: true }));
   const allParticipants = [...activeMembers, ...guests];
@@ -2508,12 +2509,16 @@ function viewCard(id) {
   document.getElementById('cardModal').classList.add('show');
 }
 
-function deleteDefaultSignature(memberId) {
+async function deleteDefaultSignature(memberId) {
   const m = members.find(x => x.id === memberId);
   if (!m) return;
   if (!confirm(`"${m.name}" 님의 대표서명을 완전히 삭제할까요?\n\n삭제 후에는 서명부에서 자동 불러오기가 되지 않습니다.`)) return;
   delete m.savedSignature;
-  saveImmediate();
+  m.updatedAt = new Date().toISOString();
+  try {
+    await clubRef.collection('members').doc(memberId).set({ savedSignature: null }, { merge: true });
+  } catch(e) { console.warn('DB 대표서명 삭제 실패:', e); }
+  saveLocal();
   toast(`${m.name} 님의 대표서명이 삭제되었습니다`);
   viewCard(memberId);
 }
