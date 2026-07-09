@@ -2292,8 +2292,7 @@ function openSignPad(memberId, date, fromTablet) {
   _signCtx = canvas.getContext('2d');
   canvas.width = canvas.offsetWidth || 400;
   canvas.height = 220;
-  _signCtx.fillStyle = '#fff';
-  _signCtx.fillRect(0,0,canvas.width,canvas.height);
+  _signCtx.clearRect(0,0,canvas.width,canvas.height);
   document.getElementById('signCanvasWrap').classList.remove('has-drawing');
   setupSignCanvas(canvas);
   openModal('signPadModal');
