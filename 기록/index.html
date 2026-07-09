@@ -1582,7 +1582,7 @@ function onAttendScheduleChange() {
   updateParticipantBtn();
 }
 
-function renderSignbook() {
+async function renderSignbook() {
   const date = document.getElementById('attendDate').value || todayISO();
   const key = getAttendKey();
   const c = document.getElementById('signbookContainer');
@@ -1645,6 +1645,13 @@ function renderSignbook() {
     return;
   }
 
+  // 서명 이미지 사전 처리 (흰 배경 제거) — HTML 세팅 전에 완료
+  const processedSigs = {};
+  await Promise.all(allParticipants.map(async m => {
+    const sig = rec.signatures[m.id];
+    if (sig) processedSigs[m.id] = await removeWhiteBg(sig);
+  }));
+
   // 한글 서명부 양식 그대로
   const activityTitle = linkedSch ? linkedSch.title : '';
   const activityPlace = linkedSch ? linkedSch.location : '';
@@ -1666,10 +1673,10 @@ function renderSignbook() {
       <thead><tr>
         <th>순번</th><th>이름</th><th>학교/학년</th><th>성별</th><th>생년월일</th><th>연락처</th><th>서명</th>
       </tr></thead><tbody style="height:100%;">`;
+  const isManageMode = document.getElementById('signbookContainer').classList.contains('sign-manage-mode');
   allParticipants.forEach((m, i) => {
-    const sig = rec.signatures[m.id];
+    const sig = processedSigs[m.id];
     const hasSaved = !!m.savedSignature;
-    const isManageMode = document.getElementById('signbookContainer').classList.contains('sign-manage-mode');
 
     let sigContent;
     if (isManageMode) {
@@ -1701,9 +1708,6 @@ function renderSignbook() {
     <div class="sb-footer">${esc(settings.orgName)}</div>
   </div>`;
   c.innerHTML = html;
-  c.querySelectorAll('.sb-sig-cell img').forEach(img => {
-    removeWhiteBg(img.src).then(url => { img.src = url; });
-  });
 }
 
 // ==================== 서명 패드 ====================
