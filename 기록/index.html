@@ -1753,8 +1753,8 @@ function removeWhiteBg(dataUrl) {
       ctx.drawImage(img, 0, 0);
       const d = ctx.getImageData(0, 0, c.width, c.height);
       for (let i = 0; i < d.data.length; i += 4) {
-        // color-to-alpha: 밝기를 불투명도로 변환 (흰=투명, 검정=불투명)
-        // 안티앨리어싱 경계 회색 픽셀도 자연스럽게 처리됨
+        if (d.data[i+3] === 0) continue; // 이미 투명한 픽셀은 건드리지 않음
+        // 흰 배경만 있는 이미지: 밝기를 불투명도로 변환
         const brightness = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3;
         d.data[i] = 0;
         d.data[i+1] = 0;
