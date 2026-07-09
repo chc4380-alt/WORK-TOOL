@@ -1753,13 +1753,12 @@ function removeWhiteBg(dataUrl) {
       ctx.drawImage(img, 0, 0);
       const d = ctx.getImageData(0, 0, c.width, c.height);
       for (let i = 0; i < d.data.length; i += 4) {
-        if (d.data[i+3] === 0) continue; // 이미 투명한 픽셀은 건드리지 않음
-        // 흰 배경만 있는 이미지: 밝기를 불투명도로 변환
+        if (d.data[i+3] === 0) continue;
         const brightness = (d.data[i] + d.data[i+1] + d.data[i+2]) / 3;
-        d.data[i] = 0;
-        d.data[i+1] = 0;
-        d.data[i+2] = 0;
-        d.data[i+3] = Math.round(255 - brightness);
+        if (brightness > 200) {
+          d.data[i+3] = 0; // 흰 배경 → 투명
+        }
+        // 어두운 획은 그대로 유지
       }
       ctx.putImageData(d, 0, 0);
       resolve(c.toDataURL('image/png'));
