@@ -126,7 +126,7 @@
   .signbook .sb-table td.sb-sig-cell .sig-placeholder { color: #bbb; font-size: 11px; font-style: italic; }
   .signbook .sb-table td.sb-sig-cell.readonly { cursor: default; }
   .signbook .sb-table td.sb-sig-cell.readonly:hover { background: #fff; }
-  .signbook .sb-table td.sb-sig-cell img { max-height: 64px; max-width: 100%; vertical-align: middle; mix-blend-mode: multiply; }
+  .signbook .sb-table td.sb-sig-cell img { max-height: 64px; max-width: 100%; vertical-align: middle; }
 
   /* 서명 개별 삭제 버튼 (항상 표시) */
   .sb-sig-cell .sig-quick-del {
@@ -1739,10 +1739,6 @@ function applyOrOpenSign(memberId) {
   openSignPad(memberId);
 }
 
-function processSignImg(img) {
-  removeWhiteBg(img.src).then(url => { img.src = url; });
-}
-
 function removeWhiteBg(dataUrl) {
   return new Promise(resolve => {
     const img = new Image();
@@ -1753,7 +1749,8 @@ function removeWhiteBg(dataUrl) {
       ctx.drawImage(img, 0, 0);
       const d = ctx.getImageData(0, 0, c.width, c.height);
       for (let i = 0; i < d.data.length; i += 4) {
-        if (d.data[i] > 200 && d.data[i+1] > 200 && d.data[i+2] > 200) d.data[i+3] = 0;
+        // 흰색/밝은 배경 픽셀만 투명하게 (획은 어두워서 제외됨)
+        if (d.data[i] > 230 && d.data[i+1] > 230 && d.data[i+2] > 230) d.data[i+3] = 0;
       }
       ctx.putImageData(d, 0, 0);
       resolve(c.toDataURL('image/png'));
@@ -1866,7 +1863,7 @@ function clearSignCanvas() {
   document.getElementById('signCanvasWrap').classList.remove('has-drawing');
 }
 
-function saveSignature() {
+async function saveSignature() {
   if (!signHasDrawing) {
     toast('서명을 먼저 입력해주세요', 'warn');
     return;
@@ -1886,7 +1883,8 @@ function saveSignature() {
   outCtx.imageSmoothingEnabled = true;
   outCtx.imageSmoothingQuality = 'high';
   outCtx.drawImage(signCanvas, 0, 0, outCanvas.width, outCanvas.height);
-  const dataUrl = outCanvas.toDataURL('image/png');
+  // 흰 배경 제거 후 저장 (신규/기존 모두 투명 배경으로 통일)
+  const dataUrl = await removeWhiteBg(outCanvas.toDataURL('image/png'));
 
   attendance[key].signatures[currentSignMemberId] = dataUrl;
   // 서명하면 항상 '출석' 상태로 기록 (기존 결석/사유 포함 덮어씀)
