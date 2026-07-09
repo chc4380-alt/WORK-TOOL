@@ -1295,10 +1295,91 @@ async function loadFromDB(org) {
       }, { merge: true }).catch(e => console.warn('출석 업로드 실패:', date, e))
     ));
     showSyncStatus('ok');
+    setupRealtimeListeners(org);
   } catch (e) {
     console.warn('DB 로드 실패, 로컬 데이터 사용:', e);
     showSyncStatus('error');
   }
+}
+
+let _dbListeners = [];
+function setupRealtimeListeners(org) {
+  _dbListeners.forEach(u => u());
+  _dbListeners = [];
+  const ref = orgRef(org);
+  const d = appData[org];
+
+  _dbListeners.push(
+    ref.collection('members').orderBy('name').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      d.members = snap.docs.map(doc => doc.data());
+      saveLocal(); renderMembers(); renderAttend();
+    })
+  );
+
+  _dbListeners.push(
+    ref.collection('schedules').orderBy('date').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      d.schedules = snap.docs.map(doc => doc.data());
+      saveLocal(); renderSchedule(); renderAttend();
+    })
+  );
+
+  _dbListeners.push(
+    ref.collection('attendance').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      snap.docChanges().forEach(change => {
+        const date = change.doc.id;
+        if (change.type === 'removed') {
+          delete d.attendance[date];
+        } else {
+          const r = change.doc.data();
+          d.attendance[date] = {
+            scheduleId: r.scheduleId || '',
+            byMember: r.byMember || {},
+            signatures: r.signatures || {}
+          };
+        }
+      });
+      saveLocal(); renderSignbook();
+    })
+  );
+
+  _dbListeners.push(
+    ref.collection('activities').orderBy('date', 'desc').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      d.activities = snap.docs.map(doc => doc.data());
+      saveLocal(); renderActivity();
+    })
+  );
+
+  _dbListeners.push(
+    ref.collection('minutes').orderBy('date', 'desc').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      d.minutes = snap.docs.map(doc => doc.data());
+      saveLocal(); renderMinutes();
+    })
+  );
+
+  _dbListeners.push(
+    ref.collection('settings').doc('main').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites || !snap.exists) return;
+      d.settings = { ...d.settings, ...snap.data() };
+      saveLocal(); renderDashboard();
+    })
+  );
+
+  _dbListeners.push(
+    globalRef.onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites || !snap.exists) return;
+      const r = snap.data();
+      if (r.orgName) appData.globalSettings.orgName = r.orgName;
+      if (r.jointSchedules) appData.jointSchedules = r.jointSchedules;
+      saveLocal();
+      const el = document.getElementById('homeOrgName');
+      if (el) el.textContent = appData.globalSettings.orgName;
+    })
+  );
 }
 
 // ===== 전역 데이터(기관명, 합동일정) 동기화 =====

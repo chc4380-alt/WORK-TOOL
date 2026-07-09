@@ -782,10 +782,86 @@ async function loadFromDB() {
       await Promise.all(localOnlyKeys.map(k => saveAttendanceRecordToDB(k, attendance[k])));
     }
     showSyncStatus('ok');
+    setupRealtimeListeners();
   } catch(e) {
     console.warn('DB 로드 실패, 로컬 사용:', e);
     showSyncStatus('error');
   }
+}
+
+let _dbListeners = [];
+function setupRealtimeListeners() {
+  _dbListeners.forEach(u => u());
+  _dbListeners = [];
+
+  _dbListeners.push(
+    clubRef.collection('members').orderBy('createdAt').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      members = snap.docs.map(doc => {
+        const r = doc.data();
+        const ex = members.find(m => m.id === r.id);
+        return { ...r, savedSignature: r.savedSignature || ex?.savedSignature || null };
+      });
+      saveLocal();
+      renderList();
+      renderDashboard();
+    })
+  );
+
+  _dbListeners.push(
+    clubRef.collection('schedules').orderBy('date').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      schedules = snap.docs.map(doc => doc.data());
+      saveLocal();
+      renderSchedule();
+      renderSchedulePicker();
+    })
+  );
+
+  _dbListeners.push(
+    clubRef.collection('attendance').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites) return;
+      const currentKey = getAttendKey();
+      let changed = false;
+      snap.docChanges().forEach(change => {
+        const key = change.doc.id;
+        if (change.type === 'removed') {
+          delete attendance[key];
+          delete guestParticipants[key];
+        } else {
+          const r = change.doc.data();
+          attendance[key] = {
+            byMember: r.byMember || {},
+            scheduleId: r.scheduleId || null,
+            signatures: r.signatures || {}
+          };
+          if (r.guests && r.guests.length > 0) guestParticipants[key] = r.guests;
+        }
+        if (key === currentKey) changed = true;
+      });
+      saveLocal();
+      if (changed) renderSignbook();
+    })
+  );
+
+  _dbListeners.push(
+    clubRef.collection('settings').doc('main').onSnapshot(snap => {
+      if (snap.metadata.hasPendingWrites || !snap.exists) return;
+      const st = snap.data();
+      settings = { ...settings,
+        clubName: st.clubName || settings.clubName,
+        orgName: st.orgName || settings.orgName,
+        advisorName: st.advisorName || '',
+        signbookTitle: st.signbookTitle || settings.signbookTitle
+      };
+      participantsMap = {};
+      Object.entries(st.participantsMap || {}).forEach(([date, arr]) => {
+        participantsMap[date] = arr === null ? null : new Set(arr);
+      });
+      excludedStatKeys = st.excludedStatKeys || [];
+      saveLocal();
+    })
+  );
 }
 
 async function saveToDB() {
