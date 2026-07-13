@@ -461,6 +461,22 @@
         <div class="form-group"></div>
         <div class="form-group full"><label>활동 이력 / 특이사항</label><textarea id="history" placeholder="활동 내역, 수상경력, 알레르기 등"></textarea></div>
 
+        <div class="section-title">📷 회원 사진</div>
+        <div class="form-group full">
+          <div style="display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap;">
+            <div id="photoPreview" onclick="document.getElementById('photoFileInput').click()" style="width:90px;height:117px;border:2px dashed #D3D1C7;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#fafaf5;overflow:hidden;cursor:pointer;flex-shrink:0;transition:border-color 0.15s;">
+              <span style="font-size:11px;color:#bbb;text-align:center;line-height:1.6;">사진<br>(3×4)<br>클릭</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; padding-top:4px;">
+              <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+              <button type="button" class="btn btn-secondary btn-small" onclick="document.getElementById('photoFileInput').click()">📷 사진 선택</button>
+              <button type="button" class="btn btn-danger btn-small" onclick="clearMemberPhoto()">🗑️ 사진 삭제</button>
+              <div style="font-size:11px;color:#888;line-height:1.5;">권장: 3×4 증명사진<br>업로드 시 자동 압축</div>
+            </div>
+          </div>
+          <input type="hidden" id="memberPhoto">
+        </div>
+
         <div class="section-title">📝 지도사 의견 (상담·관찰 기록)</div>
         <div class="form-group full"><label>의견박스</label><textarea id="advisorNote" rows="5" placeholder="상담 내용, 성향, 관찰된 특징, 지도 방향 등을 자유롭게 기록하세요."></textarea></div>
       </div>
@@ -1166,7 +1182,55 @@ function updateHeader() {
 }
 
 // ==================== 회원 폼 ====================
-function resetForm() { document.getElementById('memberForm').reset(); document.getElementById('memberId').value=''; }
+function resetForm() {
+  document.getElementById('memberForm').reset();
+  document.getElementById('memberId').value='';
+  document.getElementById('memberPhoto').value='';
+  updatePhotoPreview('');
+}
+
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX_W = 300, MAX_H = 400;
+      let w = img.width, h = img.height;
+      const ratio = Math.min(MAX_W / w, MAX_H / h, 1);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('memberPhoto').value = dataUrl;
+      updatePhotoPreview(dataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function updatePhotoPreview(dataUrl) {
+  const preview = document.getElementById('photoPreview');
+  if (!preview) return;
+  if (dataUrl) {
+    preview.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+    preview.style.borderColor = '#1D9E75';
+  } else {
+    preview.innerHTML = `<span style="font-size:11px;color:#bbb;text-align:center;line-height:1.6;">사진<br>(3×4)<br>클릭</span>`;
+    preview.style.borderColor = '#D3D1C7';
+  }
+}
+
+function clearMemberPhoto() {
+  document.getElementById('memberPhoto').value = '';
+  document.getElementById('photoFileInput').value = '';
+  updatePhotoPreview('');
+}
 
 function saveMember(e) {
   e.preventDefault();
@@ -1189,6 +1253,7 @@ function saveMember(e) {
     status: document.getElementById('status').value,
     history: document.getElementById('history').value.trim(),
     advisorNote: document.getElementById('advisorNote').value.trim(),
+    photo: document.getElementById('memberPhoto').value || null,
     updatedAt: new Date().toISOString()
   };
   const idx = members.findIndex(m=>m.id===id);
@@ -1208,6 +1273,8 @@ function editMember(id) {
     const el = document.getElementById(k);
     if (el) el.value = m[key] || (k==='status'?'활동중':'');
   });
+  document.getElementById('memberPhoto').value = m.photo || '';
+  updatePhotoPreview(m.photo || '');
   switchTab('add');
 }
 
@@ -2472,7 +2539,11 @@ function viewCard(id) {
         <tr>
           <th>성명</th><td style="width:30%">${esc(m.name)}</td>
           <th>성별</th><td style="width:15%">${esc(m.gender||'-')}</td>
-          <td class="photo-cell" rowspan="4"><div class="photo-box">사진<br>(3×4)</div></td>
+          <td class="photo-cell" rowspan="4">
+            ${m.photo
+              ? `<img src="${m.photo}" style="width:100px;height:130px;object-fit:cover;border-radius:4px;display:block;margin:auto;">`
+              : `<div class="photo-box">사진<br>(3×4)</div>`}
+          </td>
         </tr>
         <tr><th>생년월일</th><td>${esc(m.birthdate||'-')} ${age!==''?`(만 ${age}세)`:''}</td><th>학년</th><td>${esc(m.grade||'-')}</td></tr>
         <tr><th>학교</th><td colspan="3">${esc(m.school||'-')}</td></tr>
