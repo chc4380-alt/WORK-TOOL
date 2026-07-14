@@ -1711,6 +1711,23 @@ async function downloadHWPX() {
         const newSpan = Math.max(1, curSpan - deletedScheduleRows);
         xml = xml.slice(0, numStart) + newSpan + xml.slice(numEnd);
       }
+
+      // '총소요시간' 행은 표에서 데이터 행 뒤에 이어지는 별도 행(원본 rowAddr=8)이라,
+      // 앞의 행들이 삭제된 만큼 rowAddr를 당겨주지 않으면 행 번호에 구멍이 생겨
+      // 한글이 표 구조가 깨진 것으로 보고 파일을 손상됨으로 처리한다.
+      const totalRowAnchor = '<hp:t>총소요시간</hp:t>';
+      const totalAnchorPos = xml.indexOf(totalRowAnchor);
+      if (totalAnchorPos !== -1) {
+        const trStart = xml.lastIndexOf('<hp:tr', totalAnchorPos);
+        const trEnd = xml.indexOf('</hp:tr>', totalAnchorPos) + '</hp:tr>'.length;
+        if (trStart >= 0 && trEnd > trStart) {
+          const oldRowAddr = 8; // 총소요시간 행의 템플릿 원본 rowAddr
+          const newRowAddr = oldRowAddr - deletedScheduleRows;
+          const trBlock = xml.slice(trStart, trEnd);
+          const fixedBlock = trBlock.split(`rowAddr="${oldRowAddr}"`).join(`rowAddr="${newRowAddr}"`);
+          xml = xml.slice(0, trStart) + fixedBlock + xml.slice(trEnd);
+        }
+      }
     }
 
     // 총소요시간 (인덱스 114, tr 삭제 후 재계산)
