@@ -1,4 +1,4 @@
-const CACHE_NAME = 'work-tool-v1';
+const CACHE_NAME = 'work-tool-v2';
 const ASSETS = [
   '/WORK-TOOL/',
   '/WORK-TOOL/index.html',
