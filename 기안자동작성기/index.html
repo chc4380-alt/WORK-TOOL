@@ -1102,6 +1102,22 @@ function numToKorean(num) {
 
 function dot(s) { if (!s) return s; s = s.trim(); return s.endsWith('.') ? s : s + '.'; }
 
+// HTML/HWPX(XML) 삽입 전 특수문자 이스케이프 — 미리보기 innerHTML 및 HWPX section0.xml 변조 방지
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+function escXml(s) {
+  return String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+}
+
+// 예산 항목의 "항목명 + 계산식" 한 줄 텍스트 (계산식이 비어있으면 항목명만)
+function calcLine(b) {
+  const calc = (b.calc || '').replace(/×/g, '*').trim();
+  const item = (b.item || '').trim();
+  if (item && calc) return item + ' ' + calc;
+  return calc || item || '';
+}
+
 // ════════════════════════════════════════
 //  AI 생성
 // ════════════════════════════════════════
@@ -1261,25 +1277,25 @@ ${lawTexts || '청소년활동진흥법 제5조(청소년활동 지원)'}
 //  미리보기 렌더링
 // ════════════════════════════════════════
 function showPreviewShell(d) {
-  const periodStr = d.period ? d.period + ' ' : '';
+  const periodStr = d.period ? escHtml(d.period) + ' ' : '';
   document.getElementById('previewArea').innerHTML = `
     <div class="doc-preview">
       <div class="doc-title">기  안  용  지</div>
       <table class="doc-meta-table">
         <tr><td class="doc-meta-label">결  재</td><td>담  당</td><td>팀  장</td><td>센터장</td></tr>
-        <tr><td class="doc-meta-label">분류번호</td><td colspan="3">${d.docNum}</td></tr>
-        <tr><td class="doc-meta-label">기 안 자</td><td>${d.author}</td><td class="doc-meta-label">기안일시</td><td>${d.docDate}</td></tr>
+        <tr><td class="doc-meta-label">분류번호</td><td colspan="3">${escHtml(d.docNum)}</td></tr>
+        <tr><td class="doc-meta-label">기 안 자</td><td>${escHtml(d.author)}</td><td class="doc-meta-label">기안일시</td><td>${d.docDate}</td></tr>
         <tr><td class="doc-meta-label">수    신</td><td colspan="3">내부결재</td></tr>
         <tr><td class="doc-meta-label">시행일시</td><td colspan="3">${d.docDate}</td></tr>
-        <tr><td class="doc-meta-label">제    목</td><td colspan="3">${d.actName} 진행의 건</td></tr>
+        <tr><td class="doc-meta-label">제    목</td><td colspan="3">${escHtml(d.actName)} 진행의 건</td></tr>
       </table>
       <div class="doc-p"><span class="placeholder-text">AI 작성 중... <span class="stream-cursor"></span></span></div>
       <div class="doc-p" style="text-align:center;margin:12px 0 8px;">- 아    래 -</div>
-      <div class="doc-p"> 1. 활 동 명 : ${d.actName}</div>
-      <div class="doc-p"> 2. 일    시 : ${d.actDate}</div>
-      <div class="doc-p"> 3. 장    소 : ${d.actPlace}</div>
-      <div class="doc-p"> 4. 참여인원 : ${periodStr}${d.participants}</div>
-      ${d.hasBudget && d.korAmount ? `<div class="doc-p"> 5. 소요예산 : 일금 ${d.korAmount}원(\\ ${Number(d.budgetTotal.replace(/,/g,'')).toLocaleString()}원)</div>` : ''}
+      <div class="doc-p"> 1. 활 동 명 : ${escHtml(d.actName)}</div>
+      <div class="doc-p"> 2. 일    시 : ${escHtml(d.actDate)}</div>
+      <div class="doc-p"> 3. 장    소 : ${escHtml(d.actPlace)}</div>
+      <div class="doc-p"> 4. 참여인원 : ${periodStr}${escHtml(d.participants)}</div>
+      ${d.hasBudget && d.korAmount ? `<div class="doc-p"> 5. 소요예산 : 일금 ${escHtml(d.korAmount)}원(\\ ${Number(d.budgetTotal.replace(/,/g,'')).toLocaleString()}원)</div>` : ''}
       <div style="margin-top:16px;text-align:right;">광양시청소년문화센터</div>
     </div>
   `;
@@ -1287,55 +1303,55 @@ function showPreviewShell(d) {
 
 function showPreviewFull(d) {
   const ai = d.ai;
-  const periodStr = d.period ? d.period + ' ' : '';
+  const periodStr = d.period ? escHtml(d.period) + ' ' : '';
   const totalAmt = d.budgetTotal ? Number(d.budgetTotal.replace(/,/g,'')).toLocaleString() : '';
 
   const schedHtml = d.schedules.map(s => `
     <tr>
-      <td style="border:1px solid #ccc;padding:4px 8px;text-align:center;">${s.from}</td>
-      <td style="border:1px solid #ccc;padding:4px 8px;text-align:center;">${s.to}</td>
-      <td style="border:1px solid #ccc;padding:4px 8px;text-align:center;">${s.duration || ''}</td>
-      <td style="border:1px solid #ccc;padding:4px 8px;">${s.content}</td>
-      <td style="border:1px solid #ccc;padding:4px 8px;">${s.place}</td>
+      <td style="border:1px solid #ccc;padding:4px 8px;text-align:center;">${escHtml(s.from)}</td>
+      <td style="border:1px solid #ccc;padding:4px 8px;text-align:center;">${escHtml(s.to)}</td>
+      <td style="border:1px solid #ccc;padding:4px 8px;text-align:center;">${escHtml(s.duration || '')}</td>
+      <td style="border:1px solid #ccc;padding:4px 8px;">${escHtml(s.content)}</td>
+      <td style="border:1px solid #ccc;padding:4px 8px;">${escHtml(s.place)}</td>
     </tr>`).join('');
 
-  const attachHtml = d.attaches.map((a, i) => `<div class="doc-p">           ${i+1}. ${a}</div>`).join('');
-  const purposeHtml = (ai.purposes||[]).map(p => `<div class="doc-p">○ ${p}</div>`).join('');
-  const goalHtml = (ai.goals||[]).map(g => `<div class="doc-p">○ ${g}</div>`).join('');
-  const effectHtml = (ai.effects||[]).map(e => `<div class="doc-p"> ○ ${e}</div>`).join('');
-  const schedMainHtml = (ai.scheduleMainItems||[]).map(s => `<div class="doc-p">    - ${s}</div>`).join('');
+  const attachHtml = d.attaches.map((a, i) => `<div class="doc-p">           ${i+1}. ${escHtml(a)}</div>`).join('');
+  const purposeHtml = (ai.purposes||[]).map(p => `<div class="doc-p">○ ${escHtml(p)}</div>`).join('');
+  const goalHtml = (ai.goals||[]).map(g => `<div class="doc-p">○ ${escHtml(g)}</div>`).join('');
+  const effectHtml = (ai.effects||[]).map(e => `<div class="doc-p"> ○ ${escHtml(e)}</div>`).join('');
+  const schedMainHtml = (ai.scheduleMainItems||[]).map(s => `<div class="doc-p">    - ${escHtml(s)}</div>`).join('');
 
   const budgetRowsHtml = d.hasBudget
     ? d.budgets.map(b => `<tr>
-        <td style="border:1px solid #ccc;padding:4px 8px;">${b.category||'일반수용비'}</td>
-        <td style="border:1px solid #ccc;padding:4px 8px;">${b.item}</td>
-        <td style="border:1px solid #ccc;padding:4px 8px;">${b.calc}</td>
+        <td style="border:1px solid #ccc;padding:4px 8px;">${escHtml(b.category||'일반수용비')}</td>
+        <td style="border:1px solid #ccc;padding:4px 8px;">${escHtml(b.item)}</td>
+        <td style="border:1px solid #ccc;padding:4px 8px;">${escHtml(b.calc)}</td>
         <td style="border:1px solid #ccc;padding:4px 8px;text-align:right;">${b.amount?Number(b.amount.replace(/,/g,'')).toLocaleString()+'원':''}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" style="border:1px solid #ccc;padding:8px;text-align:center;color:#999;">예산 없음</td></tr>`;
 
-  const titlePart = d.period ? `${d.period}<br>${d.actName}` : d.actName;
+  const titlePart = d.period ? `${escHtml(d.period)}<br>${escHtml(d.actName)}` : escHtml(d.actName);
 
   document.getElementById('previewArea').innerHTML = `
     <div class="doc-preview">
       <div class="doc-title">기  안  용  지</div>
       <table class="doc-meta-table">
         <tr><td class="doc-meta-label">결  재</td><td>담  당</td><td>팀  장</td><td>센터장</td></tr>
-        <tr><td class="doc-meta-label">분류번호</td><td colspan="3">${d.docNum}</td></tr>
-        <tr><td class="doc-meta-label">기 안 자</td><td>${d.author}</td><td class="doc-meta-label">기안일시</td><td>${d.docDate}</td></tr>
+        <tr><td class="doc-meta-label">분류번호</td><td colspan="3">${escHtml(d.docNum)}</td></tr>
+        <tr><td class="doc-meta-label">기 안 자</td><td>${escHtml(d.author)}</td><td class="doc-meta-label">기안일시</td><td>${d.docDate}</td></tr>
         <tr><td class="doc-meta-label">수    신</td><td colspan="3">내부결재</td></tr>
         <tr><td class="doc-meta-label">시행일시</td><td colspan="3">${d.docDate}</td></tr>
-        <tr><td class="doc-meta-label">제    목</td><td colspan="3">${d.actName} 진행의 건</td></tr>
+        <tr><td class="doc-meta-label">제    목</td><td colspan="3">${escHtml(d.actName)} 진행의 건</td></tr>
       </table>
 
-      <div class="doc-p ai-content">${ai.mainBody || ''}</div>
-      ${(ai.lawRef || ai.lawArticle) ? `<div class="law-ref">📋 <strong>${(ai.lawRef?.article || ai.lawArticle) || ''}</strong><br>${(ai.lawRef?.item1 || ai.lawItem1) || ''}${((ai.lawRef?.item2 || ai.lawItem2)) ? '<br>' + (ai.lawRef?.item2 || ai.lawItem2) : ''}</div>` : ''}
+      <div class="doc-p ai-content">${escHtml(ai.mainBody || '')}</div>
+      ${(ai.lawRef || ai.lawArticle) ? `<div class="law-ref">📋 <strong>${escHtml((ai.lawRef?.article || ai.lawArticle) || '')}</strong><br>${escHtml((ai.lawRef?.item1 || ai.lawItem1) || '')}${((ai.lawRef?.item2 || ai.lawItem2)) ? '<br>' + escHtml(ai.lawRef?.item2 || ai.lawItem2) : ''}</div>` : ''}
       <div class="doc-p" style="text-align:center;margin:12px 0 8px;font-weight:700;">- 아    래 -</div>
-      <div class="doc-p"> 1. 활 동 명 : ${d.actName}</div>
-      <div class="doc-p"> 2. 일    시 : ${d.actDate}</div>
-      <div class="doc-p"> 3. 장    소 : ${d.actPlace}</div>
-      <div class="doc-p"> 4. 참여인원 : ${periodStr}${d.participants}</div>
-      ${d.hasBudget && d.korAmount ? `<div class="doc-p"> 5. 소요예산 : 일금 ${d.korAmount}원(\\ ${totalAmt}원)</div>` : ''}
+      <div class="doc-p"> 1. 활 동 명 : ${escHtml(d.actName)}</div>
+      <div class="doc-p"> 2. 일    시 : ${escHtml(d.actDate)}</div>
+      <div class="doc-p"> 3. 장    소 : ${escHtml(d.actPlace)}</div>
+      <div class="doc-p"> 4. 참여인원 : ${periodStr}${escHtml(d.participants)}</div>
+      ${d.hasBudget && d.korAmount ? `<div class="doc-p"> 5. 소요예산 : 일금 ${escHtml(d.korAmount)}원(\\ ${totalAmt}원)</div>` : ''}
       <br>
       <div class="doc-p">붙    임 : ${attachHtml ? '' : '없음'}</div>
       ${attachHtml}
@@ -1344,7 +1360,7 @@ function showPreviewFull(d) {
       <hr style="margin:28px 0;border:none;border-top:2px solid #333;">
 
       <div style="text-align:center;font-size:15px;font-weight:700;margin-bottom:20px;">
-        2026년 광양시청소년문화센터 ${d.actName} 활동계획서
+        2026년 광양시청소년문화센터 ${escHtml(d.actName)} 활동계획서
       </div>
 
       <div class="doc-section-title"><span class="doc-section-num">1</span> 운영목적</div>
@@ -1354,10 +1370,10 @@ function showPreviewFull(d) {
       <div class="ai-content">${goalHtml}</div>
 
       <div class="doc-section-title"><span class="doc-section-num">3</span> 운영개요</div>
-      <div class="doc-p"> ○ 활 동 명 : ${d.actName}</div>
-      <div class="doc-p"> ○ 일    시 : ${d.actDate}</div>
-      <div class="doc-p"> ○ 장    소 : ${d.actPlace}</div>
-      <div class="doc-p"> ○ 참여인원 : ${periodStr}${d.participants}</div>
+      <div class="doc-p"> ○ 활 동 명 : ${escHtml(d.actName)}</div>
+      <div class="doc-p"> ○ 일    시 : ${escHtml(d.actDate)}</div>
+      <div class="doc-p"> ○ 장    소 : ${escHtml(d.actPlace)}</div>
+      <div class="doc-p"> ○ 참여인원 : ${periodStr}${escHtml(d.participants)}</div>
       <div class="doc-p"> ○ 주요내용</div>
       ${schedMainHtml}
       ${d.hasBudget ? `<div class="doc-p"> ○ 소요예산 : ${totalAmt}원</div>` : ''}
@@ -1479,27 +1495,52 @@ async function downloadHWPX() {
       { from:109, to:110, dur:111, content:112, place:-1 },
     ];
 
+    // 비고(장소) 칸은 6개 행에 걸쳐 병합된 셀 하나뿐이므로, 채워진 모든 행의 값을 모아 한 번에 기록
+    const placeValues = [...new Set(scheds.slice(0, ROW_IDX.length).map(s => (s.place || '').trim()).filter(Boolean))];
+    const aggPlace = placeValues.length ? placeValues.join(' / ') : '';
+
+    let deletedScheduleRows = 0;
+    let removedNodeCount = 0; // 같은 루프 안에서 앞선 행이 삭제되면 이후 행의 고정 인덱스가 그만큼 밀리므로 보정
     for (let ri = 0; ri < ROW_IDX.length; ri++) {
       const idx = ROW_IDX[ri];
       const s   = scheds[ri];
       if (s) {
-        xml = setIdx(xml, idx.from, s.from || '');
-        xml = setIdx(xml, idx.to,   s.to   || '');
-        xml = setIdx(xml, idx.dur,  toMin(s.duration || ''));
-        xml = setIdx(xml, idx.content, s.content || '');
-        if (idx.place > 0) xml = setIdx(xml, idx.place, s.place || '');
+        xml = setIdx(xml, idx.from - removedNodeCount, escXml(s.from || ''));
+        xml = setIdx(xml, idx.to   - removedNodeCount, escXml(s.to   || ''));
+        xml = setIdx(xml, idx.dur  - removedNodeCount, escXml(toMin(s.duration || '')));
+        xml = setIdx(xml, idx.content - removedNodeCount, escXml(s.content || ''));
+        if (idx.place > 0) xml = setIdx(xml, idx.place - removedNodeCount, escXml(aggPlace));
       } else {
         // 빈 행 → tr 블록째 삭제
         const nodes = getTNodes(xml);
-        if (idx.from < nodes.length) {
-          const fromVal = nodes[idx.from].val;
+        const adjFrom = idx.from - removedNodeCount;
+        if (adjFrom < nodes.length) {
+          const fromVal = nodes[adjFrom].val;
           const tPos    = xml.indexOf('<hp:t>' + fromVal + '</hp:t>');
           if (tPos >= 0) {
-            const trStart = xml.lastIndexOf('<hp:tr ', tPos);
+            const trStart = xml.lastIndexOf('<hp:tr', tPos); // 주의: '<hp:tr ' (공백 포함)로 찾으면 실제 태그(<hp:tr>, 속성 없음)와 매칭되지 않아 삭제가 전혀 동작하지 않았음
             const trEnd   = xml.indexOf('</hp:tr>', tPos) + '</hp:tr>'.length;
-            if (trStart >= 0 && trEnd > trStart) xml = xml.slice(0, trStart) + xml.slice(trEnd);
+            if (trStart >= 0 && trEnd > trStart) {
+              const removedSegment = xml.slice(trStart, trEnd);
+              removedNodeCount += (removedSegment.match(/<hp:t>/g) || []).length;
+              xml = xml.slice(0, trStart) + xml.slice(trEnd);
+              deletedScheduleRows++;
+            }
           }
         }
+      }
+    }
+
+    // 빈 행 삭제로 실제 행 수가 줄었으면, 병합된 '비고' 셀의 rowSpan도 그만큼 보정
+    if (deletedScheduleRows > 0) {
+      const spanAnchor = '<hp:cellAddr colAddr="4" rowAddr="2"/><hp:cellSpan colSpan="1" rowSpan="';
+      const spanPos = xml.indexOf(spanAnchor);
+      if (spanPos !== -1) {
+        const numStart = spanPos + spanAnchor.length;
+        const numEnd = xml.indexOf('"', numStart);
+        const curSpan = parseInt(xml.slice(numStart, numEnd), 10);
+        const newSpan = Math.max(1, curSpan - deletedScheduleRows);
+        xml = xml.slice(0, numStart) + newSpan + xml.slice(numEnd);
       }
     }
 
@@ -1517,69 +1558,115 @@ async function downloadHWPX() {
       }
     }
 
-    // ════ STEP 2: 예산 (계획서 인덱스: 178=계산식, 179=금액, 181=합계)
+    // ════ STEP 2: 예산
+    // 문서에는 동일한 구조의 예산 표가 두 곳에 있음: (1) 기안용지 표지의 한 줄 요약, (2) "5. 소요예산" 상세 표.
+    // 상세 표는 항목 행이 1개뿐인 템플릿이라, 항목이 여러 개면 계산식/금액 칸에 문단을 추가해 모두 표시한다.
     if (hasBudget && d.budgets.length > 0) {
-      const b = d.budgets[0];
-      const calcStr = (b.calc || b.item || '').replace(/×/g, '*');
-      xml = setIdx(xml, 178, calcStr);
-      xml = setIdx(xml, 179, (b.amount || '0') + '원');
+      const b0 = d.budgets[0];
+
+      // (1) 표지의 한 줄 요약 — 대표(첫) 항목만 반영 (문서 맨 앞의 첫 occurrence를 그대로 사용)
+      xml = findSet(xml, '일  반', escXml(b0.category || '일반수용비'));
+      xml = findSet(xml, '수용비', ' ');
+      xml = findSet(xml, '식비 9,000원 * 27명 = 243,000원', escXml(calcLine(b0)));
+      xml = findSet(xml, '243,000원', escXml((b0.amount || '0') + '원'));
+
+      // (2) "5. 소요예산" 상세 표 — 위 표지 요약 이후(" 소요예산" 제목 뒤)로 탐색 범위를 한정해
+      //     표지 쪽 텍스트와 절대 혼동되지 않도록 한다.
+      let bCur = xml.indexOf('<hp:t> 소요예산</hp:t>');
+      const budgetReplace = (target, newVal) => {
+        const t = '<hp:t>' + target + '</hp:t>';
+        const pos = xml.indexOf(t, bCur);
+        if (pos === -1) return false;
+        const nt = '<hp:t>' + newVal + '</hp:t>';
+        xml = xml.slice(0, pos) + nt + xml.slice(pos + t.length);
+        bCur = pos;
+        return true;
+      };
+      const budgetInsertPara = (target, newVal) => {
+        const t = '<hp:t>' + target + '</hp:t>';
+        const pos = xml.indexOf(t, bCur);
+        if (pos === -1) return false;
+        const pStart = xml.lastIndexOf('<hp:p ', pos);
+        const pEnd   = xml.indexOf('</hp:p>', pos) + '</hp:p>'.length;
+        if (pStart === -1 || pEnd <= pStart) return false;
+        const pBlock = xml.slice(pStart, pEnd);
+        const relOffset = pBlock.indexOf(t);
+        const nt = '<hp:t>' + newVal + '</hp:t>';
+        const newBlock = pBlock.split(t).join(nt);
+        xml = xml.slice(0, pEnd) + newBlock + xml.slice(pEnd);
+        bCur = pEnd + relOffset;
+        return true;
+      };
+
+      budgetReplace('일  반', escXml(b0.category || '일반수용비'));
+      budgetReplace('수용비', ' ');
+
+      const calc0 = escXml(calcLine(b0));
+      budgetReplace('식비 9,000원 * 27명 = 243,000원', calc0);
+      let lastCalc = calc0;
+      for (let i = 1; i < d.budgets.length; i++) {
+        const calcI = escXml(calcLine(d.budgets[i]));
+        if (budgetInsertPara(lastCalc, calcI)) lastCalc = calcI;
+      }
+
+      const amt0 = escXml((b0.amount || '0') + '원');
+      budgetReplace('243,000원', amt0);
+      let lastAmt = amt0;
+      for (let i = 1; i < d.budgets.length; i++) {
+        const amtI = escXml((d.budgets[i].amount || '0') + '원');
+        if (budgetInsertPara(lastAmt, amtI)) lastAmt = amtI;
+      }
     }
-    xml = setIdx(xml, 181, totalAmt ? Number(totalAmt.replace(/,/g, '')).toLocaleString() : '0');
+    // 합계(표지 + 상세 표 공통, SUM 수식 필드의 캐시 값 포함)는 STEP 3 마지막의 findSetAll('243,000', ...)에서 일괄 처리
 
     // ════ STEP 3: 일반 텍스트 치환
-    xml = findSet   (xml, '프로그램명 26 \u2013 번호', d.docNum || '');
-    xml = findSetAll(xml, '0000. 0. 00.', d.docDate || '');
-    xml = findSet   (xml, '\ud64d \uae38 \ub3d9', d.author || '');
-    xml = findSet   (xml, ' (활동명) 진행의 건', ' ' + d.actName + ' 진행의 건');
-    xml = findSet   (xml, '❍ 2026년 광양시청소년문화센터 (활동명)을 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.', ai.mainBody || '❍ 2026년 광양시청소년문화센터 ' + d.actName + '을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.');
-    xml = findSet   (xml, ' 1. 활 동 명 : (활동명) ', ' 1. 활 동 명 : ' + d.actName);
-    xml = findSet   (xml, ' 2. 일    시 : 0000년 0월 00일(요일) 00:00~00:00(24시간제)', ' 2. 일    시 : ' + d.actDate);
-    xml = findSet   (xml, ' 3. 장    소 : (장소명)', ' 3. 장    소 : ' + d.actPlace);
-    xml = findSet   (xml, ' 4. 참여인원 : 00명 (남 00명, 여 00명)', ' 4. 참여인원 : ' + periodStr + d.participants);
-    xml = findSet   (xml, ' 5. 활동내용 : (활동내용 한줄 요약)', ' 5. 활동내용 : ' + d.actName);
+    xml = findSet   (xml, '프로그램명 26 \u2013 번호', escXml(d.docNum || ''));
+    xml = findSetAll(xml, '0000. 0. 00.', escXml(d.docDate || ''));
+    xml = findSet   (xml, '\ud64d \uae38 \ub3d9', escXml(d.author || ''));
+    xml = findSet   (xml, ' (활동명) 진행의 건', ' ' + escXml(d.actName) + ' 진행의 건');
+    xml = findSet   (xml, '❍ 2026년 광양시청소년문화센터 (활동명)을 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.', escXml(ai.mainBody || '❍ 2026년 광양시청소년문화센터 ' + d.actName + '을(를) 아래와 같이 진행하고자 하오니 재가하여 주시기를 바랍니다.'));
+    xml = findSet   (xml, ' 1. 활 동 명 : (활동명) ', ' 1. 활 동 명 : ' + escXml(d.actName));
+    xml = findSet   (xml, ' 2. 일    시 : 0000년 0월 00일(요일) 00:00~00:00(24시간제)', ' 2. 일    시 : ' + escXml(d.actDate));
+    xml = findSet   (xml, ' 3. 장    소 : (장소명)', ' 3. 장    소 : ' + escXml(d.actPlace));
+    xml = findSet   (xml, ' 4. 참여인원 : 00명 (남 00명, 여 00명)', ' 4. 참여인원 : ' + escXml(periodStr) + escXml(d.participants));
+    xml = findSet   (xml, ' 5. 활동내용 : (활동내용 한줄 요약)', ' 5. 활동내용 : ' + escXml(d.actName));
     if (hasBudget && d.korAmount) {
       xml = findSet(xml, ' 6. 소요예산 : 일금 이십사만삼천원(\\ 243,000원)',
-                    ' 6. 소요예산 : 일금 ' + d.korAmount + '원(\\ ' + totalAmt + '원)');
+                    ' 6. 소요예산 : 일금 ' + escXml(d.korAmount) + '원(\\ ' + escXml(totalAmt) + '원)');
     } else {
       xml = findSet(xml, ' 6. 소요예산 : 일금 이십사만삼천원(\\ 243,000원)', ' ');
     }
-    xml = findSet   (xml, '붙    임 : 1. (활동명) ', '붙    임 : 1. ' + (d.attaches[0] || ' '));
+    xml = findSet   (xml, '붙    임 : 1. (활동명) ', '붙    임 : 1. ' + escXml(d.attaches[0] || ' '));
     xml = findSet   (xml, '활동계획서 1부.', ' ');
-    xml = findSet   (xml, '2. 세부내용 1부.', d.attaches[1] ? '2. ' + d.attaches[1] : ' ');
+    xml = findSet   (xml, '2. 세부내용 1부.', d.attaches[1] ? '2. ' + escXml(d.attaches[1]) : ' ');
 
     // 법령
-    const lawArticle = ai.lawRef?.article || ai.lawArticle || '청소년활동진흥법 제64조(청소년동아리활동의 활성화)';
-    const lawItem1   = ai.lawRef?.item1   || ai.lawItem1   || '① 조항 내용';
-    const lawItem2   = ai.lawRef?.item2   || ai.lawItem2   || '';
+    const lawArticle = escXml(ai.lawRef?.article || ai.lawArticle || '청소년활동진흥법 제64조(청소년동아리활동의 활성화)');
+    const lawItem1   = escXml(ai.lawRef?.item1   || ai.lawItem1   || '① 조항 내용');
+    const lawItem2   = escXml(ai.lawRef?.item2   || ai.lawItem2   || '');
     xml = findSet(xml, '청소년활동진흥법 제64조(청소년동아리활동의 활성화)', lawArticle);
     xml = findSet(xml, '① 국가 및 지방자치단체는 청소년이 자율적으로 참여하여 조직하고 운영하는 다양한 형태의 동아리활동을 적극 지원하여야 한다.', lawItem1);
     xml = findSet(xml, '② 청소년활동시설은 제1항에 따른 동아리활동에 필요한 장소 및 장비 등을 제공하고 지원할 수 있다.', lawItem2 || ' ');
 
     // 운영개요
-    xml = findSet   (xml, '(활동명) ', d.actName);
-    xml = findSet   (xml, ' ○ 일    시 : ', ' ○ 일    시 : ' + d.actDate);
+    xml = findSet   (xml, '(활동명) ', escXml(d.actName));
+    xml = findSet   (xml, ' ○ 일    시 : ', ' ○ 일    시 : ' + escXml(d.actDate));
     xml = findSet   (xml, '0000년 0월 00일(요일) 00:00~00:00(24시간제)', ' ');
-    xml = findSet   (xml, ' ○ 장    소 : ', ' ○ 장    소 : ' + d.actPlace);
-    xml = findSet   (xml, ' ○ 참여인원 : ', ' ○ 참여인원 : ' + periodStr + d.participants);
+    xml = findSet   (xml, ' ○ 장    소 : ', ' ○ 장    소 : ' + escXml(d.actPlace));
+    xml = findSet   (xml, ' ○ 참여인원 : ', ' ○ 참여인원 : ' + escXml(periodStr) + escXml(d.participants));
     xml = findSet   (xml, '00명 (남 00명, 여 00명)', ' ');
     const items = ai.scheduleMainItems || [];
-    xml = findSet   (xml, '    - 세부운영내용 1', items[0] ? '    - ' + items[0] : ' ');
-    xml = findSet   (xml, '    - 세부운영내용 2', items[1] ? '    - ' + items[1] : ' ');
-    xml = findSet   (xml, '    - 세부운영내용 3', items[2] ? '    - ' + items[2] : ' ');
+    xml = findSet   (xml, '    - 세부운영내용 1', items[0] ? '    - ' + escXml(items[0]) : ' ');
+    xml = findSet   (xml, '    - 세부운영내용 2', items[1] ? '    - ' + escXml(items[1]) : ' ');
+    xml = findSet   (xml, '    - 세부운영내용 3', items[2] ? '    - ' + escXml(items[2]) : ' ');
     if (hasBudget) {
-      xml = findSet(xml, ' ○ 소요예산 : 243,000원 (소요예산 간략히)', ' ○ 소요예산 : ' + totalAmt + '원');
+      xml = findSet(xml, ' ○ 소요예산 : 243,000원 (소요예산 간략히)', ' ○ 소요예산 : ' + escXml(totalAmt) + '원');
     } else {
       xml = findSet(xml, ' ○ 소요예산 : 243,000원 (소요예산 간략히)', ' ');
     }
-    // 기안용지 예산표
-    if (hasBudget && d.budgets.length > 0) {
-      const b = d.budgets[0];
-      xml = findSet(xml, '식비 9,000원 * 27명 = 243,000원', (b.calc || '').replace(/×/g,'*'));
-      xml = findSet(xml, '243,000원', (b.amount||'0') + '원');
-    }
-    xml = findSetAll(xml, '243,000', totalAmt);
-    xml = findSetAll(xml, '(활동명)', d.actName);
-    xml = findSetAll(xml, '(장소명)', scheds[0]?.place || d.actPlace || ' ');
+    xml = findSetAll(xml, '243,000', escXml(totalAmt)); // 표지·상세 표의 합계 필드(SUM 수식 캐시 값 포함) 일괄 반영
+    xml = findSetAll(xml, '(활동명)', escXml(d.actName));
+    xml = findSetAll(xml, '(장소명)', escXml(aggPlace || d.actPlace || ' '));
 
     // ════ STEP 4: ○ 1~2줄 문장  순차 치환
     const pur  = ai.purposes  || [];
@@ -1587,28 +1674,28 @@ async function downloadHWPX() {
     const effs = ai.effects   || [];
     const PH   = '○ 1~2줄 문장 ';
     const allFills = [
-      ...pur.slice(0,3).map(p => '○ ' + dot(p)),
-      ...gls.slice(0,4).map(g => '○ ' + dot(g)),
-      ...effs.slice(0,4).map(e => '○ ' + dot(e)),
+      ...pur.slice(0,3).map(p => '○ ' + dot(escXml(p))),
+      ...gls.slice(0,4).map(g => '○ ' + dot(escXml(g))),
+      ...effs.slice(0,4).map(e => '○ ' + dot(escXml(e))),
     ];
     for (const fill of allFills) xml = findSet(xml, PH, fill);
 
     // ════ STEP 5: 운영목적 4번째 para 삽입
     if (pur.length > 3) {
-      const target3 = '<hp:t>○ ' + dot(pur[2]) + '</hp:t>';
+      const target3 = '<hp:t>○ ' + dot(escXml(pur[2])) + '</hp:t>';
       const pos3    = xml.indexOf(target3);
       if (pos3 >= 0) {
         const pStart = xml.lastIndexOf('<hp:p ', pos3);
         const pEnd   = xml.indexOf('</hp:p>', pos3) + '</hp:p>'.length;
         const pBlock = xml.slice(pStart, pEnd);
-        const newP   = pBlock.replace(target3, '<hp:t>○ ' + dot(pur[3]) + '</hp:t>');
+        const newP   = pBlock.replace(target3, '<hp:t>○ ' + dot(escXml(pur[3])) + '</hp:t>');
         xml = xml.slice(0, pEnd) + newP + xml.slice(pEnd);
       }
     }
 
     // ════ STEP 6: 활동계획서 제목 두 줄
-    xml = findSet(xml, '2026년 광양시청소년문화센터 (동아리기수)', '2026년 광양시청소년문화센터 ' + (d.period || ''));
-    xml = findSet(xml, '(활동명) 활동계획서', d.actName + ' 활동계획서');
+    xml = findSet(xml, '2026년 광양시청소년문화센터 (동아리기수)', '2026년 광양시청소년문화센터 ' + escXml(d.period || ''));
+    xml = findSet(xml, '(활동명) 활동계획서', escXml(d.actName) + ' 활동계획서');
 
     // ════ ZIP 재생성
     const FILE_ORDER = [
