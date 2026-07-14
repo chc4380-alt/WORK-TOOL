@@ -474,7 +474,7 @@
   <div class="header-logo">기</div>
   <span class="header-title">기안 자동작성기</span>
   <span class="header-sub">광양시청소년문화센터</span>
-  <span class="header-version" title="코드 버전 — 문제를 문의할 때 이 번호를 함께 알려주세요">v2026.07.14.6</span>
+  <span class="header-version" title="코드 버전 — 문제를 문의할 때 이 번호를 함께 알려주세요">v2026.07.14.9</span>
   <span class="header-badge">WORK-TOOL Hub</span>
 </div>
 
@@ -1661,6 +1661,122 @@ async function downloadHWPX() {
 
     function dot(s) { s = s.trim(); return s.endsWith('.') ? s : s + '.'; }
 
+    // ── zip 파일 하나만 외과적으로 교체하기 위한 저수준 유틸 ──
+    function crc32(buf) {
+      if (!crc32.table) {
+        const t = [];
+        for (let n = 0; n < 256; n++) {
+          let c = n;
+          for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+          t[n] = c >>> 0;
+        }
+        crc32.table = t;
+      }
+      const table = crc32.table;
+      let crc = 0xFFFFFFFF;
+      for (let i = 0; i < buf.length; i++) crc = table[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
+      return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+
+    async function deflateRaw(u8) {
+      const cs = new CompressionStream('deflate-raw');
+      const writer = cs.writable.getWriter();
+      writer.write(u8);
+      writer.close();
+      const chunks = [];
+      const reader = cs.readable.getReader();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+      }
+      const total = chunks.reduce((s, c) => s + c.length, 0);
+      const out = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { out.set(c, off); off += c.length; }
+      return out;
+    }
+
+    // 원본 zip 바이트에서 entryName 파일 하나만 새 내용으로 교체한다.
+    // 다른 모든 파일의 로컬 헤더/중앙 디렉터리 바이트(버전, 외부 속성 등 메타데이터 포함)는
+    // 원본 그대로 보존된다 — JSZip으로 zip 전체를 새로 만들면 이 메타데이터가 달라져
+    // 한글이 파일을 손상된 것으로 인식하는 문제가 있었다.
+    async function patchZipEntry(originalBytes, entryName, newContentU8) {
+      const dv = new DataView(originalBytes.buffer, originalBytes.byteOffset, originalBytes.byteLength);
+
+      let eocdOff = -1;
+      for (let i = originalBytes.length - 22; i >= 0; i--) {
+        if (dv.getUint32(i, true) === 0x06054b50) { eocdOff = i; break; }
+      }
+      if (eocdOff === -1) throw new Error('zip EOCD를 찾을 수 없습니다.');
+      const totalEntries = dv.getUint16(eocdOff + 10, true);
+      const cdOffset = dv.getUint32(eocdOff + 16, true);
+
+      const entries = [];
+      let off = cdOffset;
+      for (let i = 0; i < totalEntries; i++) {
+        const nameLen = dv.getUint16(off + 28, true);
+        const extraLen = dv.getUint16(off + 30, true);
+        const commentLen = dv.getUint16(off + 32, true);
+        const name = new TextDecoder().decode(originalBytes.subarray(off + 46, off + 46 + nameLen));
+        const localOffset = dv.getUint32(off + 42, true);
+        entries.push({ name, cdOff: off, cdLen: 46 + nameLen + extraLen + commentLen, localOffset });
+        off += 46 + nameLen + extraLen + commentLen;
+      }
+
+      const target = entries.find(e => e.name === entryName);
+      if (!target) throw new Error('zip에서 ' + entryName + ' 항목을 찾을 수 없습니다.');
+
+      const lhOff = target.localOffset;
+      const lhNameLen = dv.getUint16(lhOff + 26, true);
+      const lhExtraLen = dv.getUint16(lhOff + 28, true);
+      const lhDataStart = lhOff + 30 + lhNameLen + lhExtraLen;
+      const oldCompSize = dv.getUint32(lhOff + 18, true);
+      const lhDataEnd = lhDataStart + oldCompSize;
+
+      const newCompData = await deflateRaw(newContentU8);
+      const newCrc = crc32(newContentU8);
+      const newCompSize = newCompData.length;
+      const newUncompSize = newContentU8.length;
+      const sizeDelta = newCompSize - oldCompSize;
+
+      const headBytes = originalBytes.subarray(0, lhOff);
+      const newHeader = originalBytes.slice(lhOff, lhDataStart);
+      const hdv = new DataView(newHeader.buffer);
+      hdv.setUint32(14, newCrc, true);
+      hdv.setUint32(18, newCompSize, true);
+      hdv.setUint32(22, newUncompSize, true);
+
+      const middleBytes = originalBytes.subarray(lhDataEnd, cdOffset);
+
+      const cdParts = [];
+      for (const e of entries) {
+        const raw = originalBytes.slice(e.cdOff, e.cdOff + e.cdLen);
+        const rdv = new DataView(raw.buffer);
+        let newLocalOffset = e.localOffset;
+        if (e.localOffset > lhOff) newLocalOffset += sizeDelta;
+        rdv.setUint32(42, newLocalOffset, true);
+        if (e.name === entryName) {
+          rdv.setUint32(16, newCrc, true);
+          rdv.setUint32(20, newCompSize, true);
+          rdv.setUint32(24, newUncompSize, true);
+        }
+        cdParts.push(raw);
+      }
+
+      const eocdBytes = originalBytes.slice(eocdOff, originalBytes.length);
+      const edv = new DataView(eocdBytes.buffer);
+      edv.setUint32(16, cdOffset + sizeDelta, true);
+
+      const parts = [headBytes, newHeader, newCompData, middleBytes, ...cdParts, eocdBytes];
+      let totalLen = 0;
+      for (const p of parts) totalLen += p.length;
+      const result = new Uint8Array(totalLen);
+      let pos = 0;
+      for (const p of parts) { result.set(p, pos); pos += p.length; }
+      return result;
+    }
+
     const periodStr = d.period ? d.period + ' ' : '';
 
     // ════ STEP 1: 세부일정 (정규식 인덱스 기준)
@@ -1916,28 +2032,12 @@ async function downloadHWPX() {
     xml = findSet(xml, '(활동명) 활동계획서', escXml(d.actName) + ' 활동계획서');
 
     // ════ ZIP 재생성
-    const FILE_ORDER = [
-      'mimetype','version.xml','Contents/header.xml','Contents/section0.xml',
-      'Preview/PrvText.txt','settings.xml','Preview/PrvImage.png',
-      'META-INF/container.rdf','Contents/content.hpf',
-      'META-INF/container.xml','META-INF/manifest.xml',
-    ];
-    const newZip = new JSZip();
-    // createFolders:false — 기본값(true)이면 JSZip이 경로의 상위 폴더(Contents/, Preview/, META-INF/)를
-    // 별도 엔트리로 자동 추가한다. manifest.xml에 없는 파일이 zip에 생기게 되어 한글이 이를
-    // "손상된 파일"로 인식해 열지 못하는 원인이었다.
-    for (const fname of FILE_ORDER) {
-      const entry = zip.file(fname);
-      if (!entry) continue;
-      if (fname === 'mimetype') {
-        newZip.file(fname, await entry.async('uint8array'), { compression: 'STORE', createFolders: false });
-      } else if (fname === 'Contents/section0.xml') {
-        newZip.file(fname, new TextEncoder().encode(xml), { compression: 'DEFLATE', compressionOptions: { level: 6 }, createFolders: false });
-      } else {
-        newZip.file(fname, await entry.async('uint8array'), { compression: 'DEFLATE', compressionOptions: { level: 6 }, createFolders: false });
-      }
-    }
-    const blob = await newZip.generateAsync({ type: 'blob', mimeType: 'application/hwp+zip' });
+    // JSZip으로 전체를 새로 만들면(new JSZip() + generateAsync) 원본과 zip 메타데이터
+    // (버전 필드, 외부 파일 속성 등)가 미묘하게 달라져 한글이 "손상된 파일"로 처리했다.
+    // 그래서 zip을 통째로 새로 만들지 않고, 원본 zip 바이트에서 section0.xml 엔트리 하나만
+    // 외과적으로 교체한다 — 나머지 10개 파일은 원본과 바이트 단위로 완전히 동일하게 유지된다.
+    const patchedBytes = await patchZipEntry(bytes, 'Contents/section0.xml', new TextEncoder().encode(xml));
+    const blob = new Blob([patchedBytes], { type: 'application/hwp+zip' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url; a.download = d.actName + '_진행의건.hwpx'; a.click();
