@@ -75,20 +75,21 @@
     font-weight: 600;
   }
 
-  /* ── LAYOUT ── */
+  /* ── LAYOUT ──
+     작성 폼(sidebar)을 위에 넓게, 미리보기(main)는 아래에 배치해 아래로
+     스크롤해서 확인하는 구조. 페이지 전체가 하나로 스크롤된다. */
   .layout {
-    display: grid;
-    grid-template-columns: 360px 1fr;
+    display: block;
     min-height: calc(100vh - 54px);
   }
 
-  /* ── SIDEBAR ── */
+  /* ── SIDEBAR (작성 폼) ── */
   .sidebar {
     background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 20px 18px;
-    overflow-y: auto;
-    max-height: calc(100vh - 54px);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 28px 32px;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .section-label {
@@ -329,11 +330,11 @@
     border-color: var(--accent);
   }
 
-  /* ── MAIN ── */
+  /* ── MAIN (미리보기, 작성 폼 아래로 스크롤해서 확인) ── */
   .main {
-    padding: 24px 28px;
-    overflow-y: auto;
-    max-height: calc(100vh - 54px);
+    padding: 24px 28px 48px;
+    max-width: 900px;
+    margin: 0 auto;
   }
 
   .preview-card {
@@ -595,10 +596,17 @@
 
     <div class="form-group">
       <label class="form-label">활동 일시 <span class="required">*</span></label>
+      <div class="form-label" style="margin-bottom:4px;">날짜</div>
       <input type="date" id="actDateDate" value="2026-05-24">
-      <div class="row2" style="margin-top:6px;">
-        <input type="time" id="actDateFrom" value="10:00">
-        <input type="time" id="actDateTo" value="17:00">
+      <div class="row2" style="margin-top:8px;">
+        <div>
+          <div class="form-label">시작</div>
+          <input type="time" id="actDateFrom" value="10:00">
+        </div>
+        <div>
+          <div class="form-label">종료</div>
+          <input type="time" id="actDateTo" value="17:00">
+        </div>
       </div>
       <input type="text" id="actDate" readonly style="margin-top:6px;background:var(--surface2);color:var(--text-muted);">
     </div>
