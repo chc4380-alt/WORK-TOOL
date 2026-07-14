@@ -474,7 +474,7 @@
   <div class="header-logo">기</div>
   <span class="header-title">기안 자동작성기</span>
   <span class="header-sub">광양시청소년문화센터</span>
-  <span class="header-version" title="코드 버전 — 문제를 문의할 때 이 번호를 함께 알려주세요">v2026.07.14.9</span>
+  <span class="header-version" title="코드 버전 — 문제를 문의할 때 이 번호를 함께 알려주세요">v2026.07.14.10</span>
   <span class="header-badge">WORK-TOOL Hub</span>
 </div>
 
@@ -1853,6 +1853,22 @@ async function downloadHWPX() {
           const trBlock = xml.slice(trStart, trEnd);
           const fixedBlock = trBlock.split(`rowAddr="${oldRowAddr}"`).join(`rowAddr="${newRowAddr}"`);
           xml = xml.slice(0, trStart) + fixedBlock + xml.slice(trEnd);
+        }
+
+        // 표(<hp:tbl>) 자체에 선언된 rowCnt도 보정해야 한다. <hp:tr> 개수는 줄었는데
+        // rowCnt="9"(원본 그대로)로 남아있으면 선언된 행 수와 실제 행 수가 어긋나서
+        // 한글이 표 구조가 깨진 것으로 보고 파일을 손상됨으로 처리한다.
+        const tblStart = xml.lastIndexOf('<hp:tbl', totalAnchorPos);
+        if (tblStart >= 0) {
+          const tblTagEnd = xml.indexOf('>', tblStart);
+          const tblTag = xml.slice(tblStart, tblTagEnd);
+          const rowCntMatch = tblTag.match(/rowCnt="(\d+)"/);
+          if (rowCntMatch) {
+            const oldCnt = parseInt(rowCntMatch[1], 10);
+            const newCnt = oldCnt - deletedScheduleRows;
+            const newTblTag = tblTag.replace(`rowCnt="${oldCnt}"`, `rowCnt="${newCnt}"`);
+            xml = xml.slice(0, tblStart) + newTblTag + xml.slice(tblTagEnd);
+          }
         }
       }
     }
